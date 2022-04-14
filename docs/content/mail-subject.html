@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../style.css">
+  <script type="text/javascript" src="../script.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad: true});</script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+  <!-- Font -->
+  <link defer rel="preconnect" href="https://fonts.googleapis.com">
+  <link defer rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link defer href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+
+  <!-- pseudocode.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js"></script>
+
+  <title>メールの件名が文字化けするんだが？</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2022-04-15"/>
+
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../index.html">トップへ</a>
+<p>
+  <date>2022-04-15</date>
+      <tag><a href="../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1
+id="メールの件名が文字化けするんだが">メールの件名が文字化けするんだが？</h1>
+<p>メールの件名、たまに文字化けしませんか？</p>
+
+<figure><figcaption class="code-caption">文字化けメールの例</figcaption><pre><code class="nohljsln txt">----------------------------------
+件名 : Zoomのフォーカスモードの��用について／Using Zoom's Focus Mode
+From : xxx
+To : yyy
+日付: yyyy-mm-dd hh:mm
+----------------------------------
+...</code></pre></figure>
+<p>→ おそらく、RFC2047まわりの問題です。</p>
+<hr />
+<h2
+id="日本語の件名はエンコードして送れ-rfc2047">日本語の件名はエンコードして送れ
+(RFC2047)</h2>
+<p><a href="https://www.rfc-editor.org/rfc/rfc2047">RFC2047</a></p>
+<blockquote>
+<p>This memo describes similar techniques to allow the encoding of
+non-ASCII text in various portions of a RFC 822 [2] message header,
+…</p>
+</blockquote>
+<p>日本語はNon-ASCII
+Textなので、このRFCに沿ったエンコーディングが必要。</p>
+<hr />
+<h2 id="エンコード手順">エンコード手順</h2>
+<ol type="1">
+<li>件名をBase64(とか)でエンコード</li>
+<li><span style="color:red"><strong>得られた文字列を75文字以内の文字列群に分割</strong></span></li>
+<li>(文字列群を送信)</li>
+</ol>
+<hr />
+<h2 id="エンコード手順に潜む罠">エンコード手順に潜む罠</h2>
+<p>手順の2番目に罠がある。</p>
+<p>RFC曰く :</p>
+<blockquote>
+<p>Each ‘encoded-word’ MUST represent an integral number of
+characters.</p>
+</blockquote>
+<p>要するに :</p>
+<figure>
+<figcaption class="code-caption">合法な分割・違法な分割</figcaption>
+<pre style="border-style:solid;border-width:1px;">        平文 : <span style="color:red;">あ</span><span style="color:green;">い</span><span style="color:blue;">う</span>
+エンコード後 : <span style="color:red;">AAAA</span><span style="color:green;">IIII</span><span style="color:blue;">UUUU</span>
+  合法な分割 : <span style="color:red;">AAAA</span><span style="color:green;">IIII</span> / <span style="color:blue;">UUUU</span>
+  違法な分割 : <span style="color:red;">AAAA</span><span style="color:green;">II</span> / <span style="color:green">II</span><span style="color:blue;">UUUU</span></pre>
+</figure>
+
+<hr />
+<h2 id="解析-化けた件名">解析! 化けた件名</h2>
+<p>受信側のメーラが気の利かないメーラだと、次のようなことが起こる。</p>
+<figure>
+<figcaption class="code-caption">気の利かないデコード</figcaption>
+<pre style="border-style:solid;border-width:1px;">      違法な分割 : <span style="color:red;">AAAA</span><span style="color:green;">II</span> / <span style="color:green">II</span><span style="color:blue;">UUUU</span>
+それぞれデコード : <span style="color:red;">あ</span><span style="color:green;">�</span> / <span style="color:green">�</span><span style="color:blue;">う</span>
+            結合 : <span style="color:red;">あ</span><span style="color:green;">��</span><span style="color:blue;">う</span></pre>
+</figure>
+(おそらく)これが文字化けの原因である。
+
+<p><strong>結論 :
+悪いのはRFC2047に従わない送信側のメーラ。(たぶん)</strong></p>
+<p>おわり。</p>
+</body>
+</html>
