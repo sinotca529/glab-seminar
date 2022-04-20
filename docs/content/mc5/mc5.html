@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>Model Checking (Sec.5)</title>
+  <meta name="keywords" content="MC"/>
+  <meta name="date" content="yyyy-mm-dd"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.13.16/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.13.16/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>yyyy-mm-dd</date>
+      <tag><a href="../../tag.html?tag=MC">MC</a></tag>
+  </p>
+
+<h1 id="model-checking-sec5">Model Checking (Sec.5)</h1>
+<dl>
+<dt>この章の目的 :</dt>
+<dd>
+クリプキ構造<span class="math inline">M</span>, 式<span
+class="math inline">f</span>について、<span class="math inline">M \vDash
+f</span>の成立を調べること。
+</dd>
+</dl>
+<p>記号の位置おかしくね？∈</p>
+<p>その手順 :</p>
+<ol type="1">
+<li><span class="math inline">{\llbracket f \rrbracket}_M \ (= \{s \in
+S\ | \ M,s \vDash f\})</span>を求める。</li>
+<li><span class="math inline">S_0 \subseteq {\llbracket f
+\rrbracket}_M</span> を調べる。</li>
+</ol>
+<p>この章の流れ :</p>
+<ul>
+<li>(<a href="./mc5.1.html">5.1節</a>) クリプキ構造の陽な表示 (explicit
+representation)について、モデルチェックのアルゴリズムを示す。</li>
+<li>(5.2節) それに対し、公平性を踏まえた拡張をする。</li>
+<li>(5.3節) CTL operators
+に対し、不動点characterizationを定義し、モデルチェックへの役立て方を示す。</li>
+</ul>
+<p><note>以下、<span class="math inline">S_0</span>と<span
+class="math inline">AP</span>は固定なのでしばしば略記します。</note></p>
+<hr />
+<hr />
+<h2 id="公平性を考慮した拡張">公平性を考慮した拡張</h2>
+</body>
+</html>

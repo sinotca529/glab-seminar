@@ -7,13 +7,18 @@ window.addEventListener("DOMContentLoaded", function() {
             a.href = match[1] + encodeURIComponent(match[2])
         });
 
-    // pseudo.js
-    document.querySelectorAll(".myalgorithmic")
+    document.querySelectorAll("quiz")
         .forEach(function(a) {
-            let code = a.textContent;
-            let options = {
-                lineNumber: true
-            };
-            pseudocode.render(code, a, options);
+            a.addEventListener("click", function onClick(_event) {
+                const begin = '<span style="color:black;">';
+                const end = '</span>';
+                const content = a.innerHTML;
+                if (content.startsWith(begin)) {
+                    a.innerHTML = content.slice(begin.length, -end.length)
+                }
+                else {
+                    a.innerHTML = begin + a.innerHTML + end;
+                }
+            })
         });
 });

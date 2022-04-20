@@ -1,1 +1,1 @@
-const CONTENT_META_DATA = [{"path": "content/mail-subject.html", "title": "メールの件名が文字化けするんだが？", "tags": ["LT"], "date": "2022-04-15"}]
+const CONTENT_META_DATA = [{"path": "content/mail-subject.html", "title": "メールの件名が文字化けするんだが？", "tags": ["LT"], "date": "2022-04-15"}, {"path": "content/mc5/mc5.html", "title": "Model Checking (Sec.5)", "tags": ["MC"], "date": "yyyy-mm-dd"}, {"path": "content/mc5/mc5.1.html", "title": "Model Checking (Sec.5.1)", "tags": ["MC"], "date": "yyyy-mm-dd"}]

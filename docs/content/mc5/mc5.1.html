@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+  <!-- mermaid.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad: true});</script>
+
+  <!-- pseudocode.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".algorithm")
+        .forEach(e => pseudocode.renderElement(e, {lineNumber: true, lineNumberPunc: ' '}));
+    });
+  </script>
+
+  <!-- viz.js (graphviz) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/1.8.2/viz.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".graphviz")
+        .forEach(e => e.innerHTML = Viz(e.innerText));
+    });
+  </script>
+
+  <title>Model Checking (Sec.5.1)</title>
+  <meta name="keywords" content="MC"/>
+  <meta name="date" content="yyyy-mm-dd"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.13.16/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.13.16/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>yyyy-mm-dd</date>
+      <tag><a href="../../tag.html?tag=MC">MC</a></tag>
+  </p>
+
+<h1 id="51-explicit-state-ctl-model-checking">5.1 Explicit-State CTL
+Model Checking</h1>
+<dl>
+<dt>この節の目的:</dt>
+<dd>
+クリプキ構造の陽な表示 (explicit
+representation)について、モデルチェックのアルゴリズムを示す。
+</dd>
+</dl>
+<hr />
+<h2 id="アルゴリズム概要">アルゴリズム概要</h2>
+<h3 id="入出力">入出力</h3>
+<ul>
+<li>入力 : クリプキ構造<span class="math inline">M</span>、CTL式<span
+class="math inline">f</span></li>
+<li>出力 : <span class="math inline">{\llbracket f \rrbracket}_M \ (=
+\{s \in S\ | \ M,s \vDash f\})</span></li>
+</ul>
+<h3 id="前提">前提</h3>
+<ul>
+<li>CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる</li>
+<li>よって、変形後の式について<span class="math inline">{\llbracket f
+\rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash
+f\})</span>がわかれば十分</li>
+</ul>
+<h3 id="方針">方針</h3>
+<p>まず、<span class="math inline">{\llbracket f_1 \rrbracket}_M,
+{\llbracket f_2 \rrbracket}_M</span>がわかっている時に、</p>
+<ul>
+<li><span class="math inline">\neg f_1</span></li>
+<li><span class="math inline">f_1 \land f_2</span></li>
+<li><span class="math inline">f_1 \lor f_2</span></li>
+<li><span class="math inline">\textbf{EX}(f_1)</span></li>
+<li><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span></li>
+<li><span class="math inline">\textbf{E}(f_1 \textbf{G} f_2)</span></li>
+</ul>
+<p>について<span class="math inline">{\llbracket \cdot
+\rrbracket}_M</span>を求めるアルゴリズム群を考えておく。</p>
+<p>そのアルゴリズム群を用いて、次のように処理して、<span
+class="math inline">{\llbracket f \rrbracket}_M</span>を得る。</p>
+
+<figure><figcaption class="code-caption">アルゴリズム全体</figcaption><pre><code class="py">def set_of_state_which_sat_f(M: Kripke, f: Formula):
+    # 式 f のネストの深さ (後述の例を参照) を得る
+    nest_depth = f.nest_depth()
+
+    for i in range(0, nest_depth+1):
+        sub_formulas = f.get_sub_formulas(nest_depth=i)
+
+        for sub_f in sub_formulas:
+            match sub_f:
+                f1         =&gt; CheckAtomic(f1),
+                ¬f1       =&gt; CheckNot(f1, f2),
+                (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
+                (f1 ∨ f2) =&gt; CheckOr(f1, f2),
+                E(f1 U f2) =&gt; CheckEU(f1, f2),
+                EG(f1)     =&gt; CheckEG(f1),
+
+    return {s ∈ S | f ∈ label(s)}</code></pre></figure>
+<ul>
+<li><code>label(s)</code>は、状態<span
+class="math inline">s</span>が満たすことが判明したCTL式の集合</li>
+<li><code>CheckXX</code>は、その式を満たす状態すべてにラベルを貼る関数。</li>
+<li>ネストの浅いものから順に処理する。</li>
+<li>→ 各caseにおいて、<code>f1</code>,
+<code>f2</code>のラベル付けは済んで[いる/いない]状態にある。</li>
+</ul>
+<p>以降は、各<code>CheckXX</code>を見ていく。</p>
+<hr />
+<h2 id="簡単なケース-not-and-or">簡単なケース (Not, And, Or)</h2>
+
+<figure><figcaption class="code-caption">CheckNot</figcaption><pre><code class="py"># O(|S|)
+def CheckNot(f1):
+    T := {s | f1 ∉ label(s)}
+    for s in T:
+        label(s) += ¬f1</code></pre></figure>
+
+<figure><figcaption class="code-caption">CheckAnd</figcaption><pre><code class="py"># O(|S|)
+def CheckAnd(f1, f2):
+    T := {s | f1 ∈ label(s) and f2 ∈ label(s)}
+    for s in T:
+        label(s) += f1 ∧ f2</code></pre></figure>
+
+<figure><figcaption class="code-caption">CheckOr</figcaption><pre><code class="py"># O(|S|)
+def CheckOr(f1, f2):
+    T := {s | f1 ∈ label(s) or f2 ∈ label(s)}
+    for s in T:
+        label(s) += f1 ∨ f2</code></pre></figure>
+<hr />
+<h2 id="euの処理">EUの処理</h2>
+
+<figure><figcaption class="code-caption">CheckEU</figcaption><pre><code class="py"># O(|S| + |R|)
+# labelはグローバルな辞書的なもの
+# f1, f2についてのラベル付けは終わっていると仮定する
+def CheckEU(f1, f2):
+    T := {s | f2 ∈ label(s)}
+    for s in T:
+        label(s) += E(f1 U f2)
+
+    while not T != ∅:
+        s = T.pop()
+        for t in s.parents():
+            if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
+                label(t) += E(f1 U f2)
+                T.push(t)n</code></pre></figure>
+<h3 id="動作">動作</h3>
+
+<figure><div class="mermaid">graph LR
+    s0((!f1)) --&gt; s1((f1)) --&gt; s2((f1)) --&gt; s3((f1))</div></figure>
+<h3 id="計算量">計算量</h3>
+<p>前半部分は<code>O(|S|)</code>で計算できる。</p>
+
+<figure><figcaption class="code-caption">前半部分</figcaption><pre><code class="py">T := {s | f2 ∈ label(s)}
+for s in T:
+    label(s) += E(f1 U f2)</code></pre></figure>
+<br>
+
+<p>後半部分は<code>O(|R|)</code>で計算できる。</p>
+
+<figure><figcaption class="code-caption">後半部分</figcaption><pre><code class="py">while not T != ∅:
+    s = T.pop()
+    for t in s.parents():
+        if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
+            label(t) += E(f1 U f2)
+            T.push(t)n</code></pre></figure>
+<p>ちなみに、MC本のアルゴリズムは次のようになっている :</p>
+
+<pre class="algorithm">\begin{algorithm}
+\begin{algorithmic}
+\While{$T \neq \emptyset$}
+    \State $\textbf{choose}\ s \in T$
+    \State $T = T \backslash \{s\}$
+    \ForAll{$t\ \textbf{s.t.}\ t \in S'$ \And $R(t, s)$}
+        \State $\cdots$
+    \EndFor
+\EndWhile
+\end{algorithmic}
+\end{algorithm}</pre>
+<p>このコードは直感的には、</p>
+<ul>
+<li>4行目の<code>for</code>文が<span
+class="math inline">O(|R|)</span></li>
+<li>よって1行目の<code>while</code>を踏まえると全体で<span
+class="math inline">O(|S||R|)</span></li>
+</ul>
+<p>のように見える。<br></p>
+<p>しかし、前処理で<code>R</code>から次のようなデータ構造を作っておくと、<span
+class="math inline">O(|R|)</span>で処理できる。<br>
+(このデータ構造自体は<span
+class="math inline">O(|R|)</span>で作れる。)</p>
+
+<figure><pre><code class="nohljsln txt">    Array of states
+    +---+
+    |   |
+    |   |      Array of parents of s
+    +---+      +-----+-----+-----+---
+  s | o-+----&gt; | 親1 | 親2 | 親3 |
+    +---+      +-----+-----+-----+---
+    |   |
+    |   |
+    +---+</code></pre></figure>
+<hr />
+<h2 id="egの処理">EGの処理</h2>
+<dl>
+<dt>SCC (Strongly Connected Component):</dt>
+<dd>
+任意の2頂点について、それを結ぶパスがある有向グラフ。
+</dd>
+<dt>MSCC (Maximal SCC):</dt>
+<dd>
+SCCのうち、他のSCCに包含されないもの。
+</dd>
+<dt>nontrivial SCC:</dt>
+<dd>
+頂点が2つ以上のグラフ or ある頂点からその頂点への辺があるグラフ。
+</dd>
+</dl>
+<h3 id="lemma-51">Lemma 5.1</h3>
+<p><span class="math inline">M,s \vDash
+\text{EG}f_1</span>と、次の2条件を両方満たすことは同値</p>
+<ol type="1">
+<li><span class="math inline">s \in S&#39;</span></li>
+<li><span class="math inline">M&#39;</span>上に、<span
+class="math inline">s</span>からグラフ<span class="math inline">(S&#39;,
+R&#39;)</span>のMSCC上のノード<span
+class="math inline">t</span>までのパスが存在</li>
+</ol>
+<h4 id="証明の準備">証明の準備</h4>
+<p>クリプキ構造<span class="math inline">M</span>のうち、<span
+class="math inline">f_1</span>を満たすノードのみを残したクリプキ構造を、<span
+class="math inline">M&#39;</span>と呼ぶ。</p>
+<p><span class="math display">
+M&#39; = (S&#39;, R&#39;, L&#39;) \;\;\;\text{where}\;\;\;S&#39; =
+\{s\in S | M,s\vDash f_1\}, R&#39; = R|_{S&#39;\times S&#39;}, L&#39; =
+L|_{S&#39;}
+</span></p>
+<h4 id="証明-longrightarrow">証明 (<span
+class="math inline">\Longrightarrow</span>)</h4>
+<ul>
+<li><p><span class="math inline">M,s \vDash
+\text{EG}f_1</span>を仮定し、<span
+class="math inline">\text{EG}f_1</span>を満たす無限長パスを<span
+class="math inline">\pi</span>と呼ぶ。</p></li>
+<li><p>このとき、<span class="math inline">s \in
+S&#39;</span>であり、また<span class="math inline">\pi</span>は<span
+class="math inline">S&#39;</span>上のパスである。</p></li>
+<li><p>また、<span class="math inline">\pi</span>は、次を満たす<span
+class="math inline">\pi_1</span>を用いて、<span class="math inline">\pi
+= \pi_0\pi_1</span>と書ける。</p>
+<ul>
+<li><span class="math inline">\pi_1</span>上の全要素は<span
+class="math inline">\pi_1</span>上に無限にしばしば(infinitely
+often)現れる。</li>
+</ul></li>
+</ul>
+
+<figure><figcaption class="code-caption">CheckEG</figcaption><pre><code class="py">def CheckEG(f1):
+    Sd = { s ∈ S | f1 ∈ label(s) }
+    MSCCs = get_all_mscc(Sd)
+    T = (全MSCCの状態の和集合)
+
+    while not T != ∅:
+        s = T.pop()
+        for t in s.parents():
+            if EG f1 ∉ label(t)
+                label(T) += EG f1</code></pre></figure>
+<hr />
+<h2 id="アルゴリズム全体の計算量">アルゴリズム全体の計算量</h2>
+<ul>
+<li><code>CheckXX</code>はすべて<span
+class="math inline">O(|S|+|R|)</span></li>
+<li>処理する部分式の数は高々<span class="math inline">|f|</span></li>
+</ul>
+<p>なので、全体の計算量は<span
+class="math inline">O(|f|(|S|+|R|))</span>である。</p>
+
+<figure><pre><code class="py">def set_of_state_which_sat_f(M: Kripke, f: Formula):
+    # 式 f のネストの深さ (後述の例を参照) を得る
+    nest_depth = f.nest_depth()
+
+    for i in range(0, nest_depth+1):
+        sub_formulas = f.get_sub_formulas(nest_depth=i)
+
+        for sub_f in sub_formulas:
+            match sub_f:
+                f1         =&gt; CheckAtomic(f1),
+                ¬f1       =&gt; CheckNot(f1, f2),
+                (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
+                (f1 ∨ f2) =&gt; CheckOr(f1, f2),
+                E(f1 U f2) =&gt; CheckEU(f1, f2),
+                EG(f1)     =&gt; CheckEG(f1),
+
+    return {s ∈ S | f ∈ label(s)}</code></pre></figure>
+<hr />
+<h2 id="具体例">具体例</h2>
+<p>次のクリプキ構造について、<span
+class="math inline">\textbf{AG}(\textit{Start} \rightarrow
+\textbf{AF}\textit{Heat})</span>を調べる。</p>
+
+<figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
+    splines = false
+    N1 [xlabel=&quot;1&quot;, label = &quot;!Start\n!Close\n!Heat\n!Error&quot;, shape = circle]
+    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n!Close\n!Heat\nError&quot;, shape = circle]
+    N3 [xlabel=&quot;3&quot;, label = &quot;!Start\nClose\n!Heat\n!Error&quot;, shape = circle]
+    N4 [xlabel=&quot;4&quot;, label = &quot;!Start\nClose\nHeat\n!Error&quot;, shape = circle]
+    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n!Heat\nError&quot;, shape = circle]
+    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n!Heat\n!Error&quot;, shape = circle]
+    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n!Error&quot;, shape = circle]
+
+    N1 -&gt; N2
+    N1 -&gt; N3
+    N2 -&gt; N5
+    N3 -&gt; N1
+    N3 -&gt; N6
+    N4 -&gt; N1
+    N4 -&gt; N3
+    N4 -&gt; N4 [label=&quot;cook&quot;]
+    N5 -&gt; N2
+    N5 -&gt; N3
+    N6 -&gt; N7
+    N7 -&gt; N4
+
+    {rank = same; N2, N3, N4;}
+    {rank = same; N5, N6, N7;}
+
+    N2 -&gt; N3 -&gt; N4 [color=transparent]
+    N5 -&gt; N6 -&gt; N7 [color=transparent]
+}</div></figure>
+<h3 id="考察">考察</h3>
+<p><span class="math inline">\textbf{AG}(\textit{Start} \rightarrow
+\textit{Heat})</span>は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。</p>
+<p>クリプキ構造を観察すると、次の点に気付く :</p>
+<ol type="1">
+<li>このクリプキ構造全体はSCCである</li>
+<li>状態4から状態4への遷移がある</li>
+</ol>
+<p>つまり、任意の状態について、そこから始まり、状態4に到達し、状態4に留まり続ける無限長パスが存在する。<br>
+したがって、<span class="math inline">\textbf{AG}(\textit{Start}
+\rightarrow \textit{Heat}) = \emptyset</span>となるはずである。</p>
+<h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
+<p><span class="math display">
+\begin{align*}
+&amp;\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat}) \\
+&amp;= \textbf{AG}(\neg \textit{Start} \lor \textbf{AF}\textit{Heat}) \\
+&amp;= \neg \textbf{EF}(\textit{Start} \land \neg
+\textbf{AF}\textit{Heat}) \\
+&amp;= \neg \textbf{EF}(\textit{Start}
+\land  \textbf{EG}\neg\textit{Heat}) \\
+&amp;= \neg \textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}))
+\end{align*}
+</span></p>
+<h3 id="ステップ2--部分式の列挙">ステップ2 : 部分式の列挙</h3>
+<p>Q. 部分式を列挙せよ。</p>
+<ul>
+<li><quiz><span class="math inline">\textit{true}</span></quiz></li>
+<li><quiz><span class="math inline">\textit{Start}</span></quiz></li>
+<li><quiz><span class="math inline">\textit{Heat}</span></quiz></li>
+<li><quiz><span class="math inline">\neg\textit{Heat}</span></quiz></li>
+<li><quiz><span
+class="math inline">\textbf{EG}\neg\textit{Heat}</span></quiz></li>
+<li><quiz><span class="math inline">\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}</span></quiz></li>
+<li><quiz><span class="math inline">\textbf{E}(\textit{true} \textbf{U}
+(\textit{Start} \land \textbf{EG}\neg\textit{Heat}))</span></quiz></li>
+<li><quiz><span class="math inline">\neg\textbf{E}(\textit{true}
+\textbf{U} (\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}))</span></quiz></li>
+</ul>
+<h3 id="ステップ3--ネストの浅い部分式から順に調べる">ステップ3 :
+ネストの浅い部分式から順に調べる</h3>
+<ul>
+<li><span class="math inline">\llbracket\textit{true}\rrbracket = \{1,
+2, 3, 4, 5, 6, 7\}</span></li>
+<li><span class="math inline">\llbracket\textit{Start}\rrbracket = \{2,
+5, 6, 7\}</span></li>
+<li><span class="math inline">\llbracket\textit{Heat}\rrbracket = \{4,
+7\}</span></li>
+<li><span class="math inline">\llbracket\neg\textit{Heat}\rrbracket =
+\{1, 2, 3, 5, 6\}</span></li>
+</ul>
+<h4 id="llbrackettextbfegnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket</span>
+について</h4>
+<ol type="1">
+<li><span class="math inline">S&#39; = \llbracket \neg\textit{Heat}
+\rrbracket = \{1, 2, 3, 5, 6\}</span>と置く</li>
+<li><span class="math inline">S&#39;</span>内のMSCCを見つける</li>
+<li><span
+class="math inline">S&#39;</span>内の状態のうち、MSCC内の状態への経路がある状態を見つける</li>
+<li>見つけた状態の集合が<span
+class="math inline">\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket</span>である</li>
+</ol>
+<ul>
+<li>いま、<span class="math inline">\textbf{MSCC} = \{\{1, 2, 3,
+5\}\}</span> である</li>
+<li>よって状態1, 2, 3, 5は<span
+class="math inline">\neg\textit{Heat}</span>を満た<quiz>す　　</quiz></li>
+<li>また、残った状態6からMSCCへの経路は存在しないので、6は<span
+class="math inline">\neg\textit{Heat}</span>を満た<quiz>さない</quiz></li>
+<li>よって、<span
+class="math inline">\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket
+=</span><quiz><span class="math inline">\{1, 2, 3,
+5\}</span></quiz></li>
+</ul>
+<h4
+id="llbrackettextitstart-land-textbfegnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}\rrbracket</span> について</h4>
+<ul>
+<li><span class="math inline">\llbracket\textit{Start}\rrbracket = \{2,
+5, 6, 7\}</span></li>
+<li><span
+class="math inline">\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket =
+\{1, 2, 3, 5\}</span></li>
+<li>よって、<span class="math inline">\llbracket\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}</span></li>
+</ul>
+<h4
+id="llbrackettextbfetextittrue-textbfu-textitstart-land-textbfegnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\textbf{E}(\textit{true} \textbf{U}
+(\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket</span>
+について</h4>
+<ol type="1">
+<li><span class="math inline">T = \llbracket\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}</span> と置く</li>
+<li><span class="math inline">T</span>内の状態の親のうち、<span
+class="math inline">\textit{true}</span>を満たすものを<span
+class="math inline">T</span>に加えていく</li>
+<li><span
+class="math inline">T</span>の要素がこれ以上増えなくなったとき、<span
+class="math inline">T = \llbracket\textbf{E}(\textit{true} \textbf{U}
+(\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}))\rrbracket</span>である</li>
+</ol>
+<ul>
+<li><span class="math inline">\{2,
+5\}</span>から親を辿っていくと全ての状態に到達できる</li>
+<li>よって、<span class="math inline">\llbracket\textbf{E}(\textit{true}
+\textbf{U} (\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}))\rrbracket = \{1, 2, 3, 4, 5, 6,
+7\}</span></li>
+</ul>
+<h4
+id="llbracketnegtextbfetextittrue-textbfu-textitstart-land-textbfegnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\neg\textbf{E}(\textit{true} \textbf{U}
+(\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket</span>
+について</h4>
+<ul>
+<li><span class="math inline">\llbracket\textbf{E}(\textit{true}
+\textbf{U} (\textit{Start} \land
+\textbf{EG}\neg\textit{Heat}))\rrbracket = \{1, 2, 3, 4, 5, 6,
+7\}</span>である</li>
+<li>よって、<span
+class="math inline">\llbracket\neg\textbf{E}(\textit{true} \textbf{U}
+(\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket =
+\emptyset</span></li>
+</ul>
+</body>
+</html>
