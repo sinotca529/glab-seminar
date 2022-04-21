@@ -10,15 +10,12 @@ window.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll("quiz")
         .forEach(function(a) {
             a.addEventListener("click", function onClick(_event) {
-                const begin = '<span style="color:black;">';
-                const end = '</span>';
-                const content = a.innerHTML;
-                if (content.startsWith(begin)) {
-                    a.innerHTML = content.slice(begin.length, -end.length)
+                const current = a.style.color;
+                if (current == "black") {
+                    a.style.color = "";
+                } else {
+                    a.style.color = "black";
                 }
-                else {
-                    a.innerHTML = begin + a.innerHTML + end;
-                }
-            })
+            });
         });
 });
