@@ -1,6 +1,6 @@
 ---
 title: OOM-Killerにcc1plusをkillされた話
-date: 2022-04-15
+date: 2022-04-22
 tag: LT
 ---
 
