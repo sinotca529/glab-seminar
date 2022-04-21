@@ -9,9 +9,7 @@ tag: LT
 
 ## LLVM のビルドに失敗
 毎度のごとく、LLVMのビルドに失敗した。<br>
-どうせ いつもの「virtual memory exhausted: Cannot allocate memory」だろうと思いきや、見たことのないエラーが。
-
-`cc1plus` (`g++`が呼び出す狭義のコンパイラ) が Kill されたらしい。
+`cc1plus` (`g++`が呼び出す狭義のコンパイラ) が kill されたらしい。
 ```
 $ cmake --build .
 
@@ -22,20 +20,22 @@ c++: fatal error: Killed signal terminated program cc1plus
 
 
 ## 原因 : リソース不足
-Google先生曰く、どうやら OOM-Killer の仕業らしい。
+Google先生曰く、`cc1plus`をkillしたのはOOM-Killer。
 
+### OOM-Killer
 - OOM : Out-Of-Memory
 - リソースが足りないときに適当なプロセスをKillする
 - リソース不足でシステム全体がダウンすることを防いでくれる
 
-`cc1plus`は犠牲になったのだ。
+つまり根本原因はリソース不足。
 
 (ちなみに、今回ビルドに失敗したPCのメモリは8GBしかない。研究室から借りたPCを使えばもう少し頑張れるはず。)
 
 
 ## ログを覗く
-`cat /var/log/syslog | grep Kill` でログを見てみると :
-```txt
+ログを見てみると、確かにOut of memoryでプロセスがkillされている。
+```sh
+$ cat /var/log/syslog | grep Kill
 Apr 21 18:54:33 (HOST-NAME) kernel: [   48.192626] Out of memory: Killed process 274 (cc1plus) total-vm:715960kB, anon-rss:572228kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1432kB oom_score_adj:0
 Apr 21 18:54:33 (HOST-NAME) kernel: [  109.555946] Out of memory: Killed process 402 (cc1plus) total-vm:704832kB, anon-rss:656452kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1412kB oom_score_adj:0
 Apr 21 18:54:33 (HOST-NAME) kernel: [  163.459520] Out of memory: Killed process 478 (cc1plus) total-vm:750692kB, anon-rss:514892kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1496kB oom_score_adj:0
@@ -46,11 +46,8 @@ Apr 21 18:54:33 (HOST-NAME) kernel: [ 1053.453668] Out of memory: Killed process
 Apr 21 18:55:17 (HOST-NAME) kernel: [ 3028.760734] Out of memory: Killed process 4024 (cc1plus) total-vm:568000kB, anon-rss:440584kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1144kB oom_score_adj:0
 ```
 
-確かにOut of memoryでプロセスがkillされている。
-
-
 ## 対処 : スレッド数を制限
-とりあえず`cmake --build . -- -j4`とスレッド数を制限してみた。<br>
+とりあえず`cmake --build . -- -j4`としてスレッド数を制限してみた。<br>
 → Killされる頻度がだいぶ落ちた。
 
 他にも色々と対処法がありそう。
@@ -58,7 +55,8 @@ Apr 21 18:55:17 (HOST-NAME) kernel: [ 3028.760734] Out of memory: Killed process
 
 ## 感想
 以前から、LLVMのビルド中に「virtual memory exhausted: Cannot allocate memory」に出くわすことはよくあった。<br>
-しかし、今回のエラーを見るのは初めて。
+しかし、今回のエラーを見るのは初めて。<br>
+根本原因は同じだが、表示されるエラーが替わった理由は謎である。
 
 前回のビルドからの変更点は
 - 定期的な`apt update` & `apt upgrade`
@@ -66,5 +64,3 @@ Apr 21 18:55:17 (HOST-NAME) kernel: [ 3028.760734] Out of memory: Killed process
 - (windows 11 にアプデ)
 
 くらい。
-
-根本原因は同じだが、表示されるエラーが替わった理由は謎である。
