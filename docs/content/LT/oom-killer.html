@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>OOM-Killerにcc1plusをkillされた話</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2022-04-22"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2022-04-22</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="oom-killer-に-cc1plus-をkillされた話">OOM-Killer に cc1plus
+をkillされた話</h1>
+<h2 id="llvm-のビルドに失敗">LLVM のビルドに失敗</h2>
+<p>毎度のごとく、LLVMのビルドに失敗した。<br> <code>cc1plus</code>
+(<code>g++</code>が呼び出す狭義のコンパイラ) が kill されたらしい。</p>
+
+<figure><pre><code class="nohljsln txt">$ cmake --build .
+
+(-- snipped --)
+
+c++: fatal error: Killed signal terminated program cc1plus</code></pre></figure>
+<h2 id="原因--リソース不足">原因 : リソース不足</h2>
+<p>Google先生曰く、<code>cc1plus</code>をkillしたのはOOM-Killer。</p>
+<h3 id="oom-killer">OOM-Killer</h3>
+<ul>
+<li>OOM : Out-Of-Memory</li>
+<li>リソースが足りないときに適当なプロセスをKillする</li>
+<li>リソース不足でシステム全体がダウンすることを防いでくれる</li>
+</ul>
+<p>つまり根本原因はリソース不足。</p>
+<p>(ちなみに、今回ビルドに失敗したPCのメモリは8GBしかない。研究室から借りたPCを使えばもう少し頑張れるはず。)</p>
+<h2 id="ログを覗く">ログを覗く</h2>
+<p>ログを見てみると、確かにOut of memoryでプロセスがkillされている。</p>
+
+<figure><pre><code class="sh">$ cat /var/log/syslog | grep Kill
+Apr 21 18:54:33 (HOST-NAME) kernel: [   48.192626] Out of memory: Killed process 274 (cc1plus) total-vm:715960kB, anon-rss:572228kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1432kB oom_score_adj:0
+Apr 21 18:54:33 (HOST-NAME) kernel: [  109.555946] Out of memory: Killed process 402 (cc1plus) total-vm:704832kB, anon-rss:656452kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1412kB oom_score_adj:0
+Apr 21 18:54:33 (HOST-NAME) kernel: [  163.459520] Out of memory: Killed process 478 (cc1plus) total-vm:750692kB, anon-rss:514892kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1496kB oom_score_adj:0
+Apr 21 18:54:33 (HOST-NAME) kernel: [  236.053123] Out of memory: Killed process 580 (cc1plus) total-vm:750616kB, anon-rss:321836kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1496kB oom_score_adj:0
+Apr 21 18:54:33 (HOST-NAME) kernel: [  325.111948] Out of memory: Killed process 706 (cc1plus) total-vm:733492kB, anon-rss:282628kB, file-rss:4kB, shmem-rss:0kB, UID:1000 pgtables:1456kB oom_score_adj:0
+Apr 21 18:54:33 (HOST-NAME) kernel: [  331.543347] Out of memory: Killed process 702 (cc1plus) total-vm:659552kB, anon-rss:317520kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1324kB oom_score_adj:0
+Apr 21 18:54:33 (HOST-NAME) kernel: [ 1053.453668] Out of memory: Killed process 2076 (cc1plus) total-vm:559516kB, anon-rss:413612kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1120kB oom_score_adj:0
+Apr 21 18:55:17 (HOST-NAME) kernel: [ 3028.760734] Out of memory: Killed process 4024 (cc1plus) total-vm:568000kB, anon-rss:440584kB, file-rss:0kB, shmem-rss:0kB, UID:1000 pgtables:1144kB oom_score_adj:0</code></pre></figure>
+<h2 id="対処--スレッド数を制限">対処 : スレッド数を制限</h2>
+<p>とりあえず<code>cmake --build . -- -j4</code>としてスレッド数を制限してみた。<br>
+→ Killされる頻度がだいぶ落ちた。</p>
+<p>他にも色々と対処法がありそう。</p>
+<h2 id="感想">感想</h2>
+<p>以前から、LLVMのビルド中に「virtual memory exhausted: Cannot allocate
+memory」に出くわすことはよくあった。<br>
+しかし、今回のエラーを見るのは初めて。<br>
+根本原因は同じだが、表示されるエラーが替わった理由は謎である。</p>
+<p>前回のビルドからの変更点は</p>
+<ul>
+<li>定期的な<code>apt update</code> &amp; <code>apt upgrade</code></li>
+<li>LLVMのバージョンを 12.0.0 から 12.0.1 に変更</li>
+<li>(windows 11 にアプデ)</li>
+</ul>
+<p>くらい。</p>
+</body>
+</html>

@@ -5,8 +5,8 @@
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
 
-  <link rel="stylesheet" type="text/css" href="../style.css">
-  <script type="text/javascript" src="../script.js"></script>
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
@@ -37,10 +37,10 @@
   </style>
 </head>
 <body>
-<a href="../index.html">トップへ</a>
+<a href="../../index.html">トップへ</a>
 <p>
   <date>2022-04-15</date>
-      <tag><a href="../tag.html?tag=LT">LT</a></tag>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
   </p>
 
 <h1
@@ -55,7 +55,6 @@ To : yyy
 ----------------------------------
 ...</code></pre></figure>
 <p>→ おそらく、RFC2047まわりの問題です。</p>
-<hr />
 <h2
 id="日本語の件名はエンコードして送れ-rfc2047">日本語の件名はエンコードして送れ
 (RFC2047)</h2>
@@ -67,14 +66,12 @@ non-ASCII text in various portions of a RFC 822 [2] message header,
 </blockquote>
 <p>日本語はNon-ASCII
 Textなので、このRFCに沿ったエンコーディングが必要。</p>
-<hr />
 <h2 id="エンコード手順">エンコード手順</h2>
 <ol type="1">
 <li>件名をBase64(とか)でエンコード</li>
 <li><span style="color:red"><strong>得られた文字列を75文字以内の文字列群に分割</strong></span></li>
 <li>(文字列群を送信)</li>
 </ol>
-<hr />
 <h2 id="エンコード手順に潜む罠">エンコード手順に潜む罠</h2>
 <p>手順の2番目に罠がある。</p>
 <p>RFC曰く :</p>
@@ -91,7 +88,6 @@ characters.</p>
   違法な分割 : <span style="color:red;">AAAA</span><span style="color:green;">II</span> / <span style="color:green">II</span><span style="color:blue;">UUUU</span></pre>
 </figure>
 
-<hr />
 <h2 id="解析-化けた件名">解析! 化けた件名</h2>
 <p>受信側のメーラが気の利かないメーラだと、次のようなことが起こる。</p>
 <figure>

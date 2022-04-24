@@ -19,7 +19,6 @@ To : yyy
 
 → おそらく、RFC2047まわりの問題です。
 
----
 ## 日本語の件名はエンコードして送れ (RFC2047)
 [RFC2047](https://www.rfc-editor.org/rfc/rfc2047)
 
@@ -27,13 +26,11 @@ To : yyy
 
 日本語はNon-ASCII Textなので、このRFCに沿ったエンコーディングが必要。
 
----
 ## エンコード手順
 1. 件名をBase64(とか)でエンコード
 2. <span style="color:red">**得られた文字列を75文字以内の文字列群に分割**</span>
 3. (文字列群を送信)
 
----
 ## エンコード手順に潜む罠
 手順の2番目に罠がある。
 
@@ -49,7 +46,6 @@ RFC曰く :
   違法な分割 : <span style="color:red;">AAAA</span><span style="color:green;">II</span> / <span style="color:green">II</span><span style="color:blue;">UUUU</span></pre>
 </figure>
 
----
 ## 解析! 化けた件名
 受信側のメーラが気の利かないメーラだと、次のようなことが起こる。
 <figure>
