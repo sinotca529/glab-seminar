@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>トリッキーなスライスの取り方</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2022-04-25"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2022-04-25</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="トリッキーなスライスの取り方">トリッキーなスライスの取り方</h1>
+
+<figure><figcaption class="code-caption">take-slice.py</figcaption><pre><code class="py">s = &quot;0123456789&quot;
+offset = 3
+length = 2
+
+# これは
+sub1 = s[offset:offset+length]    #            s[offset:]
+assert(sub1 == &quot;34&quot;)              #           _____|_____
+                                  #          /           \
+# こうも書ける                    # s [0 1 2 3 4 5 6 7 8 9]
+sub2 = s[offset:][:length]        #          \_/
+assert(sub2 == &quot;34&quot;)              #            s[offset:][:length]</code></pre></figure>
+<p>利点 :</p>
+<ul>
+<li><code>offset</code>を2回書かなくていい</li>
+</ul>
+<p>欠点 :</p>
+<ul>
+<li>初見は混乱するかも</li>
+<li>スクリプト言語でやるとオーバヘッドがあるかも</li>
+</ul>
+<p><span style="color:red"><strong>注意 :
+トリッキーな書き方は用量・用法を守りましょう。</strong></span></p>
+<p><a
+href="https://twitter.com/m_ou_se/status/1403426221367627777">ネタ元</a></p>
+</body>
+</html>
