@@ -56,7 +56,7 @@
       div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
   <script defer=""
-  src="https://cdn.jsdelivr.net/npm/katex@0.13.16/dist/katex.min.js"></script>
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
   <script>document.addEventListener("DOMContentLoaded", function () {
  var mathElements = document.getElementsByClassName("math");
  var macros = [];
@@ -72,7 +72,7 @@
 }}});
   </script>
   <link rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/katex@0.13.16/dist/katex.min.css" />
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
 </head>
 <body>
 <a href="../../index.html">トップへ</a>
@@ -90,7 +90,6 @@ Model Checking</h1>
 representation)について、モデルチェックのアルゴリズムを示す。
 </dd>
 </dl>
-<hr />
 <h2 id="アルゴリズム概要">アルゴリズム概要</h2>
 <h3 id="入出力">入出力</h3>
 <ul>
@@ -148,8 +147,7 @@ class="math inline">s</span>が満たすことが判明したCTL式の集合</li
 <code>f2</code>のラベル付けは済んで[いる/いない]状態にある。</li>
 </ul>
 <p>以降は、各<code>CheckXX</code>を見ていく。</p>
-<hr />
-<h2 id="簡単なケース-not-and-or">簡単なケース (Not, And, Or)</h2>
+<h2 id="簡単なケース-not-and-or-ex">簡単なケース (Not, And, Or, EX)</h2>
 
 <figure><figcaption class="code-caption">CheckNot</figcaption><pre><code class="py"># O(|S|)
 def CheckNot(f1):
@@ -168,7 +166,12 @@ def CheckOr(f1, f2):
     T := {s | f1 ∈ label(s) or f2 ∈ label(s)}
     for s in T:
         label(s) += f1 ∨ f2</code></pre></figure>
-<hr />
+
+<figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
+def CheckEX(f):
+    for (parent, child) in R:
+        if f ∈ label(child):
+            parent += EX(f)</code></pre></figure>
 <h2 id="euの処理">EUの処理</h2>
 
 <figure><figcaption class="code-caption">CheckEU</figcaption><pre><code class="py"># O(|S| + |R|)
@@ -187,8 +190,38 @@ def CheckEU(f1, f2):
                 T.push(t)n</code></pre></figure>
 <h3 id="動作">動作</h3>
 
-<figure><div class="mermaid">graph LR
-    s0((!f1)) --&gt; s1((f1)) --&gt; s2((f1)) --&gt; s3((f1))</div></figure>
+<figure><div class="mermaid">graph LR;
+    A--&gt;B;</div></figure>
+
+<figure><div class="graphviz">digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
+    N0 [label=&quot;¬f1&quot;]
+    N1 [label=&quot;f1&quot;]
+    N2 [label=&quot;f1&quot;]
+    N3 [label=&quot;f2&quot;]
+    N0 -&gt; N1 -&gt; N2 -&gt; N3
+}</div></figure>
+
+<figure><div class="graphviz">digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;]
+    N0 [label=&quot;¬f1&quot;]
+    N1 [label=&quot;f1&quot;]
+    N2 [label=&quot;f1&quot;]
+    N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
+    N0 -&gt; N1 -&gt; N2 -&gt; N3
+}</div></figure>
+
+<figure><div class="graphviz">digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;]
+    N0 [label=&quot;¬f1&quot;]
+    N1 [label=&quot;f1&quot;]
+    N2 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
+    N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
+    N0 -&gt; N1 -&gt; N2 -&gt; N3
+}</div></figure>
 <h3 id="計算量">計算量</h3>
 <p>前半部分は<code>O(|S|)</code>で計算できる。</p>
 
@@ -241,7 +274,6 @@ class="math inline">O(|R|)</span>で作れる。)</p>
     |   |
     |   |
     +---+</code></pre></figure>
-<hr />
 <h2 id="egの処理">EGの処理</h2>
 <dl>
 <dt>SCC (Strongly Connected Component):</dt>
@@ -306,7 +338,6 @@ often)現れる。</li>
         for t in s.parents():
             if EG f1 ∉ label(t)
                 label(T) += EG f1</code></pre></figure>
-<hr />
 <h2 id="アルゴリズム全体の計算量">アルゴリズム全体の計算量</h2>
 <ul>
 <li><code>CheckXX</code>はすべて<span
@@ -333,7 +364,6 @@ class="math inline">O(|f|(|S|+|R|))</span>である。</p>
                 EG(f1)     =&gt; CheckEG(f1),
 
     return {s ∈ S | f ∈ label(s)}</code></pre></figure>
-<hr />
 <h2 id="具体例">具体例</h2>
 <p>次のクリプキ構造について、<span
 class="math inline">\textbf{AG}(\textit{Start} \rightarrow

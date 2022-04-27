@@ -12,7 +12,6 @@ plug:
 この節の目的:
 : クリプキ構造の陽な表示 (explicit representation)について、モデルチェックのアルゴリズムを示す。
 
----
 ## アルゴリズム概要
 ### 入出力
 - 入力 : クリプキ構造$M$、CTL式$f$
@@ -62,8 +61,7 @@ def set_of_state_which_sat_f(M: Kripke, f: Formula):
 
 以降は、各`CheckXX`を見ていく。
 
----
-## 簡単なケース (Not, And, Or)
+## 簡単なケース (Not, And, Or, EX)
 ```py {caption=CheckNot}
 # O(|S|)
 def CheckNot(f1):
@@ -88,7 +86,14 @@ def CheckOr(f1, f2):
         label(s) += f1 ∨ f2
 ```
 
----
+```py {caption=CheckEX}
+# O(|R|)
+def CheckEX(f):
+    for (parent, child) in R:
+        if f ∈ label(child):
+            parent += EX(f)
+```
+
 ## EUの処理
 
 ```py {caption=CheckEU}
@@ -110,10 +115,45 @@ def CheckEU(f1, f2):
 
 ### 動作
 ```mermaid
-graph LR
-    s0((!f1)) --> s1((f1)) --> s2((f1)) --> s3((f1))
+graph LR;
+    A-->B;
 ```
 
+```graphviz
+digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
+    N0 [label="¬f1"]
+    N1 [label="f1"]
+    N2 [label="f1"]
+    N3 [label="f2"]
+    N0 -> N1 -> N2 -> N3
+}
+```
+
+```graphviz
+digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor="white"]
+    N0 [label="¬f1"]
+    N1 [label="f1"]
+    N2 [label="f1"]
+    N3 [label="f2", fillcolor="burlywood"]
+    N0 -> N1 -> N2 -> N3
+}
+```
+
+```graphviz
+digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor="white"]
+    N0 [label="¬f1"]
+    N1 [label="f1"]
+    N2 [label="f1", fillcolor="burlywood"]
+    N3 [label="f2", fillcolor="burlywood"]
+    N0 -> N1 -> N2 -> N3
+}
+```
 ### 計算量
 前半部分は`O(|S|)`で計算できる。
 ```py {caption=前半部分}
@@ -169,7 +209,6 @@ while not T != ∅:
     +---+
 ```
 
----
 ## EGの処理
 SCC (Strongly Connected Component):
 : 任意の2頂点について、それを結ぶパスがある有向グラフ。
@@ -212,7 +251,6 @@ def CheckEG(f1):
                 label(T) += EG f1
 ```
 
----
 ## アルゴリズム全体の計算量
 - `CheckXX`はすべて$O(|S|+|R|)$
 - 処理する部分式の数は高々$|f|$
@@ -239,7 +277,6 @@ def set_of_state_which_sat_f(M: Kripke, f: Formula):
     return {s ∈ S | f ∈ label(s)}
 ```
 
----
 ## 具体例
 次のクリプキ構造について、$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$を調べる。
 

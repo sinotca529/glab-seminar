@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+  <!-- mermaid.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad: true});</script>
+
+  <!-- pseudocode.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".algorithm")
+        .forEach(e => pseudocode.renderElement(e, {lineNumber: true, lineNumberPunc: ' '}));
+    });
+  </script>
+
+  <!-- viz.js (graphviz) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/1.8.2/viz.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".graphviz")
+        .forEach(e => e.innerHTML = Viz(e.innerText));
+    });
+  </script>
+
+  <title>Model Checking (Sec.5.3)</title>
+  <meta name="keywords" content="MC"/>
+  <meta name="date" content="yyyy-mm-dd"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>yyyy-mm-dd</date>
+      <tag><a href="../../tag.html?tag=MC">MC</a></tag>
+  </p>
+
+<h1 id="53-ctl-model-checking-via-fixpoint-computation">5.3 CTL Model
+Checking via Fixpoint Computation</h1>
+<p>クリプキ構造<span class="math inline">M</span>, 式<span
+class="math inline">f</span>について、<span class="math inline">M \vDash
+f</span>の成立を調べる他の手法として、Fixpoint (不動点)
+を使ったアルゴリズムを紹介する。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;"></th>
+<th style="text-align: left;">操作の対象</th>
+<th style="text-align: left;">時間計算量</th>
+<th style="text-align: left;">空間計算量</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">5.1節の手法</td>
+<td style="text-align: left;">各状態・遷移</td>
+<td style="text-align: left;"><span class="math inline">\propto
+|M|</span></td>
+<td style="text-align: left;">大きい</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5.3節の手法</td>
+<td style="text-align: left;">状態集合</td>
+<td style="text-align: left;"><span class="math inline">\propto
+|M|^2</span></td>
+<td style="text-align: left;">(OBDDと併用すれば)小さい</td>
+</tr>
+</tbody>
+</table>
+<h2 id="節の流れ">節の流れ</h2>
+<ol type="1">
+<li>前準備
+<ul>
+<li>不動点の定義</li>
+<li>単調, <span class="math inline">\cup</span>-連続, <span
+class="math inline">\cap</span>-連続 の定義</li>
+<li>用語定義</li>
+</ul></li>
+<li>不動点に関する定理・補題について</li>
+<li>不動点を用いて<span class="math inline">M \vDash
+f</span>を調べる方法の説明</li>
+<li>さらに公平性を考慮した場合の説明</li>
+</ol>
+<h2 id="前準備">前準備</h2>
+<h3 id="不動点-fixpoint-の定義">不動点 (fixpoint) の定義</h3>
+<p>不動点は、Complete Partial Order (CPO,
+完備半順序)を満たすドメインに対して定義される。</p>
+<details>
+<summary>完備半順序の定義</summary>
+
+<ul>
+<li>最小限がある。</li>
+<li>任意の単調増加する列<span class="math inline">\{ x_i\}_i</span>
+について、上限がある。</li>
+<li>(最大限は無くても良い。)</li>
+</ul>
+</details>
+
+<p><strong><span
+class="math inline">\mathcal{P}(S)</span>は完備半順序を持つ。</strong></p>
+<!-- 先取り : P(S)の要素を、ある性質を満たす状態集合とみなし、云々 -->
+
+<dl>
+<dt>不動点 :</dt>
+<dd>
+関数<span class="math inline">\tau</span>について、<span
+class="math inline">F</span>が不動点 <span
+class="math inline">\iff</span> <span class="math inline">\tau(F) =
+F</span>
+</dd>
+</dl>
+<h3 id="単調-cup-連続-cap-連続-の定義">単調, <span
+class="math inline">\cup</span>-連続, <span
+class="math inline">\cap</span>-連続 の定義</h3>
+<dl>
+<dt>関数<span class="math inline">\tau</span>が単調 (monotonic)
+とは:</dt>
+<dd>
+<span class="math inline">P \subseteq Q \implies \tau(P) \subseteq
+\tau(Q)</span>
+</dd>
+<dt>関数<span class="math inline">\tau</span>が<span
+class="math inline">\cup</span>-連続 (<span
+class="math inline">\cup</span>-continuous) とは:</dt>
+<dd>
+<span class="math inline">P_1 \subseteq P_2 \subseteq \cdots \implies
+\tau(\cup_i P_i) = \cup_i \tau(P_i)</span>
+</dd>
+<dt>関数<span class="math inline">\tau</span>が<span
+class="math inline">\cap</span>-連続 (<span
+class="math inline">\cap</span>-continuous) とは:</dt>
+<dd>
+<span class="math inline">P_1 \supseteq P_2 \supseteq \cdots \implies
+\tau(\cup_i P_i) = \cup_i \tau(P_i)</span>
+</dd>
+</dl>
+<h3 id="用語定義-predicate-predicate-transformer">用語定義 (predicate,
+predicate transformer)</h3>
+<p><span class="math inline">M \vDash
+f</span>を調べるうえで、状態集合<span
+class="math inline">S</span>の冪集合<span
+class="math inline">\mathcal(P)(S)</span>に着目する。</p>
+<ul>
+<li><span
+class="math inline">\mathcal(P)</span>は、latticeとみなせる。</li>
+</ul>
+<p><span class="math inline">\mathcal(P)(S)</span>の要素<span
+class="math inline">S&#39;</span>は、<span
+class="math inline">S</span>の <em>predicate</em> だとみなせる。</p>
+<ul>
+<li><em>predicate</em> : その集合内の要素のみが満たす性質</li>
+<li>e.g. <span class="math inline">\{3, 4\}</span>を、「状態3,
+4のみが満たす性質」とみなす、ということ。</li>
+</ul>
+<h2 id="不動点に関する定理補題">不動点に関する定理・補題</h2>
+<h3 id="theorem55-tarski-knaster">Theorem5.5 (Tarski-Knaster)</h3>
+<p>Predicate transformer <span
+class="math inline">\tau</span>について。</p>
+<h4 id="主張1">[主張1]</h4>
+<p><span class="math inline">\tau</span>が単調ならば、次で定義する{最大,
+最小}不動点が存在。</p>
+<ul>
+<li>最大不動点 : <span class="math inline">\nu Z.\tau(Z) = \bigcup\{ Z \
+|\ Z \subseteq \tau(Z)\}</span></li>
+<li>最小不動点 : <span class="math inline">\mu Z.\tau(Z) = \bigcap\{ Z \
+|\ Z \supseteq \tau(Z)\}</span></li>
+</ul>
+<details>
+<summary>証明 (最大不動点について)</summary>
+
+<p><span class="math inline">\Gamma = \{ z \ |\ z \subseteq
+\tau(Z)\}</span>, <span class="math inline">P =
+\cup\Gamma</span>とおく。</p>
+<p>ここで、<span
+class="math inline">\Gamma</span>は、すべての不動点を内包している。<br>
+よって、もし<span
+class="math inline">P</span>が不動点ならば、それは最大不動点である。<br></p>
+<p><span
+class="math inline">P</span>が不動点であることを示すには、次の両立を示せば良い。</p>
+<ul>
+<li>(1) <span class="math inline">P \subseteq \tau(P)</span></li>
+<li>(2) <span class="math inline">P \supseteq \tau(P)</span></li>
+</ul>
+<p><strong>(1) <span class="math inline">P \subseteq \tau(P)</span>
+について:</strong> <br> <span class="math inline">\forall Z \in
+\Gamma</span> について、次が成立する。 <span class="math display">
+\begin{align*}
+\text{(a)}\ \ &amp;Z \subseteq \tau(Z) &amp;(\Gamma \text{の定義より})\\
+\text{(b)}\ \ &amp;Z \subseteq P &amp;(P \text{の定義より})\\
+\end{align*}
+</span></p>
+<p><span class="math inline">\tau</span>は単調なので、(b)より、 <span
+class="math display"> \tau(Z) \subseteq \tau(P) </span></p>
+<p>これと(a)より、。 <span class="math display"> Z \subseteq \tau(P)
+</span></p>
+<p><span
+class="math inline">\Gamma</span>の全要素について、この式を考え、両辺の和をとると、
+<span class="math display"> \bigcup_{Z \in \Gamma} Z \
+\subseteq\  \bigcup_{Z \in \Gamma} \tau(P) </span></p>
+<p>これを整理して、 <span class="math display"> P \subseteq \tau(P)
+</span></p>
+<p><strong>(2) <span class="math inline">P \supseteq \tau(P)</span>
+について:</strong><br> (1)の両辺に<span
+class="math inline">\tau</span>を適用すると、</p>
+<ul>
+<li><span class="math inline">\tau(P) \subseteq
+\tau(\tau(P))</span></li>
+</ul>
+<p>よって<span class="math inline">\Gamma</span>の定義より、 <span
+class="math display"> \tau(P) \in \Gamma </span></p>
+<p><span class="math inline">P</span>の定義より、<span
+class="math inline">P</span>は<span
+class="math inline">\Gamma</span>の任意の要素より大きいので、 <span
+class="math display"> P \supseteq \tau(P) </span></p>
+</details>
+
+<h4 id="主張2">[主張2]</h4>
+<ul>
+<li><span class="math inline">\tau</span>が<span
+class="math inline">\cap</span>-連続ならば、<span
+class="math inline">\nu Z.\tau(Z) =
+\cap\tau^i(\textit{true})</span></li>
+<li><span class="math inline">\tau</span>が<span
+class="math inline">\cup</span>-連続ならば、<span
+class="math inline">\mu Z.\tau(Z) =
+\cup\tau^i(\textit{false})</span></li>
+</ul>
+<details>
+<summary>証明 (最大不動点について)</summary>
+
+<p><span class="math inline">P =
+\bigcap\tau^i(S)</span>がであることを示すには、次の両立を示せば良い。</p>
+<ul>
+<li>(1) <span class="math inline">P \supseteq
+\bigcap\tau^i(S)</span></li>
+<li>(2) <span class="math inline">P \subseteq
+\bigcap\tau^i(S)</span></li>
+</ul>
+<p><strong>(1) <span class="math inline">P \supseteq
+\bigcap\tau^i(S)</span>について:</strong><br> <span
+class="math inline">S</span>は<span
+class="math inline">\mathcal{P}(S)</span>の最大元なので、 <span
+class="math display"> S \supseteq \tau(S) </span></p>
+<p><span class="math inline">\tau</span>は単調なので、両辺に<span
+class="math inline">\tau</span>を<span
+class="math inline">i</span>回適用しても大小は変わらず、 <span
+class="math display"> \tau^i(S) \supseteq \tau^{i+1}(S)</span></p>
+<!-- TODO 収束値の補足 -->
+
+<p>よって、列 <span class="math inline">\{ \tau^i(S)\}_i</span>
+は単調減少する。<br> このとき、<span class="math inline">\tau^i(S) =
+\bigcap_{k=0}^i \tau^i(S)</span>が成り立つ。<br></p>
+<p>また、<span
+class="math inline">\mathcal{P}(S)</span>は下に有界なので、列 <span
+class="math inline">\{ \tau^i(S)\}_i</span> は収束する。<br>
+その収束値は、<span class="math inline">\tau^\infty(S) =
+\bigcap_{i=0}^\infty \tau^i(S)</span>である。</p>
+<p>ここで、<span class="math inline">S \cup \tau(S) = \tau(S)</span>
+を踏まえれば、 <span class="math display"> \tau\left(
+\bigcap_{i=0}^\infty \tau^i(S) \right) = \bigcap_{i=1}^\infty \tau^i(S)
+= \bigcap_{i=0}^\infty \tau^i(S)</span></p>
+<p>よって、<span class="math inline">\bigcap_{i_0}^\infty
+\tau^i(S)</span>は不動点である。</p>
+<p>いま、<span class="math inline">P</span>は最大不動点なので、 <span
+class="math display"> P \supseteq \bigcap \tau^i(S) </span></p>
+<p><strong>(2) <span class="math inline">P \subseteq
+\bigcap\tau^i(S)</span>について:</strong><br> <span
+class="math inline">S</span>は<span
+class="math inline">\mathcal{P}(S)</span>の最大元なので、 <span
+class="math display"> P \subseteq \tau(S) </span></p>
+<p><span class="math inline">\tau</span>は単調なので、両辺に<span
+class="math inline">\tau</span>を<span
+class="math inline">\infty</span>回適用しても大小は変わらず、 <span
+class="math display"> \tau^\infty(P) \subseteq \tau^\infty(S)
+</span></p>
+<p><span class="math inline">P</span>は不動点なので左辺は<span
+class="math inline">P</span>であり、また右辺は<span
+class="math inline">\bigcap\tau^i(S)</span>に等しいので、 <span
+class="math display"> P \subseteq \bigcap\tau^i(S) </span></p>
+</details>
+
+<h3 id="lemma-56">Lemma 5.6</h3>
+<p><span class="math inline">S</span>が有限で<span
+class="math inline">\tau</span>が単調ならば、<span
+class="math inline">\tau</span>は<span
+class="math inline">\cup</span>-連続であり<span
+class="math inline">\cap</span>-連続である。</p>
+<details>
+<summary>証明 (<span class="math inline">\cup</span>-連続について)</summary>
+
+<!-- $P_1 \subseteq P_2 \subseteq \cdots \implies \tau(\cup_i P_i) = \cup_i \tau(P_i)$ -->
+
+<p>列<span
+class="math inline">\{P_i\}_i</span>は単調増加し、上に有界である(<span
+class="math inline">S</span>が有限なので)から、 <span
+class="math display"> \exist j_0 \ \textit{ s.t. }\  \forall j, P_j
+\subseteq P_{j_0} </span></p>
+<p>このとき<span class="math inline">\bigcup_i P_i =
+P_{j_0}</span>であるから、 <span class="math display">
+\tau\left(\bigcup_i P_i\right) = \tau(P_{j_0}) </span></p>
+<p>また、<span class="math inline">\tau</span>は単調なので、<span
+class="math inline">j_0</span>について次も成り立つ。 <span
+class="math display"> \exist j_0 \ \textit{ s.t. }\  \forall j,
+\tau(P_j) \subseteq \tau(P_{j_0}) </span> したがって、次が成り立つ。
+<span class="math display"> \bigcup_i \tau(P_i) = \tau(P_{j_0})
+</span></p>
+<p>以上より、次が成立。 <span class="math display"> \tau\left(\bigcup_i
+P_i\right) = \bigcup_i \tau(P_i) </span></p>
+</details>
+
+<h3 id="lemma-57">Lemma 5.7</h3>
+<p><span class="math inline">\tau</span>が単調ならば、任意の<span
+class="math inline">i</span>について次が成立。</p>
+<ul>
+<li><span class="math inline">\tau^i(\textit{false}) \subseteq
+\tau^{i+1}(\textit{false})</span></li>
+<li><span class="math inline">\tau^i(\textit{true}) \supseteq
+\tau^{i+1}(\textit{true})</span></li>
+</ul>
+<p>証明 : 数学的帰納法を使う。</p>
+<h3 id="lemma-58">Lemma 5.8</h3>
+<p><span class="math inline">\tau</span>が単調で<span
+class="math inline">S</span>が有限なら、次を満たす<span
+class="math inline">i_0</span>, <span
+class="math inline">j_0</span>が存在する。</p>
+<ul>
+<li><span class="math inline">\forall k \geq i_0,\
+\tau^k(\textit{false}) = \tau^{i_0}(\textit{false})</span></li>
+<li><span class="math inline">\forall k \geq j_0,\ \tau^k(\textit{true})
+= \tau^{j_0}(\textit{true})</span></li>
+</ul>
+<h4 id="直感的な意味">直感的な意味</h4>
+<p><span class="math inline">\textit{false}</span>/<span
+class="math inline">\textit{true}</span>に<span
+class="math inline">\tau</span>を適用し続けると、有限回の適用で収束する。</p>
+<h4 id="証明-1つめについて">証明 (1つめについて)</h4>
+<p>Lemma 5.7 より列 <span class="math inline">\{\tau^i (false)\}</span>
+は単調増加する。<br> また<span
+class="math inline">S</span>が有限であるから、この列は上に有界である。<br>
+よって、どこか(<span class="math inline">i_0</span>)で収束する。</p>
+<h3 id="lemma-59">Lemma 5.9</h3>
+<p><span class="math inline">\tau</span>が単調で<span
+class="math inline">S</span>が有限なら、次を満たす<span
+class="math inline">i_0</span>, <span
+class="math inline">j_0</span>が存在する。</p>
+<ul>
+<li><span class="math inline">\mu Z.\tau(Z) =
+\tau^{i_0}(\textit{false})</span></li>
+<li><span class="math inline">\nu Z.\tau(Z) =
+\tau^{j_0}(\textit{true})</span></li>
+</ul>
+<h4 id="直感的な意味-1">直感的な意味</h4>
+<p><span class="math inline">\textit{false}</span>/<span
+class="math inline">\textit{true}</span>に<span
+class="math inline">\tau</span>を適用し続けて収束したなら、それは最大不動点/最小不動点である。</p>
+<h4 id="証明">証明</h4>
+<p>Theorem5.5の主張2とLemma5.7, Lemma5.8 より示せる。</p>
+<!-- これクイズにいいかもね -->
+
+<h2 id="不動点を計算するアルゴリズム">不動点を計算するアルゴリズム</h2>
+<p>上で見てきた定理・補題より、不動点は次のようにして求められる。</p>
+
+<figure><figcaption class="code-caption">最小不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Lfp(tau: PredicateTransformer) -&gt; Predicate:
+    prevQ = ∅
+    Q = tau(prevQ)
+    while prevQ != Q:
+        prevQ = Q
+        Q = tau(prevQ)
+    return Q</code></pre></figure>
+
+<figure><figcaption class="code-caption">最大不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Mfp(tau: PredicateTransformer) -&gt; Predicate:
+    prevQ = S
+    Q = tau(prevQ)
+    while prevQ != Q:
+        prevQ = Q
+        Q = tau(prevQ)
+    return Q</code></pre></figure>
+<h3 id="アルゴリズムの停止性-lfpについて">アルゴリズムの停止性
+(<code>Lfp</code>について)</h3>
+<p><span class="math inline">\tau^i(\emptyset)</span>と<span
+class="math inline">\tau^{i+1}(\emptyset)</span>の関係は、次の2通りに分けられる。</p>
+<ol type="1">
+<li><span class="math inline">\tau^i(\emptyset) \subset
+\tau^{i+1}(\emptyset)</span></li>
+<li><span class="math inline">\tau^i(\emptyset) =
+\tau^{i+1}(\emptyset)</span></li>
+</ol>
+<p>ここで、列<span class="math inline">\{ \tau^k(\emptyset)
+\}_k</span>について考える。<br> <span
+class="math inline">\tau^i(\emptyset) =
+\tau^{i+1}(\emptyset)</span>が成り立つ最小の<span
+class="math inline">i</span>を<span
+class="math inline">k</span>とすると、次が成り立つ。 <span
+class="math display"> \emptyset \subset \tau(\emptyset) \subset \cdots
+\subset \tau^{k-1}(\emptyset) \subset \tau^k(\emptyset) =
+\tau^{k+1}(\emptyset) = \cdots </span></p>
+<p>ここで、<span class="math inline">\tau^k(\emptyset) \subseteq
+S</span>であることを踏まえると、<span
+class="math inline">k</span>はたかだか<span
+class="math inline">|S|</span>である。</p>
+<p>したがって、ループは高々<span
+class="math inline">S</span>周で終わるため、関数<code>Lfp</code>は有限時間で停止する。</p>
+<h2 id="fixpoint-based-reachability-analysis">Fixpoint-Based
+Reachability Analysis</h2>
+<dl>
+<dt>Reachability Analysis:</dt>
+<dd>
+クリプキ構造<span
+class="math inline">M</span>について、初期状態から到達可能な状態の集合を求める解析。
+</dd>
+</dl>
+<p>不動点を用いて、reachability analysisをおこなう。</p>
+<p>まず、状態集合<span
+class="math inline">Q</span>について、そこから1手で到達できる状態の集合<span
+class="math inline">\textit{post-image}(Q)</span>を定義する : <span
+class="math display"> \textit{post-image}(Q) = \{s&#39; \ |\ \exist s
+\in Q\ \text{ s.t. }\ R(s, s&#39;)\} </span></p>
+<p>これを用いて、<span class="math inline">\tau</span>を定義する : <span
+class="math display"> \tau(Q) = S_0 \cup \textit{post-image}(Q)
+</span></p>
+<p>このとき、最小不動点<span class="math inline">\mu
+Q.\tau(Q)</span>が、初期状態から到達可能な状態の集合となる。</p>
+<h3
+id="reachability-analysis-のm-vdash-textbfagpの検査への応用">Reachability
+analysis の<span class="math inline">M \vDash
+\textbf{AG}p</span>の検査への応用</h3>
+<p>到達可能な状態すべてが<span
+class="math inline">p</span>を満たすか調べることで、<span
+class="math inline">M \vDash \textbf{AG}p</span> を検査できる。</p>
+
+<figure><pre><code class="py">def tau(Q):
+    return S0 ∪ post_image(Q)
+
+# モデルMについて次の2つをおこなう:
+#   1. M ⊨ AG p を判定する
+#   2. AG p を満たす、到達可能な状態集合を求める
+def on_the_fly_Reach(M, p):
+    prevQ = ∅
+    Q = tau(prevQ)
+    while Q != prevQ:
+        if ∃s ∈ Q s.t. s ⊭ p:
+            return (&quot;Model doesn't satisfy AG p&quot;, ∅)
+        prevQ = Q
+        Q = tau(prevQ)
+    return (&quot;Model satisfy AG p&quot;, Q)</code></pre></figure>
+<h2 id="fixpoint-based-model-checking-algorithm-for-ctl">Fixpoint-Based
+Model-Checking Algorithm for CTL</h2>
+<p>不動点がCTL式を満たす状態集合になるよう、predicate transformer
+を設計する。</p>
+<ul>
+<li><span class="math inline">\llbracket \textbf{AF}f_1 \rrbracket_M =
+\mu Z.(f_1 \lor \textbf{AX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{EF}f_1 \rrbracket_M =
+\mu Z.(f_1 \lor \textbf{EX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{AG}f_1 \rrbracket_M =
+\nu Z.(f_1 \land \textbf{AX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{EG}f_1 \rrbracket_M =
+\nu Z.(f_1 \land \textbf{EX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{A}(f_1 \textbf{U} f_2)
+\rrbracket_M = \mu Z.(f_2 \lor (f_1 \land \textbf{AX}Z))</span></li>
+<li><span class="math inline">\llbracket \textbf{E}(f_1 \textbf{U} f_2)
+\rrbracket_M = \mu Z.(f_2 \lor (f_1 \land \textbf{EX}Z))</span></li>
+<li><span class="math inline">\llbracket \textbf{A}(f_1 \textbf{R} f_2)
+\rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{AX}Z))</span></li>
+<li><span class="math inline">\llbracket \textbf{E}(f_1 \textbf{R} f_2)
+\rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{EX}Z))</span></li>
+</ul>
+<details>
+<summary>証明 (<span class="math inline">\textbf{EG}</span>について)</summary>
+
+<p><strong>Lemma 5.10</strong><br> <span
+class="math inline">\textbf{E}(f_1 \textbf{U}
+f_2)</span>は、次で定義する関数<span
+class="math inline">\tau</span>の最小不動点である。 <span
+class="math display"> \tau(Z) = f_2 \lor (f_1 \land \textbf{EX}Z)
+</span></p>
+<p>これを示す。<br> この<span
+class="math inline">\tau</span>は単調なので、Lemma 5.6より、<span
+class="math inline">\cup</span>-連続である。</p>
+</details>
+
+<h3></h3>
+</body>
+</html>
