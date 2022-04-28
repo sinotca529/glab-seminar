@@ -86,67 +86,52 @@ Model Checking</h1>
 <dl>
 <dt>この節の目的:</dt>
 <dd>
-クリプキ構造の陽な表示 (explicit
-representation)について、モデルチェックのアルゴリズムを示す。
+クリプキ構造の explicit representation を検査するアルゴリズムの説明。
 </dd>
 </dl>
 <h2 id="アルゴリズム概要">アルゴリズム概要</h2>
 <h3 id="入出力">入出力</h3>
 <ul>
-<li>入力 : クリプキ構造<span class="math inline">M</span>、CTL式<span
+<li>入力 : クリプキ構造<span class="math inline">M</span>, CTL式 <span
 class="math inline">f</span></li>
 <li>出力 : <span class="math inline">{\llbracket f \rrbracket}_M \ (=
 \{s \in S\ | \ M,s \vDash f\})</span></li>
 </ul>
-<h3 id="前提">前提</h3>
-<ul>
-<li>CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる</li>
-<li>よって、変形後の式について<span class="math inline">{\llbracket f
-\rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash
-f\})</span>がわかれば十分</li>
-</ul>
+<h3 id="背景">背景</h3>
+<p>CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる。<br>
+よって、変形後の式について <span class="math inline">{\llbracket f
+\rrbracket}_M</span> が得られれば十分。</p>
 <h3 id="方針">方針</h3>
-<p>まず、<span class="math inline">{\llbracket f_1 \rrbracket}_M,
-{\llbracket f_2 \rrbracket}_M</span>がわかっている時に、</p>
-<ul>
-<li><span class="math inline">\neg f_1</span></li>
-<li><span class="math inline">f_1 \land f_2</span></li>
-<li><span class="math inline">f_1 \lor f_2</span></li>
-<li><span class="math inline">\textbf{EX}(f_1)</span></li>
-<li><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span></li>
-<li><span class="math inline">\textbf{E}(f_1 \textbf{G} f_2)</span></li>
-</ul>
-<p>について<span class="math inline">{\llbracket \cdot
-\rrbracket}_M</span>を求めるアルゴリズム群を考えておく。</p>
-<p>そのアルゴリズム群を用いて、次のように処理して、<span
-class="math inline">{\llbracket f \rrbracket}_M</span>を得る。</p>
+<p>状態 <span class="math inline">s</span>
+に付いているラベルの集合を、<span
+class="math inline">\textit{label}(s)</span> とおく。<br> <span
+class="math inline">\textit{label}(s)</span>に、状態 <span
+class="math inline">s</span> が満たすCTL式を加えていく。<br> 最終的に
+<span class="math inline">f \in \textit{label}(s)</span> であれば、<span
+class="math inline">s \in \llbracket f \rrbracket_M</span> である。</p>
+<p>具体的には、次のアルゴリズムを使う。<br> このアルゴリズムは、<span
+class="math inline">f</span> の部分式について、ネストの浅い
+(構造が単純な)
+ものから順に、それを満たす全状態にラベルを貼っていく。</p>
 
-<figure><figcaption class="code-caption">アルゴリズム全体</figcaption><pre><code class="py">def set_of_state_which_sat_f(M: Kripke, f: Formula):
-    # 式 f のネストの深さ (後述の例を参照) を得る
-    nest_depth = f.nest_depth()
-
-    for i in range(0, nest_depth+1):
-        sub_formulas = f.get_sub_formulas(nest_depth=i)
-
-        for sub_f in sub_formulas:
-            match sub_f:
-                f1         =&gt; CheckAtomic(f1),
-                ¬f1       =&gt; CheckNot(f1, f2),
-                (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
-                (f1 ∨ f2) =&gt; CheckOr(f1, f2),
-                E(f1 U f2) =&gt; CheckEU(f1, f2),
-                EG(f1)     =&gt; CheckEG(f1),
+<figure><pre><code class="py"># f は正規化しておくこと。
+def set_of_state_which_sat_f(M, f):
+    # ネストの浅い (構造が単純な) 部分式から処理する
+    for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
+        switch sub_f:
+            f1         =&gt; CheckAtomic(f1), # Do nothing.
+            ¬f1       =&gt; CheckNot(f1),
+            (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
+            (f1 ∨ f2) =&gt; CheckOr(f1, f2),
+            E(f1 U f2) =&gt; CheckEU(f1, f2),
+            EG(f1)     =&gt; CheckEG(f1),
 
     return {s ∈ S | f ∈ label(s)}</code></pre></figure>
-<ul>
-<li><code>label(s)</code>は、状態<span
-class="math inline">s</span>が満たすことが判明したCTL式の集合</li>
-<li><code>CheckXX</code>は、その式を満たす状態すべてにラベルを貼る関数。</li>
-<li>ネストの浅いものから順に処理する。</li>
-<li>→ 各caseにおいて、<code>f1</code>,
-<code>f2</code>のラベル付けは済んで[いる/いない]状態にある。</li>
-</ul>
-<p>以降は、各<code>CheckXX</code>を見ていく。</p>
+<p>ここで、<code>CheckXX</code> は、<span
+class="math inline">f_1</span>, <span class="math inline">f_2</span>
+のラベル付けが終わっている前提で、<code>XX</code>
+についてラベル付けする関数である。</p>
+<p>以降では、各<code>CheckXX</code>について見ていく。</p>
 <h2 id="簡単なケース-not-and-or-ex">簡単なケース (Not, And, Or, EX)</h2>
 
 <figure><figcaption class="code-caption">CheckNot</figcaption><pre><code class="py"># O(|S|)
@@ -175,8 +160,6 @@ def CheckEX(f):
 <h2 id="euの処理">EUの処理</h2>
 
 <figure><figcaption class="code-caption">CheckEU</figcaption><pre><code class="py"># O(|S| + |R|)
-# labelはグローバルな辞書的なもの
-# f1, f2についてのラベル付けは終わっていると仮定する
 def CheckEU(f1, f2):
     T := {s | f2 ∈ label(s)}
     for s in T:
@@ -189,24 +172,11 @@ def CheckEU(f1, f2):
                 label(t) += E(f1 U f2)
                 T.push(t)n</code></pre></figure>
 <h3 id="動作">動作</h3>
+<p>色付きはラベルが貼られたことを表す。</p>
 
-<figure><div class="mermaid">graph LR;
-    N0((&quot;¬f1&quot;)) --&gt; N1((&quot;f1&quot;)) --&gt; N2((&quot;f1&quot;)) --&gt; N3((&quot;f2&quot;));
-    style N3 fill:#f9f</div></figure>
-
-<figure><div class="graphviz">digraph G {
+<figure><figcaption class="code-caption">ループ直前</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
-    N0 [label=&quot;¬f1&quot;]
-    N1 [label=&quot;f1&quot;]
-    N2 [label=&quot;f1&quot;]
-    N3 [label=&quot;f2&quot;]
-    N0 -&gt; N1 -&gt; N2 -&gt; N3
-}</div></figure>
-
-<figure><div class="graphviz">digraph G {
-    graph [rankdir=LR]
-    node [shape=circle, style=filled, fillcolor=&quot;white&quot;]
     N0 [label=&quot;¬f1&quot;]
     N1 [label=&quot;f1&quot;]
     N2 [label=&quot;f1&quot;]
@@ -214,11 +184,21 @@ def CheckEU(f1, f2):
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
 
-<figure><div class="graphviz">digraph G {
+<figure><figcaption class="code-caption">ループ1順後</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
-    node [shape=circle, style=filled, fillcolor=&quot;white&quot;]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
     N0 [label=&quot;¬f1&quot;]
     N1 [label=&quot;f1&quot;]
+    N2 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
+    N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
+    N0 -&gt; N1 -&gt; N2 -&gt; N3
+}</div></figure>
+
+<figure><figcaption class="code-caption">ループ2順後</figcaption><div class="graphviz">digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
+    N0 [label=&quot;¬f1&quot;]
+    N1 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
     N2 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
     N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
     N0 -&gt; N1 -&gt; N2 -&gt; N3
@@ -231,7 +211,10 @@ for s in T:
     label(s) += E(f1 U f2)</code></pre></figure>
 <br>
 
-<p>後半部分は<span class="math inline">O(|R|)</span>で計算できる。</p>
+<p>後半部分は<span class="math inline">O(|R|)</span>で計算できる。<br>
+(<code>s.parents()</code> の総和は <span class="math inline">|R|</span>
+なので、<code>for</code> は合計<span
+class="math inline">|R|</span>回まわる。)</p>
 
 <figure><figcaption class="code-caption">後半部分</figcaption><pre><code class="py">while not T != ∅:
     s = T.pop()
@@ -239,43 +222,13 @@ for s in T:
         if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
             label(t) += E(f1 U f2)
             T.push(t)n</code></pre></figure>
-<p>ちなみに、MC本のアルゴリズムは次のようになっている :</p>
+<p>なお、<code>s.parents()</code>は <span
+class="math inline">O(|R|)</span> で事前に計算しておける。</p>
 
-<pre class="algorithm">\begin{algorithm}
-\begin{algorithmic}
-\While{$T \neq \emptyset$}
-    \State $\textbf{choose}\ s \in T$
-    \State $T = T \backslash \{s\}$
-    \ForAll{$t\ \textbf{s.t.}\ t \in S'$ \And $R(t, s)$}
-        \State $\cdots$
-    \EndFor
-\EndWhile
-\end{algorithmic}
-\end{algorithm}</pre>
-<p>このコードは直感的には、</p>
-<ul>
-<li>4行目の<code>for</code>文が<span
-class="math inline">O(|R|)</span></li>
-<li>よって1行目の<code>while</code>を踏まえると全体で<span
-class="math inline">O(|S||R|)</span></li>
-</ul>
-<p>のように見える。<br></p>
-<p>しかし、前処理で<code>R</code>から次のようなデータ構造を作っておくと、<span
-class="math inline">O(|R|)</span>で処理できる。<br>
-(このデータ構造自体は<span
-class="math inline">O(|R|)</span>で作れる。)</p>
-
-<figure><pre><code class="nohljsln txt">    Array of states
-    +---+
-    |   |
-    |   |      Array of parents of s
-    +---+      +-----+-----+-----+---
-  s | o-+----&gt; | 親1 | 親2 | 親3 |
-    +---+      +-----+-----+-----+---
-    |   |
-    |   |
-    +---+</code></pre></figure>
+<figure><figcaption class="code-caption"><code>s.parents()</code>を求める処理</figcaption><pre><code class="py">for (parent, child) in R:
+    child.parents() += parent</code></pre></figure>
 <h2 id="egの処理">EGの処理</h2>
+<h3 id="用語">用語</h3>
 <dl>
 <dt>SCC (Strongly Connected Component):</dt>
 <dd>
@@ -287,47 +240,68 @@ SCCのうち、他のSCCに包含されないもの。
 </dd>
 <dt>nontrivial SCC:</dt>
 <dd>
-頂点が2つ以上のグラフ or ある頂点からその頂点への辺があるグラフ。
+頂点が2つ以上のSCC or ある頂点からその頂点への辺があるSCC。
 </dd>
 </dl>
+<p>逆に、trivial SCC はノードが<quiz> 0 </quiz>個でエッジが<quiz> 0
+</quiz>本なグラフ。</p>
+<h3 id="記法">記法</h3>
+<p>クリプキ構造<span class="math inline">M</span>のうち、<span
+class="math inline">f_1</span>を満たすノードのみを残したクリプキ構造を、<span
+class="math inline">M&#39;</span>と呼ぶ。 <span class="math display">
+M&#39; = (S&#39;, R&#39;, L&#39;) </span> ただし、 <span
+class="math display">
+\begin{align*}
+S&#39; &amp;= \{s\in S\ |\ M,s\vDash f_1\}\\
+R&#39; &amp;= R|_{S&#39;\times S&#39;}\\
+L&#39; &amp;= L|_{S&#39;}
+\end{align*}
+</span></p>
 <h3 id="lemma-51">Lemma 5.1</h3>
-<p><span class="math inline">M,s \vDash
-\text{EG}f_1</span>と、次の2条件を両方満たすことは同値</p>
+<p><span class="math inline">M,s \vDash \text{EG}f_1</span>
+は、次の2条件を両方満たすことと同値である。</p>
 <ol type="1">
 <li><span class="math inline">s \in S&#39;</span></li>
 <li><span class="math inline">M&#39;</span>上に、<span
-class="math inline">s</span>からグラフ<span class="math inline">(S&#39;,
-R&#39;)</span>のMSCC上のノード<span
-class="math inline">t</span>までのパスが存在</li>
+class="math inline">s</span> から グラフ<span
+class="math inline">(S&#39;, R&#39;)</span>のMSCC上のノード <span
+class="math inline">t</span> までのパスが存在</li>
 </ol>
-<h4 id="証明の準備">証明の準備</h4>
-<p>クリプキ構造<span class="math inline">M</span>のうち、<span
-class="math inline">f_1</span>を満たすノードのみを残したクリプキ構造を、<span
-class="math inline">M&#39;</span>と呼ぶ。</p>
-<p><span class="math display">
-M&#39; = (S&#39;, R&#39;, L&#39;) \;\;\;\text{where}\;\;\;S&#39; =
-\{s\in S | M,s\vDash f_1\}, R&#39; = R|_{S&#39;\times S&#39;}, L&#39; =
-L|_{S&#39;}
-</span></p>
-<h4 id="証明-longrightarrow">証明 (<span
+<details open>
+<summary>証明</summary>
+
+<h4 id="longrightarrow">(<span
 class="math inline">\Longrightarrow</span>)</h4>
+<p><span class="math inline">s</span> で始まり、<span
+class="math inline">\text{EG}f_1</span> を満たす<span
+class="math inline">M</span>上の無限長パス <span
+class="math inline">\pi</span> に着目する。<br> このとき、<span
+class="math inline">\pi</span> の要素は全て <span
+class="math inline">f_1</span> を満たすので、次が言える。</p>
 <ul>
-<li><p><span class="math inline">M,s \vDash
-\text{EG}f_1</span>を仮定し、<span
-class="math inline">\text{EG}f_1</span>を満たす無限長パスを<span
-class="math inline">\pi</span>と呼ぶ。</p></li>
-<li><p>このとき、<span class="math inline">s \in
-S&#39;</span>であり、また<span class="math inline">\pi</span>は<span
-class="math inline">S&#39;</span>上のパスである。</p></li>
-<li><p>また、<span class="math inline">\pi</span>は、次を満たす<span
+<li><span class="math inline">s \in S&#39;</span></li>
+<li><span class="math inline">\pi</span> は <span
+class="math inline">S&#39;</span>上のパス</li>
+</ul>
+<p>また、<span class="math inline">\pi</span>は次を満たす<span
 class="math inline">\pi_1</span>を用いて、<span class="math inline">\pi
 = \pi_0\pi_1</span>と書ける。</p>
 <ul>
-<li><span class="math inline">\pi_1</span>上の全要素は<span
+<li><span class="math inline">\pi_1</span>上の任意の要素は、<span
 class="math inline">\pi_1</span>上に無限にしばしば(infinitely
 often)現れる。</li>
-</ul></li>
 </ul>
+<p><span class="math inline">\pi</span>上に現れる状態の集合を<span
+class="math inline">C</span>とおく。<br> このとき、<span
+class="math inline">C</span> 上の任意の2状態<span
+class="math inline">a</span>, <span
+class="math inline">b</span>について、<span
+class="math inline">a</span>で始まり<span
+class="math inline">b</span>に至る<span
+class="math inline">\pi</span>の部分パスが存在する。 よって、<span
+class="math inline">C</span>はSCCである。</p>
+</details>
+
 
 <figure><figcaption class="code-caption">CheckEG</figcaption><pre><code class="py">def CheckEG(f1):
     Sd = { s ∈ S | f1 ∈ label(s) }
@@ -425,9 +399,9 @@ class="math inline">\textit{Heat}</span>に到達することはない。</p>
 <h3 id="ステップ2--部分式の列挙">ステップ2 : 部分式の列挙</h3>
 <p>Q. 部分式を列挙せよ。</p>
 <ul>
-<li><quiz><span class="math inline">\textit{true}</span></quiz></li>
-<li><quiz><span class="math inline">\textit{Start}</span></quiz></li>
-<li><quiz><span class="math inline">\textit{Heat}</span></quiz></li>
+<li><span class="math inline">\textit{true}</span></li>
+<li><span class="math inline">\textit{Start}</span></li>
+<li><span class="math inline">\textit{Heat}</span></li>
 <li><quiz><span class="math inline">\neg\textit{Heat}</span></quiz></li>
 <li><quiz><span
 class="math inline">\textbf{EG}\neg\textit{Heat}</span></quiz></li>

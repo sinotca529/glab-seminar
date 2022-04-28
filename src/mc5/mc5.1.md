@@ -10,56 +10,44 @@ plug:
 
 # 5.1 Explicit-State CTL Model Checking
 この節の目的:
-: クリプキ構造の陽な表示 (explicit representation)について、モデルチェックのアルゴリズムを示す。
+: クリプキ構造の explicit representation を検査するアルゴリズムの説明。
 
 ## アルゴリズム概要
 ### 入出力
-- 入力 : クリプキ構造$M$、CTL式$f$
+- 入力 : クリプキ構造$M$, CTL式 $f$
 - 出力 : ${\llbracket f \rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash f\})$
 
-### 前提
-- CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる
-- よって、変形後の式について${\llbracket f \rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash f\})$がわかれば十分
+### 背景
+CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる。<br>
+よって、変形後の式について ${\llbracket f \rrbracket}_M$ が得られれば十分。
 
 ### 方針
-まず、${\llbracket f_1 \rrbracket}_M, {\llbracket f_2 \rrbracket}_M$がわかっている時に、
-- $\neg f_1$
-- $f_1 \land f_2$
-- $f_1 \lor f_2$
-- $\textbf{EX}(f_1)$
-- $\textbf{E}(f_1 \textbf{U} f_2)$
-- $\textbf{E}(f_1 \textbf{G} f_2)$
+状態 $s$ に付いているラベルの集合を、$\textit{label}(s)$ とおく。<br>
+$\textit{label}(s)$に、状態 $s$ が満たすCTL式を加えていく。<br>
+最終的に $f \in \textit{label}(s)$ であれば、$s \in \llbracket f \rrbracket_M$ である。
 
-について${\llbracket \cdot \rrbracket}_M$を求めるアルゴリズム群を考えておく。
+具体的には、次のアルゴリズムを使う。<br>
+このアルゴリズムは、$f$ の部分式について、ネストの浅い (構造が単純な) ものから順に、それを満たす全状態にラベルを貼っていく。
 
-
-そのアルゴリズム群を用いて、次のように処理して、${\llbracket f \rrbracket}_M$を得る。
-```py {caption=アルゴリズム全体}
-def set_of_state_which_sat_f(M: Kripke, f: Formula):
-    # 式 f のネストの深さ (後述の例を参照) を得る
-    nest_depth = f.nest_depth()
-
-    for i in range(0, nest_depth+1):
-        sub_formulas = f.get_sub_formulas(nest_depth=i)
-
-        for sub_f in sub_formulas:
-            match sub_f:
-                f1         => CheckAtomic(f1),
-                ¬f1       => CheckNot(f1, f2),
-                (f1 ∧ f2) => CheckAnd(f1, f2),
-                (f1 ∨ f2) => CheckOr(f1, f2),
-                E(f1 U f2) => CheckEU(f1, f2),
-                EG(f1)     => CheckEG(f1),
+```py {caption=${\llbracket f \rrbracket}_M$を得るアルゴリズム}
+# f は正規化しておくこと。
+def set_of_state_which_sat_f(M, f):
+    # ネストの浅い (構造が単純な) 部分式から処理する
+    for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
+        switch sub_f:
+            f1         => CheckAtomic(f1), # Do nothing.
+            ¬f1       => CheckNot(f1),
+            (f1 ∧ f2) => CheckAnd(f1, f2),
+            (f1 ∨ f2) => CheckOr(f1, f2),
+            E(f1 U f2) => CheckEU(f1, f2),
+            EG(f1)     => CheckEG(f1),
 
     return {s ∈ S | f ∈ label(s)}
 ```
 
-- `label(s)`は、状態$s$が満たすことが判明したCTL式の集合
-- `CheckXX`は、その式を満たす状態すべてにラベルを貼る関数。
-- ネストの浅いものから順に処理する。
-- → 各caseにおいて、`f1`, `f2`のラベル付けは済んで[いる/いない]状態にある。
+ここで、`CheckXX` は、$f_1$, $f_2$ のラベル付けが終わっている前提で、`XX` についてラベル付けする関数である。
 
-以降は、各`CheckXX`を見ていく。
+以降では、各`CheckXX`について見ていく。
 
 ## 簡単なケース (Not, And, Or, EX)
 ```py {caption=CheckNot}
@@ -98,8 +86,6 @@ def CheckEX(f):
 
 ```py {caption=CheckEU}
 # O(|S| + |R|)
-# labelはグローバルな辞書的なもの
-# f1, f2についてのラベル付けは終わっていると仮定する
 def CheckEU(f1, f2):
     T := {s | f2 ∈ label(s)}
     for s in T:
@@ -114,28 +100,12 @@ def CheckEU(f1, f2):
 ```
 
 ### 動作
-```mermaid
-graph LR;
-    N0(("¬f1")) --> N1(("f1")) --> N2(("f1")) --> N3(("f2"));
-    style N3 fill:#f9f
-```
+色付きはラベルが貼られたことを表す。
 
-```graphviz
+```graphviz {caption="ループ直前"}
 digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
-    N0 [label="¬f1"]
-    N1 [label="f1"]
-    N2 [label="f1"]
-    N3 [label="f2"]
-    N0 -> N1 -> N2 -> N3
-}
-```
-
-```graphviz
-digraph G {
-    graph [rankdir=LR]
-    node [shape=circle, style=filled, fillcolor="white"]
     N0 [label="¬f1"]
     N1 [label="f1"]
     N2 [label="f1"]
@@ -144,10 +114,10 @@ digraph G {
 }
 ```
 
-```graphviz
+```graphviz {caption="ループ1順後"}
 digraph G {
     graph [rankdir=LR]
-    node [shape=circle, style=filled, fillcolor="white"]
+    node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
     N0 [label="¬f1"]
     N1 [label="f1"]
     N2 [label="f1", fillcolor="burlywood"]
@@ -155,6 +125,19 @@ digraph G {
     N0 -> N1 -> N2 -> N3
 }
 ```
+
+```graphviz {caption="ループ2順後"}
+digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
+    N0 [label="¬f1"]
+    N1 [label="f1", fillcolor="burlywood"]
+    N2 [label="f1", fillcolor="burlywood"]
+    N3 [label="f2", fillcolor="burlywood"]
+    N0 -> N1 -> N2 -> N3
+}
+```
+
 ### 計算量
 前半部分は$O(|S|)$で計算できる。
 ```py {caption=前半部分}
@@ -164,7 +147,8 @@ for s in T:
 ```
 <br>
 
-後半部分は$O(|R|)$で計算できる。
+後半部分は$O(|R|)$で計算できる。<br>
+(`s.parents()` の総和は $|R|$ なので、`for` は合計$|R|$回まわる。)
 ```py {caption=後半部分}
 while not T != ∅:
     s = T.pop()
@@ -174,43 +158,14 @@ while not T != ∅:
             T.push(t)n
 ```
 
-ちなみに、MC本のアルゴリズムは次のようになっている :
-```algorithm
-\begin{algorithm}
-\begin{algorithmic}
-\While{$T \neq \emptyset$}
-    \State $\textbf{choose}\ s \in T$
-    \State $T = T \backslash \{s\}$
-    \ForAll{$t\ \textbf{s.t.}\ t \in S'$ \And $R(t, s)$}
-        \State $\cdots$
-    \EndFor
-\EndWhile
-\end{algorithmic}
-\end{algorithm}
-```
-
-このコードは直感的には、
-- 4行目の`for`文が$O(|R|)$
-- よって1行目の`while`を踏まえると全体で$O(|S||R|)$
-
-のように見える。<br>
-
-しかし、前処理で`R`から次のようなデータ構造を作っておくと、$O(|R|)$で処理できる。<br>
-(このデータ構造自体は$O(|R|)$で作れる。)
-```
-    Array of states
-    +---+
-    |   |
-    |   |      Array of parents of s
-    +---+      +-----+-----+-----+---
-  s | o-+----> | 親1 | 親2 | 親3 |
-    +---+      +-----+-----+-----+---
-    |   |
-    |   |
-    +---+
+なお、`s.parents()`は $O(|R|)$ で事前に計算しておける。
+```py { caption="<code>s.parents()</code>を求める処理"}
+for (parent, child) in R:
+    child.parents() += parent
 ```
 
 ## EGの処理
+### 用語
 SCC (Strongly Connected Component):
 : 任意の2頂点について、それを結ぶパスがある有向グラフ。
 
@@ -218,26 +173,45 @@ MSCC (Maximal SCC):
 : SCCのうち、他のSCCに包含されないもの。
 
 nontrivial SCC:
-: 頂点が2つ以上のグラフ or ある頂点からその頂点への辺があるグラフ。
+: 頂点が2つ以上のSCC or ある頂点からその頂点への辺があるSCC。
+
+逆に、trivial SCC はノードが<quiz> 0 </quiz>個でエッジが<quiz> 0 </quiz>本なグラフ。
+
+### 記法
+クリプキ構造$M$のうち、$f_1$を満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
+$$ M' = (S', R', L') $$
+ただし、
+$$
+    \begin{align*}
+        S' &= \{s\in S\ |\ M,s\vDash f_1\}\\
+        R' &= R|_{S'\times S'}\\
+        L' &= L|_{S'}
+    \end{align*}
+$$
 
 ### Lemma 5.1
-$M,s \vDash \text{EG}f_1$と、次の2条件を両方満たすことは同値
+$M,s \vDash \text{EG}f_1$ は、次の2条件を両方満たすことと同値である。
 1. $s \in S'$
-2. $M'$上に、$s$からグラフ$(S', R')$のMSCC上のノード$t$までのパスが存在
+2. $M'$上に、$s$ から グラフ$(S', R')$のMSCC上のノード $t$ までのパスが存在
 
-#### 証明の準備
-クリプキ構造$M$のうち、$f_1$を満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
+<details open>
+<summary>証明</summary>
 
-$$
-    M' = (S', R', L') \;\;\;\text{where}\;\;\;S' = \{s\in S | M,s\vDash f_1\}, R' = R|_{S'\times S'}, L' = L|_{S'}
-$$
+#### ($\Longrightarrow$)
+$s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に着目する。<br>
+このとき、$\pi$ の要素は全て $f_1$ を満たすので、次が言える。
+- $s \in S'$
+- $\pi$ は $S'$上のパス
 
-#### 証明 ($\Longrightarrow$)
-- $M,s \vDash \text{EG}f_1$を仮定し、$\text{EG}f_1$を満たす無限長パスを$\pi$と呼ぶ。
-- このとき、$s \in S'$であり、また$\pi$は$S'$上のパスである。
+また、$\pi$は次を満たす$\pi_1$を用いて、$\pi = \pi_0\pi_1$と書ける。
+- $\pi_1$上の任意の要素は、$\pi_1$上に無限にしばしば(infinitely often)現れる。
 
-- また、$\pi$は、次を満たす$\pi_1$を用いて、$\pi = \pi_0\pi_1$と書ける。
-    - $\pi_1$上の全要素は$\pi_1$上に無限にしばしば(infinitely often)現れる。
+$\pi$上に現れる状態の集合を$C$とおく。<br>
+このとき、$C$ 上の任意の2状態$a$, $b$について、$a$で始まり$b$に至る$\pi$の部分パスが存在する。
+よって、$C$はSCCである。
+
+</details>
+
 
 ```py {caption="CheckEG"}
 def CheckEG(f1):
@@ -334,9 +308,9 @@ $$
 
 ### ステップ2 : 部分式の列挙
 Q. 部分式を列挙せよ。
-- <quiz>$\textit{true}$</quiz>
-- <quiz>$\textit{Start}$</quiz>
-- <quiz>$\textit{Heat}$</quiz>
+- $\textit{true}$
+- $\textit{Start}$
+- $\textit{Heat}$
 - <quiz>$\neg\textit{Heat}$</quiz>
 - <quiz>$\textbf{EG}\neg\textit{Heat}$</quiz>
 - <quiz>$\textit{Start} \land \textbf{EG}\neg\textit{Heat}$</quiz>

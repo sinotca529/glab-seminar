@@ -40,9 +40,9 @@ pre, code {
 
 pre {
     /* background-color: var(--c-second); */
-    padding-right: 16px !important;
-    padding-left: 16px !important;
+    /* padding-right: 2em !important; */
     overflow-x: auto;
+    line-height: 1.2;
 }
 
 code {
