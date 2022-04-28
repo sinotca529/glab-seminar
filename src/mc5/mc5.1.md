@@ -116,7 +116,8 @@ def CheckEU(f1, f2):
 ### 動作
 ```mermaid
 graph LR;
-    A-->B;
+    N0(("¬f1")) --> N1(("f1")) --> N2(("f1")) --> N3(("f2"));
+    style N3 fill:#f9f
 ```
 
 ```graphviz
@@ -155,7 +156,7 @@ digraph G {
 }
 ```
 ### 計算量
-前半部分は`O(|S|)`で計算できる。
+前半部分は$O(|S|)$で計算できる。
 ```py {caption=前半部分}
 T := {s | f2 ∈ label(s)}
 for s in T:
@@ -163,7 +164,7 @@ for s in T:
 ```
 <br>
 
-後半部分は`O(|R|)`で計算できる。
+後半部分は$O(|R|)$で計算できる。
 ```py {caption=後半部分}
 while not T != ∅:
     s = T.pop()
@@ -283,13 +284,13 @@ def set_of_state_which_sat_f(M: Kripke, f: Formula):
 ```graphviz {caption=クリプキ構造}
 digraph G {
     splines = false
-    N1 [xlabel="1", label = "!Start\n!Close\n!Heat\n!Error", shape = circle]
-    N2 [xlabel="2", label = "Start\n!Close\n!Heat\nError", shape = circle]
-    N3 [xlabel="3", label = "!Start\nClose\n!Heat\n!Error", shape = circle]
-    N4 [xlabel="4", label = "!Start\nClose\nHeat\n!Error", shape = circle]
-    N5 [xlabel="5", label = "Start\nClose\n!Heat\nError", shape = circle]
-    N6 [xlabel="6", label = "Start\nClose\n!Heat\n!Error", shape = circle]
-    N7 [xlabel="7", label = "Start\nClose\nHeat\n!Error", shape = circle]
+    N1 [xlabel="1", label = "¬Start\n¬Close\n¬Heat\n¬Error", shape = circle]
+    N2 [xlabel="2", label = "Start\n¬Close\n¬Heat\nError", shape = circle]
+    N3 [xlabel="3", label = "¬Start\nClose\n¬Heat\n¬Error", shape = circle]
+    N4 [xlabel="4", label = "¬Start\nClose\nHeat\n¬Error", shape = circle]
+    N5 [xlabel="5", label = "Start\nClose\n¬Heat\nError", shape = circle]
+    N6 [xlabel="6", label = "Start\nClose\n¬Heat\n¬Error", shape = circle]
+    N7 [xlabel="7", label = "Start\nClose\nHeat\n¬Error", shape = circle]
 
     N1 -> N2
     N1 -> N3
@@ -313,15 +314,12 @@ digraph G {
 ```
 
 ### 考察
-$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat})$は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。
+$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。
 
-クリプキ構造を観察すると、次の点に気付く :
-1. このクリプキ構造全体はSCCである
-2. 状態4から状態4への遷移がある
+ここで、パス $\pi = 1, 2, 5, 2, 5, \cdots$ に着目する。<br>
+状態$2$で $\textit{Start}$ を満たすが、このパスが$\textit{Heat}$に到達することはない。
 
-つまり、任意の状態について、そこから始まり、状態4に到達し、状態4に留まり続ける無限長パスが存在する。<br>
 したがって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) = \emptyset$となるはずである。
-
 
 ### ステップ1 : 正規化
 $$

@@ -191,7 +191,8 @@ def CheckEU(f1, f2):
 <h3 id="動作">動作</h3>
 
 <figure><div class="mermaid">graph LR;
-    A--&gt;B;</div></figure>
+    N0((&quot;¬f1&quot;)) --&gt; N1((&quot;f1&quot;)) --&gt; N2((&quot;f1&quot;)) --&gt; N3((&quot;f2&quot;));
+    style N3 fill:#f9f</div></figure>
 
 <figure><div class="graphviz">digraph G {
     graph [rankdir=LR]
@@ -223,14 +224,14 @@ def CheckEU(f1, f2):
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
 <h3 id="計算量">計算量</h3>
-<p>前半部分は<code>O(|S|)</code>で計算できる。</p>
+<p>前半部分は<span class="math inline">O(|S|)</span>で計算できる。</p>
 
 <figure><figcaption class="code-caption">前半部分</figcaption><pre><code class="py">T := {s | f2 ∈ label(s)}
 for s in T:
     label(s) += E(f1 U f2)</code></pre></figure>
 <br>
 
-<p>後半部分は<code>O(|R|)</code>で計算できる。</p>
+<p>後半部分は<span class="math inline">O(|R|)</span>で計算できる。</p>
 
 <figure><figcaption class="code-caption">後半部分</figcaption><pre><code class="py">while not T != ∅:
     s = T.pop()
@@ -371,13 +372,13 @@ class="math inline">\textbf{AG}(\textit{Start} \rightarrow
 
 <figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
     splines = false
-    N1 [xlabel=&quot;1&quot;, label = &quot;!Start\n!Close\n!Heat\n!Error&quot;, shape = circle]
-    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n!Close\n!Heat\nError&quot;, shape = circle]
-    N3 [xlabel=&quot;3&quot;, label = &quot;!Start\nClose\n!Heat\n!Error&quot;, shape = circle]
-    N4 [xlabel=&quot;4&quot;, label = &quot;!Start\nClose\nHeat\n!Error&quot;, shape = circle]
-    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n!Heat\nError&quot;, shape = circle]
-    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n!Heat\n!Error&quot;, shape = circle]
-    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n!Error&quot;, shape = circle]
+    N1 [xlabel=&quot;1&quot;, label = &quot;¬Start\n¬Close\n¬Heat\n¬Error&quot;, shape = circle]
+    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n¬Close\n¬Heat\nError&quot;, shape = circle]
+    N3 [xlabel=&quot;3&quot;, label = &quot;¬Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N4 [xlabel=&quot;4&quot;, label = &quot;¬Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n¬Heat\nError&quot;, shape = circle]
+    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n¬Error&quot;, shape = circle]
 
     N1 -&gt; N2
     N1 -&gt; N3
@@ -400,14 +401,13 @@ class="math inline">\textbf{AG}(\textit{Start} \rightarrow
 }</div></figure>
 <h3 id="考察">考察</h3>
 <p><span class="math inline">\textbf{AG}(\textit{Start} \rightarrow
-\textit{Heat})</span>は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。</p>
-<p>クリプキ構造を観察すると、次の点に気付く :</p>
-<ol type="1">
-<li>このクリプキ構造全体はSCCである</li>
-<li>状態4から状態4への遷移がある</li>
-</ol>
-<p>つまり、任意の状態について、そこから始まり、状態4に到達し、状態4に留まり続ける無限長パスが存在する。<br>
-したがって、<span class="math inline">\textbf{AG}(\textit{Start}
+\textbf{AF}\textit{Heat})</span>は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。</p>
+<p>ここで、パス <span class="math inline">\pi = 1, 2, 5, 2, 5,
+\cdots</span> に着目する。<br> 状態<span class="math inline">2</span>で
+<span class="math inline">\textit{Start}</span>
+を満たすが、このパスが<span
+class="math inline">\textit{Heat}</span>に到達することはない。</p>
+<p>したがって、<span class="math inline">\textbf{AG}(\textit{Start}
 \rightarrow \textit{Heat}) = \emptyset</span>となるはずである。</p>
 <h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
 <p><span class="math display">

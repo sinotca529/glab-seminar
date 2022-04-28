@@ -55,6 +55,24 @@
       span.underline{text-decoration: underline;}
       div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
 </head>
 <body>
 <a href="../../index.html">トップへ</a>
@@ -65,5 +83,155 @@
 
 <h1 id="52-model-checking-ctl-with-fairness-constraints">5.2
 Model-Checking CTL with Fairness Constraints</h1>
+<p>Fairness constraints を扱えるよう、5.1節の手法を拡張する。<br>
+以下では、Fiarness constraints を <span class="math inline">F = \{ P_1,
+\cdots, P_k\}</span> と書く。</p>
+<dl>
+<dt>クリプキ構造<span class="math inline">M</span>上のSCC <span
+class="math inline">C</span>が<span
+class="math inline">F</span>について公平である :</dt>
+<dd>
+<span class="math inline">\forall P_i \in F,\ \exist t_i \in (C \cup
+P_i)</span>
+</dd>
+</dl>
+<p><span class="math inline">\textbf{E}_F\textbf{G} f_1</span>
+を考える。</p>
+<p>前準備として、Lemma 5.1 に似た補題を用意する。</p>
+<p>クリプキ構造<span class="math inline">M</span>のうち、<span
+class="math inline">f_1</span>を公平に満たすノードのみを残したクリプキ構造を、<span
+class="math inline">M&#39;</span>と呼ぶ。 <span class="math display">
+M&#39; = (S&#39;, R&#39;, L&#39;, F&#39;) \;\;\;\text{where}\;\;\;S&#39;
+= \{s\in S | M,s\vDash_F f_1\}, R&#39; = R|_{S&#39;\times S&#39;},
+L&#39; = L|_{S&#39;}, F&#39; = \{P_i \cup S&#39; \ |\ P_i \in F\}
+</span></p>
+<h2 id="lemma-53">Lemma 5.3</h2>
+<p><span class="math inline">M,s \vDash_F \textbf{E}_F\textbf{G}
+f_1</span>と、次の2条件を両方満たすことは同値</p>
+<ol type="1">
+<li><span class="math inline">s \in S&#39;</span></li>
+<li><span class="math inline">M&#39;</span>上に、<span
+class="math inline">s</span>からグラフ<span class="math inline">(S&#39;,
+R&#39;)</span>の公平なMSCC上のノード<span
+class="math inline">t</span>までのパスが存在</li>
+</ol>
+<p>(証明は Lemma 5.1 と同様のため省略。)</p>
+<h2 id="checkfaireg">CheckFairEG</h2>
+<p>Lemma 5.3 を使うことで、<code>CheckFairEG</code>を作成できる。</p>
+<p>前提 : <span class="math inline">f_1 \in \textit{label}(s) \iff
+M,s\vDash_F f_1</span></p>
+<p><code>CheckEG</code>との違いは、MSCCを用いるか、Fair MSCC
+を用いるかだけ。</p>
+<p>しかし、Fair MSCC
+を求めるには、公平性を検査する必要があるため、計算量は<span
+class="math inline">O((|S| + |R|)\cdot|F|)</span>に増加。</p>
+<p>他のCTL式を公平クリプキ構造の元で検証するため、特別な原子式 <span
+class="math inline">\textit{fair}</span> を定義する。 <span
+class="math display"> s \vDash \textit{fair} \iff \text{(There is a fair
+path starting from } s \text{. )} </span></p>
+<p>なお、<span class="math inline">\textit{fair} =
+\textbf{E}_F\textbf{G}\textit{true}</span> である。</p>
+<p><span class="math inline">M,s \vDash_F
+\textbf{E}_f\textbf{X}f_1</span>を検査するには、 <span
+class="math inline">M,s \vDash \textbf{EX}(f_1  \land
+\textit{fair})</span>を調べれば良い。</p>
+<p><span class="math inline">M,s \vDash_F \textbf{E}_f(f_1 \textbf{U}
+f_2)</span>を検査するには、 <span class="math inline">M,s \vDash
+\textbf{E}(f_1 \textbf{U} (f_2 \land
+\textit{fair})))</span>を調べれば良い。</p>
+<p>各ステップの計算量は<span class="math inline">O((|S| +
+|R|)\cdot|F|)</span>なので、全体の計算量は<span
+class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>である。</p>
+<h2 id="theorem-54">Theorem 5.4</h2>
+<p>クリプキ構造<span class="math inline">M = (S, R, L,
+F)</span>とCTL式<span class="math inline">f</span> について、<span
+class="math inline">M \vDash_F f</span> を<span
+class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>
+で調べるアルゴリズムが存在する。</p>
+<h2 id="具体例">具体例</h2>
+<p><span class="math inline">F = \{\{ s \ |\  s \vDash \textit{Start}
+\land \textit{Close} \land \neg\textit{Error}\}\}</span>とおく。</p>
+<p>5.1節と似た、次の式を調べる。 <span class="math display">
+\textbf{A}_f\textbf{G}(\textit{Start} \rightarrow
+\textbf{A}_f\textbf{F}\textit{Heat}) </span>を調べる。</p>
+<h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
+<p><span class="math display"> \textbf{A}_f\textbf{G}(\textit{Start}
+\rightarrow \textbf{A}_f\textbf{F}\textit{Heat}) = \neg
+\textbf{E}_f(\textit{true} \textbf{U} (\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))</span></p>
+<h3 id="ステップ2--部分式の列挙">ステップ2 : 部分式の列挙</h3>
+<ul>
+<li><span class="math inline">\textit{true}</span></li>
+<li><span class="math inline">\textit{Start}</span></li>
+<li><span class="math inline">\textit{Heat}</span></li>
+<li><span class="math inline">\neg\textit{Heat}</span></li>
+<li><span
+class="math inline">\textbf{E}_f\textbf{G}\neg\textit{Heat}</span></li>
+<li><span class="math inline">\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}</span></li>
+<li><span class="math inline">\textbf{E}_f(\textit{true} \textbf{U}
+(\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))</span></li>
+<li><span class="math inline">\neg\textbf{E}_f(\textit{true} \textbf{U}
+(\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))</span></li>
+</ul>
+<h3 id="ステップ3--ネストの浅い部分式から順に調べる">ステップ3 :
+ネストの浅い部分式から順に調べる</h3>
+<ul>
+<li><span class="math inline">\llbracket\textit{true}\rrbracket = \{1,
+2, 3, 4, 5, 6, 7\}</span></li>
+<li><span class="math inline">\llbracket\textit{Start}\rrbracket = \{2,
+5, 6, 7\}</span></li>
+<li><span class="math inline">\llbracket\textit{Heat}\rrbracket = \{4,
+7\}</span></li>
+<li><span class="math inline">\llbracket\neg\textit{Heat}\rrbracket =
+\{1, 2, 3, 5, 6\}</span></li>
+</ul>
+<h4 id="llbrackettextbfe_ftextbfgnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket</span>
+について</h4>
+<ol type="1">
+<li><span class="math inline">S&#39; = \llbracket \neg\textit{Heat}
+\rrbracket = \{1, 2, 3, 5, 6\}</span>と置く</li>
+<li><span class="math inline">S&#39;</span>内の公平なMSCCを見つける</li>
+<li><span
+class="math inline">S&#39;</span>内の状態のうち、MSCC内の状態への経路がある状態を見つける</li>
+<li>見つけた状態の集合が<span
+class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket</span>である</li>
+</ol>
+<ul>
+<li>いま、<span
+class="math inline">S&#39;</span>内に公平なMSCCは存在しない</li>
+<li>よって、<span
+class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket
+= \emptyset</span></li>
+</ul>
+<h4
+id="llbrackettextitstart-land-textbfe_ftextbfgnegtextitheatrrbracket-llbrackettextbfe_ftextittrue-textbfu-textitstart-land-textbfe_ftextbfgnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket</span>, <span
+class="math inline">\llbracket\textbf{E}_f(\textit{true} \textbf{U}
+(\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket</span> について</h4>
+<p><span
+class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket
+= \emptyset</span> なので、 <span class="math display">
+\llbracket\textbf{E}_f(\textit{true} \textbf{U} (\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket = \emptyset </span>
+である。</p>
+<h4
+id="llbracketnegtextbfe_ftextittrue-textbfu-textitstart-land-textbfe_ftextbfgnegtextitheatrrbracket-について"><span
+class="math inline">\llbracket\neg\textbf{E}_f(\textit{true} \textbf{U}
+(\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket</span> について</h4>
+<p><span class="math inline">\llbracket\textbf{E}_f(\textit{true}
+\textbf{U} (\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket = \emptyset</span>
+なので、</p>
+<p><span class="math display"> \llbracket\neg\textbf{E}_f(\textit{true}
+\textbf{U} (\textit{Start} \land
+\textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket = S </span>
+である。</p>
 </body>
 </html>

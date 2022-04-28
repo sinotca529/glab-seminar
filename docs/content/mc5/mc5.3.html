@@ -522,9 +522,180 @@ class="math display"> \tau(Z) = f_2 \lor (f_1 \land \textbf{EX}Z)
 </span></p>
 <p>これを示す。<br> この<span
 class="math inline">\tau</span>は単調なので、Lemma 5.6より、<span
-class="math inline">\cup</span>-連続である。</p>
+class="math inline">\cup</span>-連続である。<br> また、<span
+class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span>は<span
+class="math inline">\tau</span>の不動点である。<br></p>
+<p>あとは、<span class="math inline">\textbf{E}(f_1 \textbf{U}
+f_2)</span>が最小不動点であること、つまり次を示せば良い。 <span
+class="math display"> \textbf{E}(f_1 \textbf{U} f_2) = \cup_i
+\tau^i(\textit{false}) </span></p>
+<p>まずは<span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)
+\supseteq \cup_i \tau^i(\textit{false})</span>を示す。<br> <span
+class="math inline">\textit{false}</span>は最小元であるから、次が成り立つ。
+<span class="math display"> \textbf{E}(f_1 \textbf{U} f_2) \supseteq
+\textit{false} </span> 両辺に<span
+class="math inline">\tau</span>を<span
+class="math inline">i</span>回適用して、次式を得る (<span
+class="math inline">\textbf{E}(f_1 \textbf{U}
+f_2)</span>が不動点であることを用いた)。 <span class="math display">
+\textbf{E}(f_1 \textbf{U} f_2) \supseteq \tau^i(\textit{false}) </span>
+<span class="math inline">i = 0,
+...</span>についてこの式を考え、両辺の和集合を取ることで、次を得る。
+<span class="math display"> \textbf{E}(f_1 \textbf{U} f_2) \supseteq
+\cup_i \tau^i(\textit{false}) </span></p>
+<p>次に、<span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)
+\subseteq \cup_i \tau^i(\textit{false})</span>を示す。<br> <span
+class="math inline">\textbf{E}(f_1 \textbf{U}
+f_2)</span>を満たすパス<span
+class="math inline">\pi</span>のprefixの長さに関する帰納法を使う。<br>
+ここでprefixは、パス<span
+class="math inline">\pi</span>の始点から、初めて<span
+class="math inline">f_2</span>を満たす状態までの部分パスを指す。<br>
+初めて<span class="math inline">f_2</span>が満たされる状態が、<span
+class="math inline">j</span>番目であったとする。</p>
+
+<figure><figcaption class="code-caption">Prefixの例 (これ全体がprefix)</figcaption><div class="graphviz">digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
+    N0 [xlabel=&quot;1&quot; label=&quot;f1&quot;]
+    N1 [xlabel=&quot;2&quot; label=&quot;f1&quot;]
+    N2 [label=&quot;...&quot;, color=&quot;#00000000&quot;]
+    N3 [xlabel=&quot;j-1&quot; label=&quot;f1&quot;]
+    N4 [xlabel=&quot;j&quot; label=&quot;f2&quot;]
+    N0 -&gt; N1 -&gt; N2 -&gt; N3 -&gt; N4
+}</div></figure>
+<p>prefixの長さが<span
+class="math inline">j</span>であるパスの始点全体の集合を<span
+class="math inline">S_j</span>と置き、次を示す。 <span
+class="math display"> \forall j,\ S_j \subseteq \tau^j(\textit{false})
+</span></p>
+<p><span class="math inline">j = 1</span>のとき、<span
+class="math inline">s \vDash f_2</span>なので、 <span
+class="math display"> s \in (f_2 \lor (f_1 \land
+\textbf{EX}(\textit{false}))) = \tau(\textit{false}) \subseteq \cup_i
+\tau^i(\textit{false}) </span> よって成立。</p>
+<p>また、<span class="math inline">j = k</span>
+のときの成立を仮定する。<br> prefixの長さが<span
+class="math inline">k+1</span>なパス<span class="math inline">\pi = s_1,
+s_2, ...</span>を考える。<br> <span
+class="math inline">s_2</span>はprefixの長さが<span
+class="math inline">k</span>なパスの始点なので、仮定より<span
+class="math inline">s_2 \in \tau^k(false)</span>である。<br>
+したがって、 <span class="math display"> s_1 \in (f_2 \lor (f_1 \land
+\textbf{EX}(\tau^k(\textit{false})))) = \tau^{k+1}(\textit{false})
+</span> であるから、<span class="math inline">j = k+1</span>
+においても成り立つ。</p>
 </details>
 
-<h3></h3>
+<details>
+<summary>証明 (<span class="math inline">\textbf{EG}</span>について)</summary>
+
+<h3 id="lemma-511">Lemma 5.11</h3>
+<p><span class="math inline">\tau(Z) = f_1 \land \textbf{EX}Z</span>
+は単調である。<br> (<span class="math inline">P \subseteq
+Q</span>のとき、<span class="math inline">\textbf{EX}P \subseteq
+\textbf{EX}Q</span>であることから示せる。)</p>
+<h3 id="lemma-512">Lemma 5.12</h3>
+<p><span class="math inline">\tau(Z) = f_1 \land \textbf{EX}Z</span>,
+列<span class="math inline">\{ \tau^i(\textit{true})
+\}_i</span>の極限を<span
+class="math inline">\tau^{i_0}(\textit{true})</span>とおく。<br>
+このとき、任意の<span class="math inline">s \in S</span>について、<span
+class="math inline">s \in
+\tau^{i_0}(\textit{true})</span>であるとき次が成り立つ。</p>
+<ul>
+<li><span class="math inline">s \vDash f_1</span></li>
+<li><span class="math inline">\exist s&#39; \ \text{ s.t. }\ ((s,
+s&#39;) \in R) \land (s&#39; \in \tau^{i_0}(\textit{true}))</span></li>
+</ul>
+<p><strong>[証明]</strong><br> <span
+class="math inline">\tau^{i_0}(\textit{true})</span>は不動点なので、<span
+class="math inline">\tau^{i_0}(\textit{true}) =
+\tau^{i_1}(\textit{true})</span>である。<br> そのため、<span
+class="math inline">s \in \tau^{i_0}(\textit{true})</span>
+ならば次が成り立つ。 <span class="math display">s \in
+\tau^{i_0}(\textit{true}) = \tau^{i_0 + 1}(\textit{true}) = (f_1 \land
+\textbf{EX}(\tau^{i_0}(\textit{true})))</span> よって、<span
+class="math inline">s \vDash f_1</span> であり、<span
+class="math inline">\exist s&#39; \ \text{ s.t. }\ ((s, s&#39;) \in R)
+\land (s&#39; \in \tau^{i_0}(\textit{true}))</span> である。</p>
+<h3 id="lemma-513">Lemma 5.13</h3>
+<p><span class="math inline">\textbf{EG} f_1</span> は <span
+class="math inline">\tau(Z) = f_1 \land \textbf{EX}Z</span>
+の不動点である。</p>
+<p><strong>[証明]</strong><br> <span class="math inline">s_0 \vDash
+\textbf{EG}f_1 \iff s_0 \vDash \textbf{EXEG}f_1</span> を示す。</p>
+<p>(<span class="math inline">\Longrightarrow</span>について)<br> <span
+class="math inline">s_0 \vDash \textbf{EG}f_1</span> のとき、<span
+class="math inline">\textbf{EG}</span>の定義より次を満たすパス <span
+class="math inline">\pi = s_0, s_1, ...</span> が存在する。<br> <span
+class="math display"> \forall k,\ s_k \vDash f_1</span></p>
+<p>そのため <span class="math inline">s_1 \vDash \textbf{EG} f_1</span>
+であるから、<span class="math inline">s_0 \vDash
+\textbf{EXEG}f_1</span>である。<br> よって、 <span class="math display">
+\textbf{EG}f_1 \subseteq (f_1 \land \textbf{EXEG} f_1) </span>
+である。</p>
+<p>(<span class="math inline">\Longleftarrow</span>について)<br> (<span
+class="math inline">\Rightarrow</span>) と同様の考察で示せる。</p>
+<h3 id="lemma-514">Lemma 5.14</h3>
+<p><span class="math inline">\textbf{EG}f_1</span> は <span
+class="math inline">\tau(Z) = f_1 \land \textbf{EX}(Z)</span>
+の最大不動点である。</p>
+<p><strong>[証明]</strong><br> Lemma 5.11 より <span
+class="math inline">\tau</span>は単調なので、Lemma 5.6 より <span
+class="math inline">\cap</span>-連続である。<br>
+最大不動点であることを示すには、 <span
+class="math inline">\textbf{EG}f_1 = \cap_i \tau^i(\textit{true})</span>
+を示せば良い。<br></p>
+<p><strong>(<span class="math inline">\textbf{EG} f_1 \subseteq \cap_i
+\tau^i (\textit{true})</span>について)</strong><br> <span
+class="math inline">\forall i,\ \textbf{EG} f_1 \subseteq \tau^i
+(\textit{true})</span> を示せば良い。<br> <span class="math inline">i =
+0</span> のときは自明である。<br></p>
+<p><span class="math inline">\textbf{EG} f_1 \subseteq \tau^n
+(\textit{true})</span> を仮定する。<br> <span
+class="math inline">\tau</span> は単調なので、<span
+class="math inline">\tau(\textbf{EG} f_1) \subseteq
+\tau^{n+1}(\textit{true})</span>である。</p>
+<p>Lemma 5.13 より、<span class="math inline">\tau (\textbf{EG} f_1) =
+\textbf{EG} f_1</span> なので、 <span class="math display"> \textbf{EG}
+f_1 \subseteq \tau^{n+1}(\textit{true}) </span></p>
+<p><strong>(<span class="math inline">\textbf{EG} f_1 \supseteq \cap_i
+\tau^i (\textit{true})</span>について)</strong><br> 状態 <span
+class="math inline">s \in \cap_i \tau^i (\textit{true})</span>
+を考える。<br> このとき、<span class="math inline">\forall i,\ s \in
+\tau^i (\textit{true})</span>であるから、<span
+class="math inline">s</span>は不動点 <span
+class="math inline">\tau^{i_0}(\textit{true})</span>に含まれる。<br>
+Lemma 5.12 より、<span class="math inline">s</span> から始まり常に<span
+class="math inline">f_1</span>を満たすパスが存在するので、<span
+class="math inline">s \vDash \textbf{EG} f_1</span> である。</p>
+</details>
+
+<h2 id="characterizing-fairness-with-fixpoints">Characterizing Fairness
+with Fixpoints</h2>
+<p><span class="math inline">F = \{P_1, \cdots, P_n \}</span>
+について、<span class="math inline">\textbf{E}_f\textbf{G}
+f</span>を考える。<br> これを満たす状態集合<span
+class="math inline">Z</span>は、次を満たす。</p>
+<ol type="1">
+<li><span class="math inline">Z</span>の要素は<span
+class="math inline">f</span>を満たす。</li>
+<li>任意の公平性条件 <span class="math inline">P_k \in F</span>
+と任意の状態 <span class="math inline">s \in Z</span>
+について、次をすべて満たすパスが存在する。
+<ul>
+<li><span class="math inline">s</span> で始まる。</li>
+<li><span class="math inline">P_k</span> を満たす <span
+class="math inline">Z</span> 内の状態で終わる。</li>
+<li>長さ1以上。</li>
+<li>パス上の状態すべてが<span
+class="math inline">f</span>を満たす。</li>
+</ul></li>
+</ol>
+<p><span class="math inline">\textbf{E}_f\textbf{G} f</span>
+は不動点を使うと次のように書ける。 <span class="math display">
+\textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n
+\textbf{EXE}(f \textbf{U} (Z \land P_k))) </span></p>
 </body>
 </html>

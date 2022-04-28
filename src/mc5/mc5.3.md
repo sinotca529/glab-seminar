@@ -311,8 +311,125 @@ $\textbf{E}(f_1 \textbf{U} f_2)$は、次で定義する関数$\tau$の最小不
 $$ \tau(Z) = f_2 \lor (f_1 \land \textbf{EX}Z) $$
 
 これを示す。<br>
-この$\tau$は単調なので、Lemma 5.6より、$\cup$-連続である。
+この$\tau$は単調なので、Lemma 5.6より、$\cup$-連続である。<br>
+また、$\textbf{E}(f_1 \textbf{U} f_2)$は$\tau$の不動点である。<br>
+
+あとは、$\textbf{E}(f_1 \textbf{U} f_2)$が最小不動点であること、つまり次を示せば良い。
+$$ \textbf{E}(f_1 \textbf{U} f_2) = \cup_i \tau^i(\textit{false}) $$
+
+まずは$\textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false})$を示す。<br>
+$\textit{false}$は最小元であるから、次が成り立つ。
+$$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \textit{false} $$
+両辺に$\tau$を$i$回適用して、次式を得る ($\textbf{E}(f_1 \textbf{U} f_2)$が不動点であることを用いた)。
+$$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \tau^i(\textit{false}) $$
+$i = 0, ...$についてこの式を考え、両辺の和集合を取ることで、次を得る。
+$$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false}) $$
+
+次に、$\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$を示す。<br>
+$\textbf{E}(f_1 \textbf{U} f_2)$を満たすパス$\pi$のprefixの長さに関する帰納法を使う。<br>
+ここでprefixは、パス$\pi$の始点から、初めて$f_2$を満たす状態までの部分パスを指す。<br>
+初めて$f_2$が満たされる状態が、$j$番目であったとする。
+
+```graphviz {caption="Prefixの例 (これ全体がprefix)"}
+digraph G {
+    graph [rankdir=LR]
+    node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
+    N0 [xlabel="1" label="f1"]
+    N1 [xlabel="2" label="f1"]
+    N2 [label="...", color="#00000000"]
+    N3 [xlabel="j-1" label="f1"]
+    N4 [xlabel="j" label="f2"]
+    N0 -> N1 -> N2 -> N3 -> N4
+}
+```
+
+prefixの長さが$j$であるパスの始点全体の集合を$S_j$と置き、次を示す。
+$$ \forall j,\ S_j \subseteq \tau^j(\textit{false}) $$
+
+$j = 1$のとき、$s \vDash f_2$なので、
+$$ s \in (f_2 \lor (f_1 \land \textbf{EX}(\textit{false}))) = \tau(\textit{false}) \subseteq \cup_i \tau^i(\textit{false}) $$
+よって成立。
+
+また、$j = k$ のときの成立を仮定する。<br>
+prefixの長さが$k+1$なパス$\pi = s_1, s_2, ...$を考える。<br>
+$s_2$はprefixの長さが$k$なパスの始点なので、仮定より$s_2 \in \tau^k(false)$である。<br>
+したがって、
+$$ s_1 \in (f_2 \lor (f_1 \land \textbf{EX}(\tau^k(\textit{false})))) = \tau^{k+1}(\textit{false}) $$
+であるから、$j = k+1$ においても成り立つ。
 
 </details>
 
-### 
+<details>
+<summary>証明 (<span class="math inline">\textbf{EG}</span>について)</summary>
+
+### Lemma 5.11
+$\tau(Z) = f_1 \land \textbf{EX}Z$ は単調である。<br>
+($P \subseteq Q$のとき、$\textbf{EX}P \subseteq \textbf{EX}Q$であることから示せる。)
+
+### Lemma 5.12
+$\tau(Z) = f_1 \land \textbf{EX}Z$, 列$\{ \tau^i(\textit{true}) \}_i$の極限を$\tau^{i_0}(\textit{true})$とおく。<br>
+このとき、任意の$s \in S$について、$s \in \tau^{i_0}(\textit{true})$であるとき次が成り立つ。
+- $s \vDash f_1$
+- $\exist s' \ \text{ s.t. }\ ((s, s') \in R) \land (s' \in \tau^{i_0}(\textit{true}))$
+
+**\[証明\]**<br>
+$\tau^{i_0}(\textit{true})$は不動点なので、$\tau^{i_0}(\textit{true}) = \tau^{i_1}(\textit{true})$である。<br>
+そのため、$s \in \tau^{i_0}(\textit{true})$ ならば次が成り立つ。
+$$s \in \tau^{i_0}(\textit{true}) = \tau^{i_0 + 1}(\textit{true}) = (f_1 \land \textbf{EX}(\tau^{i_0}(\textit{true})))$$
+よって、$s \vDash f_1$ であり、$\exist s' \ \text{ s.t. }\ ((s, s') \in R) \land (s' \in \tau^{i_0}(\textit{true}))$ である。
+
+### Lemma 5.13
+$\textbf{EG} f_1$ は $\tau(Z) = f_1 \land \textbf{EX}Z$ の不動点である。
+
+**\[証明\]**<br>
+$s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash \textbf{EXEG}f_1$ を示す。
+
+($\Longrightarrow$について)<br>
+$s_0 \vDash \textbf{EG}f_1$ のとき、$\textbf{EG}$の定義より次を満たすパス $\pi = s_0, s_1, ...$ が存在する。<br>
+$$ \forall k,\ s_k \vDash f_1$$
+
+そのため $s_1 \vDash \textbf{EG} f_1$ であるから、$s_0 \vDash \textbf{EXEG}f_1$である。<br>
+よって、
+$$ \textbf{EG}f_1 \subseteq (f_1 \land \textbf{EXEG} f_1) $$
+である。
+
+($\Longleftarrow$について)<br>
+($\Rightarrow$) と同様の考察で示せる。
+
+### Lemma 5.14
+$\textbf{EG}f_1$ は $\tau(Z) = f_1 \land \textbf{EX}(Z)$ の最大不動点である。
+
+**\[証明\]**<br>
+Lemma 5.11 より $\tau$は単調なので、Lemma 5.6 より $\cap$-連続である。<br>
+最大不動点であることを示すには、 $\textbf{EG}f_1 = \cap_i \tau^i(\textit{true})$ を示せば良い。<br>
+
+**($\textbf{EG} f_1 \subseteq \cap_i \tau^i (\textit{true})$について)**<br>
+$\forall i,\ \textbf{EG} f_1 \subseteq \tau^i (\textit{true})$ を示せば良い。<br>
+$i = 0$ のときは自明である。<br>
+
+$\textbf{EG} f_1 \subseteq \tau^n (\textit{true})$ を仮定する。<br>
+$\tau$ は単調なので、$\tau(\textbf{EG} f_1) \subseteq \tau^{n+1}(\textit{true})$である。
+
+Lemma 5.13 より、$\tau (\textbf{EG} f_1) = \textbf{EG} f_1$ なので、
+$$ \textbf{EG} f_1 \subseteq \tau^{n+1}(\textit{true}) $$
+
+**($\textbf{EG} f_1 \supseteq \cap_i \tau^i (\textit{true})$について)**<br>
+状態 $s \in \cap_i \tau^i (\textit{true})$ を考える。<br>
+このとき、$\forall i,\ s \in \tau^i (\textit{true})$であるから、$s$は不動点 $\tau^{i_0}(\textit{true})$に含まれる。<br>
+Lemma 5.12 より、$s$ から始まり常に$f_1$を満たすパスが存在するので、$s \vDash \textbf{EG} f_1$ である。
+
+</details>
+
+## Characterizing Fairness with Fixpoints
+$F = \{P_1, \cdots, P_n \}$ について、$\textbf{E}_f\textbf{G} f$を考える。<br>
+これを満たす状態集合$Z$は、次を満たす。
+1. $Z$の要素は$f$を満たす。
+2. 任意の公平性条件 $P_k \in F$ と任意の状態 $s \in Z$ について、次をすべて満たすパスが存在する。
+   - $s$ で始まる。
+   - $P_k$ を満たす $Z$ 内の状態で終わる。
+   - 長さ1以上。
+   - パス上の状態すべてが$f$を満たす。
+
+
+$\textbf{E}_f\textbf{G} f$ は不動点を使うと次のように書ける。
+$$ \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U} (Z \land P_k))) $$
