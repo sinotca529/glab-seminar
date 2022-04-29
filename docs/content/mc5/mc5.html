@@ -77,16 +77,25 @@ S\ | \ M,s \vDash f\})</span>を求める。</li>
 <li><span class="math inline">S_0 \subseteq {\llbracket f
 \rrbracket}_M</span> を調べる。</li>
 </ol>
-<p>この章の流れ :</p>
+<h2 id="この章の流れ">この章の流れ</h2>
 <ul>
 <li>(<a href="./mc5.1.html">5.1節</a>) クリプキ構造の陽な表示 (explicit
 representation)について、モデルチェックのアルゴリズムを示す。</li>
 <li>(<a href="./mc5.2.html">5.2節</a>)
 それに対し、公平性を踏まえた拡張をする。</li>
-<li>(<a href="./mc5.3.html">5.3節</a>) CTL operators
-に対し、不動点characterizationを定義し、モデルチェックへの役立て方を示す。</li>
+<li>(<a href="./mc5.3.html">5.3節</a>)
+不動点を用いたアルゴリズムを示す。</li>
 </ul>
 <p><note>以下、<span class="math inline">S_0</span>と<span
-class="math inline">AP</span>は固定なのでしばしば略記します。</note></p>
+class="math inline">AP</span>は固定なのでしばしば略記する。</note></p>
+<h2 id="bibliographic-notes">Bibliographic Notes</h2>
+<p>4章で考えた safety とliveness のモデル検査による処理を考える。<br>
+Safety は、例えば reachability analysis を使って簡単に検査できる。<br>
+一方、 liveness の検査には、より賢い手法を使うのが普通である。<br>
+Biereらは、 safety の判定を liveness の判定に効率よく変換でき、かつ
+fairness も扱える手法を提唱した。<br> 彼らの手法を使えば、liveness
+について、より単純で統一的なモデル検査が可能である。<br> 加えて、既存の
+liveness しか扱えない手法を safety
+も扱えるよう拡張することも可能である。<br></p>
 </body>
 </html>

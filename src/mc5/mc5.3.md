@@ -1,10 +1,7 @@
 ---
-title: Model Checking (Sec.5.3)
+title: Model Checking (Sec.5.3a)
 tag: MC
 date: yyyy-mm-dd
-plug:
-    graphviz: true
-    pseudocode: true
 ---
 
 # 5.3 CTL Model Checking via Fixpoint Computation
@@ -502,8 +499,10 @@ Lemma 5.12 より、$s$ から始まり常に$f_1$を満たすパスが存在す
 </details>
 
 ## Characterizing Fairness with Fixpoints
-$F = \{P_1, \cdots, P_n \}$ について、$\textbf{E}_f\textbf{G} f$を考える。<br>
-これを満たす状態集合$Z$は、次を満たす状態集合のなかで最大のものである。
+$\textbf{E}_f\textbf{G}$, $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ を不動点を用いて処理する方法を考える。
+
+### $\textbf{E}_f\textbf{G}$ について
+$\textbf{E}_f\textbf{G}$を満たす状態集合$Z$は、次を満たす状態集合のなかで最大のものである。
 1. $Z$の要素は $f$ を満たす。
 2. 任意の公平性条件 $P_k \in F$ と任意の状態 $s \in Z$ について、次をすべて満たすパスが存在する。
    - $s$ で始まる。
@@ -515,7 +514,6 @@ $F = \{P_1, \cdots, P_n \}$ について、$\textbf{E}_f\textbf{G} f$を考え�
 $\textbf{E}_f\textbf{G} f$ は不動点を使うと次のように書ける。
 $$ \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U} (Z \land P_k))) $$
 
-### 証明
 #### Lemma 5.15
 $\textbf{E}_f\textbf{G} f$ は $f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U} (Z \land P_k))$ の不動点である。
 
@@ -561,7 +559,7 @@ $\square$
 #### Lemma 5.16
 $\tau$ の最大不動点は $\textbf{E}_f\textbf{G} f$ に内包される。
 
-<details open class="filled-box">
+<details class="filled-box">
 <summary>証明</summary>
 
 $\tau$ の不動点 $Z$ について、$Z \subseteq \textbf{E}_f\textbf{G} f$ を示す。<br>
@@ -585,10 +583,43 @@ $\tau$ の不動点 $Z$ について、$Z \subseteq \textbf{E}_f\textbf{G} f$ �
 - 常に $f$ を満たす。
 - $Z$ 内 の状態で終わる。
 
-これを無限に繰り返すことで、$s$ で始まり常に $f$ を満たす公平なパスの存在がいえる。
-
-
-
-
+これを無限に繰り返すことで、$s$ で始まり常に $f$ を満たす公平なパスの存在がいえる。<br>
+よって、$s \vDash \textbf{E}_f\textbf{G} f$ であるから、$Z \subseteq \textbf{E}_f\textbf{G} f$ である。<br>
+$\square$
 
 </details>
+
+### $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ について
+5.2節と同じく、原子式 $\textit{fair} = \textbf{E}_f\textbf{G}\textit{true}$ を導入する。<br>
+このとき、
+- $\textbf{E}_f\textbf{X}f_1 = \textbf{EX}(f_1  \land \textit{fair})$
+- $\textbf{E}_f(f_1 \textbf{U} f_2) = \textbf{E}(f_1 \textbf{U} (f_2 \land \textit{fair})))$
+
+である。
+
+よって、右辺を検査することで $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ を検査できる。
+
+## Fxipoint Characterization over Finite Paths
+今まで、クリプキ構造が left-total であることを仮定していた。<br>
+この仮定を外すと、CTL式に対応付けた $\tau$ も大きく変える必要がある。<br>
+
+まずは、有限パスに関する temporal operator を定義する :
+$$
+  \begin{align*}
+    M,\pi \vDash \textbf{F} g_1 &\iff \exist 0 \leq i \leq \textit{length}(\pi)\ \text{ s.t. }\ M,\pi^i \vDash g_1\\
+    M,\pi \vDash \textbf{G} g_1 &\iff \forall 0 \leq i \leq \textit{length}(\pi),\ M,\pi^i \vDash g_1
+  \end{align*}
+$$
+
+この元で、$\tau$ は次のように変更される。
+$$
+  \begin{align*}
+    \llbracket \textbf{AF} f_1 \rrbracket_M &= \mu Z.(f_1 \lor (\textbf{AX}Z \land \textbf{EX}\textit{true}))\\
+    \llbracket \textbf{EG} f_1 \rrbracket_M &= \nu Z.(f_1 \land (\textbf{EX}Z \lor \textbf{AX}\textit{false}))
+  \end{align*}
+$$
+
+同様に、他のCTL式についても fixpoint characterization が定義できる。<br>
+
+$\textbf{AF} f_1$ について、もし ある状態が$f_1$を満たさないなら、その状態には子がなくてはならない。
+これは left-total なら不要な制約。

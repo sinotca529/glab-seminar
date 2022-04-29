@@ -24,26 +24,9 @@
   </script>
 
 
-  <!-- pseudocode.js -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js"></script>
-  <script>
-    window.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".algorithm")
-        .forEach(e => pseudocode.renderElement(e, {lineNumber: true, lineNumberPunc: ' '}));
-    });
-  </script>
 
-  <!-- viz.js (graphviz) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/1.8.2/viz.js"></script>
-  <script>
-    window.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".graphviz")
-        .forEach(e => e.innerHTML = Viz(e.innerText));
-    });
-  </script>
 
-  <title>Model Checking (Sec.5.3)</title>
+  <title>Model Checking (Sec.5.3a)</title>
   <meta name="keywords" content="MC"/>
   <meta name="date" content="yyyy-mm-dd"/>
 
@@ -747,9 +730,14 @@ class="math inline">s \vDash \textbf{EG} f_1</span> である。</p>
 
 <h2 id="characterizing-fairness-with-fixpoints">Characterizing Fairness
 with Fixpoints</h2>
-<p><span class="math inline">F = \{P_1, \cdots, P_n \}</span>
-について、<span class="math inline">\textbf{E}_f\textbf{G}
-f</span>を考える。<br> これを満たす状態集合<span
+<p><span class="math inline">\textbf{E}_f\textbf{G}</span>, <span
+class="math inline">\textbf{E}_f\textbf{X}</span>, <span
+class="math inline">\textbf{E}_f\textbf{U}</span>
+を不動点を用いて処理する方法を考える。</p>
+<h3 id="textbfe_ftextbfg-について"><span
+class="math inline">\textbf{E}_f\textbf{G}</span> について</h3>
+<p><span
+class="math inline">\textbf{E}_f\textbf{G}</span>を満たす状態集合<span
 class="math inline">Z</span>は、次を満たす状態集合のなかで最大のものである。</p>
 <ol type="1">
 <li><span class="math inline">Z</span>の要素は <span
@@ -770,7 +758,6 @@ class="math inline">f</span>を満たす。</li>
 は不動点を使うと次のように書ける。 <span class="math display">
 \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n
 \textbf{EXE}(f \textbf{U} (Z \land P_k))) </span></p>
-<h3 id="証明-2">証明</h3>
 <h4 id="lemma-515">Lemma 5.15</h4>
 <p><span class="math inline">\textbf{E}_f\textbf{G} f</span> は <span
 class="math inline">f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U}
@@ -832,7 +819,7 @@ class="math inline">\square</span></p>
 <h4 id="lemma-516">Lemma 5.16</h4>
 <p><span class="math inline">\tau</span> の最大不動点は <span
 class="math inline">\textbf{E}_f\textbf{G} f</span> に内包される。</p>
-<details open class="filled-box">
+<details class="filled-box">
 <summary>証明</summary>
 
 <p><span class="math inline">\tau</span> の不動点 <span
@@ -878,7 +865,56 @@ class="math inline">s</span>
 </ul>
 <p>これを無限に繰り返すことで、<span class="math inline">s</span>
 で始まり常に <span class="math inline">f</span>
-を満たす公平なパスの存在がいえる。</p>
+を満たす公平なパスの存在がいえる。<br> よって、<span
+class="math inline">s \vDash \textbf{E}_f\textbf{G} f</span>
+であるから、<span class="math inline">Z \subseteq \textbf{E}_f\textbf{G}
+f</span> である。<br> <span class="math inline">\square</span></p>
 </details>
+
+<h3 id="textbfe_ftextbfx-textbfe_ftextbfu-について"><span
+class="math inline">\textbf{E}_f\textbf{X}</span>, <span
+class="math inline">\textbf{E}_f\textbf{U}</span> について</h3>
+<p>5.2節と同じく、原子式 <span class="math inline">\textit{fair} =
+\textbf{E}_f\textbf{G}\textit{true}</span> を導入する。<br>
+このとき、</p>
+<ul>
+<li><span class="math inline">\textbf{E}_f\textbf{X}f_1 =
+\textbf{EX}(f_1  \land \textit{fair})</span></li>
+<li><span class="math inline">\textbf{E}_f(f_1 \textbf{U} f_2) =
+\textbf{E}(f_1 \textbf{U} (f_2 \land \textit{fair})))</span></li>
+</ul>
+<p>である。</p>
+<p>よって、右辺を検査することで <span
+class="math inline">\textbf{E}_f\textbf{X}</span>, <span
+class="math inline">\textbf{E}_f\textbf{U}</span> を検査できる。</p>
+<h2 id="fxipoint-characterization-over-finite-paths">Fxipoint
+Characterization over Finite Paths</h2>
+<p>今まで、クリプキ構造が left-total であることを仮定していた。<br>
+この仮定を外すと、CTL式に対応付けた <span
+class="math inline">\tau</span> も大きく変える必要がある。<br></p>
+<p>まずは、有限パスに関する temporal operator を定義する : <span
+class="math display">
+\begin{align*}
+M,\pi \vDash \textbf{F} g_1 &amp;\iff \exist 0 \leq i \leq
+\textit{length}(\pi)\ \text{ s.t. }\ M,\pi^i \vDash g_1\\
+M,\pi \vDash \textbf{G} g_1 &amp;\iff \forall 0 \leq i \leq
+\textit{length}(\pi),\ M,\pi^i \vDash g_1
+\end{align*}
+</span></p>
+<p>この元で、<span class="math inline">\tau</span>
+は次のように変更される。 <span class="math display">
+\begin{align*}
+\llbracket \textbf{AF} f_1 \rrbracket_M &amp;= \mu Z.(f_1 \lor
+(\textbf{AX}Z \land \textbf{EX}\textit{true}))\\
+\llbracket \textbf{EG} f_1 \rrbracket_M &amp;= \nu Z.(f_1 \land
+(\textbf{EX}Z \lor \textbf{AX}\textit{false}))
+\end{align*}
+</span></p>
+<p>同様に、他のCTL式についても fixpoint characterization
+が定義できる。<br></p>
+<p><span class="math inline">\textbf{AF} f_1</span> について、もし
+ある状態が<span
+class="math inline">f_1</span>を満たさないなら、その状態には子がなくてはならない。
+これは left-total なら不要な制約。</p>
 </body>
 </html>
