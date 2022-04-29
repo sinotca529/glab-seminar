@@ -5,7 +5,6 @@ date: yyyy-mm-dd
 plug:
     graphviz: true
     pseudocode: true
-    mermaid: true
 ---
 
 # 5.1 Explicit-State CTL Model Checking
@@ -288,7 +287,7 @@ digraph G {
     N3 -> N6
     N4 -> N1
     N4 -> N3
-    N4 -> N4 [label="cook"]
+    N4 -> N4
     N5 -> N2
     N5 -> N3
     N6 -> N7

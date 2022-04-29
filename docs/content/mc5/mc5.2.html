@@ -23,9 +23,6 @@
     hljs.initLineNumbersOnLoad();
   </script>
 
-  <!-- mermaid.js -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({startOnLoad: true});</script>
 
   <!-- pseudocode.js -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css">
@@ -102,8 +99,8 @@ class="math inline">\textbf{E}_f\textbf{G}</span>の処理</h2>
 <p>クリプキ構造<span class="math inline">M</span>上のSCC <span
 class="math inline">C</span> が次を満たすとき、 <span
 class="math inline">C</span> は <span class="math inline">F</span>
-について公平であるという。 <span class="math display"> \forall P_i \in
-F,\ \exist t_i \in (C \cup P_i) </span></p>
+について公平である。 <span class="math display"> \forall P_i \in F,\
+\exist t_i \in (C \cup P_i) </span></p>
 <h2 id="記法">記法</h2>
 <p>クリプキ構造<span class="math inline">M</span>のうち、<span
 class="math inline">f_1</span>を公平に満たすノードのみを残したクリプキ構造を、<span
@@ -144,7 +141,10 @@ class="math inline">t</span>までのパスが存在</li>
                 label(t) += EG f1
                 T += t</code></pre></figure>
 <h2 id="計算量">計算量</h2>
-<p>Fair MSCCを求める部分は、例えば次のように実装できる。</p>
+<p>Fair MSCCを求める部分は、例えば次のように <span
+class="math inline">O(|F|\cdot|S|)</span> 実装できる。<br>
+よって、<code>CheckFairEG</code>の計算量は<span
+class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
 
 <figure><pre><code class="py">def get_all_fair_mscc(S):
     FairMSCCs = ∅
@@ -161,6 +161,9 @@ class="math inline">t</span>までのパスが存在</li>
         }
     }
 
+    # 2つのMSCCが共通部分を持つことは無いため、
+    # 内側のforは、合計|S|回である。
+    # よって、O(|S|)
     for m in MSCCs {
         local = ∅
         for s in m:
@@ -168,40 +171,67 @@ class="math inline">t</span>までのパスが存在</li>
         if local.len() == |F|:
             FairMSCCs ∪= m
     }
-
     return FairMSCCs</code></pre></figure>
-<p>公平性を検査する必要があるため、計算量は<span
-class="math inline">O((|S| + |R|)\cdot|F|)</span>に増加。</p>
 <h2 id="ex-eu">EX, EU</h2>
-<p>他のCTL式を公平クリプキ構造の元で検証するため、特別な原子式 <span
-class="math inline">\textit{fair}</span> を定義する。 <span
-class="math display"> s \vDash \textit{fair} \iff \text{(There is a fair
-path starting from } s \text{. )} </span></p>
+<h3 id="原子式-textitfair-の導入">原子式 <span
+class="math inline">\textit{fair}</span> の導入。</h3>
+<p>特別な原子式 <span class="math inline">\textit{fair}</span>
+を定義する。 <span class="math display"> s \vDash \textit{fair} \iff
+\text{(There is a fair path starting from } s \text{. )} </span></p>
 <p>なお、<span class="math inline">\textit{fair} =
-\textbf{E}_F\textbf{G}\textit{true}</span> である。</p>
+\textbf{E}_F\textbf{G}\textit{true}</span>
+であるから、<code>CheckFairEG(true)</code>で求まる。</p>
+<h3 id="exについて">EXについて</h3>
 <p><span class="math inline">M,s \vDash_F
 \textbf{E}_f\textbf{X}f_1</span>を検査するには、 <span
 class="math inline">M,s \vDash \textbf{EX}(f_1  \land
 \textit{fair})</span>を調べれば良い。</p>
+<h3 id="euについて">EUについて</h3>
 <p><span class="math inline">M,s \vDash_F \textbf{E}_f(f_1 \textbf{U}
 f_2)</span>を検査するには、 <span class="math inline">M,s \vDash
 \textbf{E}(f_1 \textbf{U} (f_2 \land
 \textit{fair})))</span>を調べれば良い。</p>
+<h2 id="アルゴリズム全体の計算量">アルゴリズム全体の計算量</h2>
 <p>各ステップの計算量は<span class="math inline">O((|S| +
-|R|)\cdot|F|)</span>なので、全体の計算量は<span
-class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>である。</p>
-<h2 id="theorem-54">Theorem 5.4</h2>
-<p>クリプキ構造<span class="math inline">M = (S, R, L,
-F)</span>とCTL式<span class="math inline">f</span> について、<span
-class="math inline">M \vDash_F f</span> を<span
-class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>
-で調べるアルゴリズムが存在する。</p>
+|R|)\cdot|F|)</span> である。<br> よって、アルゴリズム全体の計算量は
+<span class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>
+である。</p>
 <h2 id="具体例">具体例</h2>
 <p><span class="math inline">F = \{\{ s \ |\  s \vDash \textit{Start}
 \land \textit{Close} \land \neg\textit{Error}\}\}</span>とおく。</p>
-<p>5.1節と似た、次の式を調べる。 <span class="math display">
-\textbf{A}_f\textbf{G}(\textit{Start} \rightarrow
+<p>5.1節の具体例と同じクリプキ構造について、次の式を調べる。 <span
+class="math display"> \textbf{A}_f\textbf{G}(\textit{Start} \rightarrow
 \textbf{A}_f\textbf{F}\textit{Heat}) </span>を調べる。</p>
+
+<figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
+    splines = false
+    N1 [xlabel=&quot;1&quot;, label = &quot;¬Start\n¬Close\n¬Heat\n¬Error&quot;, shape = circle]
+    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n¬Close\n¬Heat\nError&quot;, shape = circle]
+    N3 [xlabel=&quot;3&quot;, label = &quot;¬Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N4 [xlabel=&quot;4&quot;, label = &quot;¬Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n¬Heat\nError&quot;, shape = circle]
+    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+
+    N1 -&gt; N2
+    N1 -&gt; N3
+    N2 -&gt; N5
+    N3 -&gt; N1
+    N3 -&gt; N6
+    N4 -&gt; N1
+    N4 -&gt; N3
+    N4 -&gt; N4
+    N5 -&gt; N2
+    N5 -&gt; N3
+    N6 -&gt; N7
+    N7 -&gt; N4
+
+    {rank = same; N2, N3, N4;}
+    {rank = same; N5, N6, N7;}
+
+    N2 -&gt; N3 -&gt; N4 [color=transparent]
+    N5 -&gt; N6 -&gt; N7 [color=transparent]
+}</div></figure>
 <h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
 <p><span class="math display"> \textbf{A}_f\textbf{G}(\textit{Start}
 \rightarrow \textbf{A}_f\textbf{F}\textit{Heat}) = \neg
@@ -239,22 +269,12 @@ class="math inline">\textbf{E}_f\textbf{G}\neg\textit{Heat}</span></li>
 <h4 id="llbrackettextbfe_ftextbfgnegtextitheatrrbracket-について"><span
 class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket</span>
 について</h4>
-<ol type="1">
-<li><span class="math inline">S&#39; = \llbracket \neg\textit{Heat}
-\rrbracket = \{1, 2, 3, 5, 6\}</span>と置く</li>
-<li><span class="math inline">S&#39;</span>内の公平なMSCCを見つける</li>
-<li><span
-class="math inline">S&#39;</span>内の状態のうち、MSCC内の状態への経路がある状態を見つける</li>
-<li>見つけた状態の集合が<span
-class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket</span>である</li>
-</ol>
-<ul>
-<li>いま、<span
-class="math inline">S&#39;</span>内に公平なMSCCは存在しない</li>
-<li>よって、<span
+<p><span class="math inline">S&#39; = \llbracket \neg\textit{Heat}
+\rrbracket = \{1, 2, 3, 5, 6\}</span>と置く。<br> いま、<span
+class="math inline">S&#39;</span>上に公平なMSCCは存在しない。<br>
+よって、<span
 class="math inline">\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket
-= \emptyset</span></li>
-</ul>
+= \emptyset</span> である。</p>
 <h4
 id="llbrackettextitstart-land-textbfe_ftextbfgnegtextitheatrrbracket-llbrackettextbfe_ftextittrue-textbfu-textitstart-land-textbfe_ftextbfgnegtextitheatrrbracket-について"><span
 class="math inline">\llbracket\textit{Start} \land
@@ -281,5 +301,18 @@ class="math inline">\llbracket\neg\textbf{E}_f(\textit{true} \textbf{U}
 \textbf{U} (\textit{Start} \land
 \textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket = S </span>
 である。</p>
+<h2 id="まとめ">まとめ</h2>
+<h3 id="theorem-54">Theorem 5.4</h3>
+<p>クリプキ構造<span class="math inline">M = (S, R, L,
+F)</span>とCTL式<span class="math inline">f</span> について、<span
+class="math inline">M,s \vDash_F f</span> を<span
+class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>
+で調べるアルゴリズムが存在する。</p>
+<h3 id="したがって">したがって…</h3>
+<p><span class="math inline">M \vDash_F f</span> を <span
+class="math inline">O(|f|\cdot(|S| + |R|))\cdot|F|</span>
+で判定できる。</p>
+<hr />
+<p>次節 : <a href="mc5.3.html">不動点を使った方法</a></p>
 </body>
 </html>

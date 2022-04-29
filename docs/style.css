@@ -175,3 +175,15 @@ blockquote {
 dt {
     font-weight: bold;
 }
+
+.indent {
+    margin-left: 2ch;
+}
+
+.filled-box {
+    background-color: antiquewhite;
+}
+
+details {
+    padding-left: 2ch;
+}

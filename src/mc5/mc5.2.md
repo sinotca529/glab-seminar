@@ -5,7 +5,6 @@ date: yyyy-mm-dd
 plug:
     graphviz: true
     pseudocode: true
-    mermaid: true
 ---
 
 # 5.2 Model-Checking CTL with Fairness Constraints
@@ -24,7 +23,7 @@ CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる�
 
 ## $\textbf{E}_f\textbf{G}$の処理
 ## 用語 : 公平なSCC
-クリプキ構造$M$上のSCC $C$ が次を満たすとき、 $C$ は $F$ について公平であるという。
+クリプキ構造$M$上のSCC $C$ が次を満たすとき、 $C$ は $F$ について公平である。
 $$ \forall P_i \in F,\ \exist t_i \in (C \cup P_i) $$
 
 ## 記法
@@ -65,7 +64,8 @@ def CheckFairEG(f1):
 ```
 
 ## 計算量
-Fair MSCCを求める部分は、例えば次のように実装できる。
+Fair MSCCを求める部分は、例えば次のように $O(|F|\cdot|S|)$ 実装できる。<br>
+よって、`CheckFairEG`の計算量は$O((|S| + |R|)\cdot|F|)$。
 
 ```py
 def get_all_fair_mscc(S):
@@ -83,6 +83,9 @@ def get_all_fair_mscc(S):
         }
     }
 
+    # 2つのMSCCが共通部分を持つことは無いため、
+    # 内側のforは、合計|S|回である。
+    # よって、O(|S|)
     for m in MSCCs {
         local = ∅
         for s in m:
@@ -90,34 +93,66 @@ def get_all_fair_mscc(S):
         if local.len() == |F|:
             FairMSCCs ∪= m
     }
-
     return FairMSCCs
 ```
 
-公平性を検査する必要があるため、計算量は$O((|S| + |R|)\cdot|F|)$に増加。
-
 ## EX, EU
-他のCTL式を公平クリプキ構造の元で検証するため、特別な原子式 $\textit{fair}$ を定義する。
+### 原子式 $\textit{fair}$ の導入。
+特別な原子式 $\textit{fair}$ を定義する。
 $$ s \vDash \textit{fair} \iff \text{(There is a fair path starting from } s \text{. )} $$
 
-なお、$\textit{fair} = \textbf{E}_F\textbf{G}\textit{true}$ である。
+なお、$\textit{fair} = \textbf{E}_F\textbf{G}\textit{true}$ であるから、`CheckFairEG(true)`で求まる。
 
+### EXについて
 $M,s \vDash_F \textbf{E}_f\textbf{X}f_1$を検査するには、
 $M,s \vDash \textbf{EX}(f_1  \land \textit{fair})$を調べれば良い。
 
+### EUについて
 $M,s \vDash_F \textbf{E}_f(f_1 \textbf{U} f_2)$を検査するには、
 $M,s \vDash \textbf{E}(f_1 \textbf{U} (f_2 \land \textit{fair})))$を調べれば良い。
 
-各ステップの計算量は$O((|S| + |R|)\cdot|F|)$なので、全体の計算量は$O(|f|\cdot(|S| + |R|)\cdot|F|)$である。
 
-## Theorem 5.4
-クリプキ構造$M = (S, R, L, F)$とCTL式$f$ について、$M \vDash_F f$ を$O(|f|\cdot(|S| + |R|)\cdot|F|)$ で調べるアルゴリズムが存在する。
+## アルゴリズム全体の計算量
+各ステップの計算量は$O((|S| + |R|)\cdot|F|)$ である。<br>
+よって、アルゴリズム全体の計算量は $O(|f|\cdot(|S| + |R|)\cdot|F|)$ である。
 
 ## 具体例
 $F = \{\{ s \ |\  s \vDash \textit{Start} \land \textit{Close} \land \neg\textit{Error}\}\}$とおく。
 
-5.1節と似た、次の式を調べる。
+5.1節の具体例と同じクリプキ構造について、次の式を調べる。
 $$ \textbf{A}_f\textbf{G}(\textit{Start} \rightarrow \textbf{A}_f\textbf{F}\textit{Heat}) $$を調べる。
+
+```graphviz {caption=クリプキ構造}
+digraph G {
+    splines = false
+    N1 [xlabel="1", label = "¬Start\n¬Close\n¬Heat\n¬Error", shape = circle]
+    N2 [xlabel="2", label = "Start\n¬Close\n¬Heat\nError", shape = circle]
+    N3 [xlabel="3", label = "¬Start\nClose\n¬Heat\n¬Error", shape = circle]
+    N4 [xlabel="4", label = "¬Start\nClose\nHeat\n¬Error", shape = circle]
+    N5 [xlabel="5", label = "Start\nClose\n¬Heat\nError", shape = circle]
+    N6 [xlabel="6", label = "Start\nClose\n¬Heat\n¬Error", shape = circle]
+    N7 [xlabel="7", label = "Start\nClose\nHeat\n¬Error", shape = circle]
+
+    N1 -> N2
+    N1 -> N3
+    N2 -> N5
+    N3 -> N1
+    N3 -> N6
+    N4 -> N1
+    N4 -> N3
+    N4 -> N4
+    N5 -> N2
+    N5 -> N3
+    N6 -> N7
+    N7 -> N4
+
+    {rank = same; N2, N3, N4;}
+    {rank = same; N5, N6, N7;}
+
+    N2 -> N3 -> N4 [color=transparent]
+    N5 -> N6 -> N7 [color=transparent]
+}
+```
 
 ### ステップ1 : 正規化
 $$ \textbf{A}_f\textbf{G}(\textit{Start} \rightarrow \textbf{A}_f\textbf{F}\textit{Heat}) = \neg \textbf{E}_f(\textit{true} \textbf{U} (\textit{Start} \land \textbf{E}_f\textbf{G}\neg\textit{Heat}))$$
@@ -139,13 +174,9 @@ $$ \textbf{A}_f\textbf{G}(\textit{Start} \rightarrow \textbf{A}_f\textbf{F}\text
 - $\llbracket\neg\textit{Heat}\rrbracket = \{1, 2, 3, 5, 6\}$
 
 #### $\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket$ について
-1. $S' = \llbracket \neg\textit{Heat} \rrbracket = \{1, 2, 3, 5, 6\}$と置く
-2. $S'$内の公平なMSCCを見つける
-3. $S'$内の状態のうち、MSCC内の状態への経路がある状態を見つける
-4. 見つけた状態の集合が$\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket$である
-
-- いま、$S'$内に公平なMSCCは存在しない 
-- よって、$\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket = \emptyset$
+$S' = \llbracket \neg\textit{Heat} \rrbracket = \{1, 2, 3, 5, 6\}$と置く。<br>
+いま、$S'$上に公平なMSCCは存在しない。<br>
+よって、$\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket = \emptyset$ である。
 
 #### $\llbracket\textit{Start} \land \textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket$, $\llbracket\textbf{E}_f(\textit{true} \textbf{U} (\textit{Start} \land \textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket$ について
 $\llbracket\textbf{E}_f\textbf{G}\neg\textit{Heat}\rrbracket = \emptyset$ なので、
@@ -157,3 +188,13 @@ $\llbracket\textbf{E}_f(\textit{true} \textbf{U} (\textit{Start} \land \textbf{E
 
 $$ \llbracket\neg\textbf{E}_f(\textit{true} \textbf{U} (\textit{Start} \land \textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket = S $$
 である。
+
+## まとめ
+### Theorem 5.4
+クリプキ構造$M = (S, R, L, F)$とCTL式$f$ について、$M,s \vDash_F f$ を$O(|f|\cdot(|S| + |R|)\cdot|F|)$ で調べるアルゴリズムが存在する。
+
+### したがって...
+$M \vDash_F f$ を $O(|f|\cdot(|S| + |R|))\cdot|F|$ で判定できる。
+
+---
+次節 : [不動点を使った方法](mc5.3.html)
