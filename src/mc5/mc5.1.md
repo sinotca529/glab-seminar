@@ -21,6 +21,8 @@ plug:
 CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる。<br>
 よって、変形後の式について ${\llbracket f \rrbracket}_M$ が得られれば十分。
 
+なお、正規化による式の大きさの増加は線形である。
+
 ### 方針
 状態 $s$ に付いているラベルの集合を、$\textit{label}(s)$ とおく。<br>
 $\textit{label}(s)$に、状態 $s$ が満たすCTL式を加えていく。<br>
@@ -30,8 +32,9 @@ $\textit{label}(s)$に、状態 $s$ が満たすCTL式を加えていく。<br>
 このアルゴリズムは、$f$ の部分式について、ネストの浅い (構造が単純な) ものから順に、それを満たす全状態にラベルを貼っていく。
 
 ```py {caption=${\llbracket f \rrbracket}_M$を得るアルゴリズム}
-# f は正規化しておくこと。
 def set_of_state_which_sat_f(M, f):
+    f = f.normalize()
+
     # ネストの浅い (構造が単純な) 部分式から処理する
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
@@ -91,7 +94,7 @@ def CheckEU(f1, f2):
     for s in T:
         label(s) += E(f1 U f2)
 
-    while not T != ∅:
+    while T != ∅:
         s = T.pop()
         for t in s.parents():
             if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
@@ -150,7 +153,7 @@ for s in T:
 後半部分は$O(|R|)$で計算できる。<br>
 (`s.parents()` の総和は $|R|$ なので、`for` は合計$|R|$回まわる。)
 ```py {caption=後半部分}
-while not T != ∅:
+while T != ∅:
     s = T.pop()
     for t in s.parents():
         if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
@@ -179,25 +182,25 @@ nontrivial SCC:
 
 ### 記法
 クリプキ構造$M$のうち、$f_1$を満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
-$$ M' = (S', R', L') $$
-ただし、
 $$
     \begin{align*}
-        S' &= \{s\in S\ |\ M,s\vDash f_1\}\\
-        R' &= R|_{S'\times S'}\\
-        L' &= L|_{S'}
+        M' = &(S', R', L')\ \ \text{ where}\\
+             &S' = \{s\in S\ |\ M,s\vDash f_1\},\\
+             &R' = R|_{S'\times S'},\\
+             &L' = L|_{S'}
     \end{align*}
 $$
 
 ### Lemma 5.1
 $M,s \vDash \text{EG}f_1$ は、次の2条件を両方満たすことと同値である。
 1. $s \in S'$
-2. $M'$上に、$s$ から グラフ$(S', R')$のMSCC上のノード $t$ までのパスが存在
+2. $M'$上に、$s$ から グラフ$(S', R')$の nontrivial MSCC上のノード $t$ までのパスが存在
 
-<details open>
+<details>
 <summary>証明</summary>
 
 #### ($\Longrightarrow$)
+$M,s \vDash \text{EG}f_1$ を仮定する。<br>
 $s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に着目する。<br>
 このとき、$\pi$ の要素は全て $f_1$ を満たすので、次が言える。
 - $s \in S'$
@@ -207,47 +210,59 @@ $s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に
 - $\pi_1$上の任意の要素は、$\pi_1$上に無限にしばしば(infinitely often)現れる。
 
 $\pi$上に現れる状態の集合を$C$とおく。<br>
-このとき、$C$ 上の任意の2状態$a$, $b$について、$a$で始まり$b$に至る$\pi$の部分パスが存在する。
-よって、$C$はSCCである。
+このとき、$\pi_1$ から適当な(有限長の)部分パスを取ってくれば、 $C$ 上の任意の2状態を結ぶことができる。<br>
+よって、$C$はSCCであり、したがって何らかのMSCC $C'$ に内包される。<br>
+よって、条件1, 2ともに満たされる。
+
+#### ($\Longleftarrow$)
+以下の条件1, 2の成立を仮定する。<br>
+1. $s \in S'$
+2. $M'$上に、$s$ から グラフ$(S', R')$の nontrivial MSCC上のノード $t$ までのパスが存在
+
+$s$ から $t$ へのパスを $\pi_0$ とおく。<br>
+またnontrivial MSCC上にある、$t$ から $t$ への長さ1以上のパスを取り、$\pi_1$ とおく。<br>
+このとき、 パス $\pi_0\pi_1$ 上の全状態は $f_1$ を満たすので、$M,s \vDash \text{EG}f_1$ が成立する。
 
 </details>
 
-
+### アルゴリズム
 ```py {caption="CheckEG"}
 def CheckEG(f1):
-    Sd = { s ∈ S | f1 ∈ label(s) }
-    MSCCs = get_all_mscc(Sd)
-    T = (全MSCCの状態の和集合)
+    S’ = { s ∈ S | f1 ∈ label(s) }
+    MSCCs = get_all_mscc(S’)
+    T = ∪MSCCs
 
-    while not T != ∅:
+    while T != ∅:
         s = T.pop()
         for t in s.parents():
-            if EG f1 ∉ label(t)
-                label(T) += EG f1
+            if (t ∈ S’) and (EG f1 ∉ label(t))
+                label(t) += EG f1
+                T += t
 ```
+
+### 計算量
+MSCCは$O(|S| + |R|)$で求まる。<br>
+また、`for`文は合計$|R|$回回る。<br>
+よって、`CheckEG`の計算量は$O(|S| + |R|)$である。
 
 ## アルゴリズム全体の計算量
 - `CheckXX`はすべて$O(|S|+|R|)$
 - 処理する部分式の数は高々$|f|$
 
-なので、全体の計算量は$O(|f|(|S|+|R|))$である。
+よって、全体の計算量は$O(|f|\cdot(|S|+|R|))$である。
+```py {caption=${\llbracket f \rrbracket}_M$を得るアルゴリズム(再掲)}
+def set_of_state_which_sat_f(M, f):
+    f = f.normalize()
 
-```py {caption=アルゴリズム全体 (再掲)}
-def set_of_state_which_sat_f(M: Kripke, f: Formula):
-    # 式 f のネストの深さ (後述の例を参照) を得る
-    nest_depth = f.nest_depth()
-
-    for i in range(0, nest_depth+1):
-        sub_formulas = f.get_sub_formulas(nest_depth=i)
-
-        for sub_f in sub_formulas:
-            match sub_f:
-                f1         => CheckAtomic(f1),
-                ¬f1       => CheckNot(f1, f2),
-                (f1 ∧ f2) => CheckAnd(f1, f2),
-                (f1 ∨ f2) => CheckOr(f1, f2),
-                E(f1 U f2) => CheckEU(f1, f2),
-                EG(f1)     => CheckEG(f1),
+    # ネストの浅い (構造が単純な) 部分式から処理する
+    for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
+        switch sub_f:
+            f1         => CheckAtomic(f1), # Do nothing.
+            ¬f1       => CheckNot(f1),
+            (f1 ∧ f2) => CheckAnd(f1, f2),
+            (f1 ∨ f2) => CheckOr(f1, f2),
+            E(f1 U f2) => CheckEU(f1, f2),
+            EG(f1)     => CheckEG(f1),
 
     return {s ∈ S | f ∈ label(s)}
 ```
@@ -293,12 +308,12 @@ $\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$は「スタ�
 ここで、パス $\pi = 1, 2, 5, 2, 5, \cdots$ に着目する。<br>
 状態$2$で $\textit{Start}$ を満たすが、このパスが$\textit{Heat}$に到達することはない。
 
-したがって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) = \emptyset$となるはずである。
+したがって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) =$ <quiz>$\emptyset$</quiz>となるはずである。
 
 ### ステップ1 : 正規化
 $$
 \begin{align*}
-    &\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat}) \\
+    \textbf{AG}&(\textit{Start} \rightarrow \textbf{AF}\textit{Heat}) \\
     &= \textbf{AG}(\neg \textit{Start} \lor \textbf{AF}\textit{Heat}) \\
     &= \neg \textbf{EF}(\textit{Start} \land \neg \textbf{AF}\textit{Heat}) \\
     &= \neg \textbf{EF}(\textit{Start} \land  \textbf{EG}\neg\textit{Heat}) \\
@@ -307,7 +322,7 @@ $$
 $$
 
 ### ステップ2 : 部分式の列挙
-Q. 部分式を列挙せよ。
+Q. $\neg \textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))$ の部分式を列挙せよ。
 - $\textit{true}$
 - $\textit{Start}$
 - $\textit{Heat}$
@@ -324,20 +339,14 @@ Q. 部分式を列挙せよ。
 - $\llbracket\neg\textit{Heat}\rrbracket = \{1, 2, 3, 5, 6\}$
 
 #### $\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket$ について
-1. $S' = \llbracket \neg\textit{Heat} \rrbracket = \{1, 2, 3, 5, 6\}$と置く
-2. $S'$内のMSCCを見つける
-3. $S'$内の状態のうち、MSCC内の状態への経路がある状態を見つける
-4. 見つけた状態の集合が$\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket$である
-
-- いま、$\textbf{MSCC} = \{\{1, 2, 3, 5\}\}$ である
-- よって状態1, 2, 3, 5は$\neg\textit{Heat}$を満た<quiz>す　　</quiz>
-- また、残った状態6からMSCCへの経路は存在しないので、6は$\neg\textit{Heat}$を満た<quiz>さない</quiz>
-- よって、$\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket =$<quiz>$\{1, 2, 3, 5\}$</quiz>
+$S' = \llbracket \neg\textit{Heat} \rrbracket = \{1, 2, 3, 5, 6\}$と置く。<br>
+いま、$S'$上の(nontrivialな)MSCCは、$\{1, 2, 3, 5\}$ のみである。<br>
+また、$S'$上の状態で、このMSCCへのパスがある状態は$\{1, 2, 3, 5\}$のみである。<br>
+よって、$\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket = \{1, 2, 3, 5\}$である。
 
 #### $\llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket$ について
-- $\llbracket\textit{Start}\rrbracket = \{2, 5, 6, 7\}$
-- $\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket = \{1, 2, 3, 5\}$
-- よって、$\llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}$
+$\llbracket\textit{Start}\rrbracket = \{2, 5, 6, 7\}$, $\llbracket\textbf{EG}\neg\textit{Heat}\rrbracket = \{1, 2, 3, 5\}$である。<br>
+よって、$\llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}$
 
 ####  $\llbracket\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket$ について
 1. $T = \llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}$ と置く
@@ -352,3 +361,13 @@ Q. 部分式を列挙せよ。
 #### $\llbracket\neg\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket$ について
 - $\llbracket\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket = \{1, 2, 3, 4, 5, 6, 7\}$である
 - よって、$\llbracket\neg\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket = \emptyset$
+
+## まとめ
+### Theorem 5.2
+クリプキ構造$M$, CTL式 $f$ について、$\llbracket f \rrbracket_M$ を $O(|f|\cdot(|S| + |R|))$で求めるアルゴリズムが存在する。
+
+### したがって...
+$S \subseteq \llbracket f \rrbracket_M$ を調べることで $M \vDash f$ を $O(|f|\cdot(|S| + |R|))$ で判定できる。
+
+---
+次節 : [公平性の導入](mc5.2.html)

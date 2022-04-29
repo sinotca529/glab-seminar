@@ -9,19 +9,35 @@ plug:
 ---
 
 # 5.2 Model-Checking CTL with Fairness Constraints
-Fairness constraints を扱えるよう、5.1節の手法を拡張する。<br>
-以下では、Fiarness constraints を $F = \{ P_1, \cdots, P_k\}$ と書く。
+この節の目的:
+: Fairness constraints を扱えるよう、5.1節の手法を拡張すること。
 
-クリプキ構造$M$上のSCC $C$が$F$について公平である :
-: $\forall P_i \in F,\ \exist t_i \in (C \cup P_i)$
+この節では、Fiarness constraints を $F = \{ P_1, \cdots, P_k\}$ と書く。
 
-$\textbf{E}_F\textbf{G} f_1$ を考える。
+## 概要
+CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる。<br>
+よって、5.1節と同じく、これらを処理する関数を設計すれば良い。
 
-前準備として、Lemma 5.1 に似た補題を用意する。
+このうち、¬, ∧, ∨ については5.1節で設計した関数を流用できる。
 
+この節では、残るEG, EX, EUについて考える。
+
+## $\textbf{E}_f\textbf{G}$の処理
+## 用語 : 公平なSCC
+クリプキ構造$M$上のSCC $C$ が次を満たすとき、 $C$ は $F$ について公平であるという。
+$$ \forall P_i \in F,\ \exist t_i \in (C \cup P_i) $$
+
+## 記法
 クリプキ構造$M$のうち、$f_1$を公平に満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
-$$ M' = (S', R', L', F') \;\;\;\text{where}\;\;\;S' = \{s\in S | M,s\vDash_F f_1\}, R' = R|_{S'\times S'}, L' = L|_{S'}, F' = \{P_i \cup S' \ |\ P_i \in F\} $$
-
+$$
+    \begin{align*}
+        M' = &(S', R', L', F') \ \ \text{ where}\\
+             &S' = \{s\in S | M,s\vDash_F f_1\},\\
+             &S' = R' = R|_{S'\times S'},\\
+             &S' = L' = L|_{S'},\\
+             &S' = F' = \{P_i \cup S' \ |\ P_i \in F\}
+    \end{align*}
+$$
 
 ## Lemma 5.3
 $M,s \vDash_F \textbf{E}_F\textbf{G} f_1$と、次の2条件を両方満たすことは同値
@@ -30,15 +46,57 @@ $M,s \vDash_F \textbf{E}_F\textbf{G} f_1$と、次の2条件を両方満たす�
 
 (証明は Lemma 5.1 と同様のため省略。)
 
-## CheckFairEG
-Lemma 5.3 を使うことで、`CheckFairEG`を作成できる。
+## アルゴリズム
+Lemma 5.3 を使うことで、`CheckFairEG`を作成できる。<br>
+`CheckEG`との違いは、MSCCを用いるか、Fair MSCC を用いるかだけである。
 
-前提 : $f_1 \in \textit{label}(s) \iff M,s\vDash_F f_1$
+```py {caption="CheckFairEG"}
+def CheckFairEG(f1):
+    S’ = { s ∈ S | f1 ∈ label(s) }
+    FairMSCCs = get_all_fair_mscc(S’)
+    T = ∪FiarMSCCs
 
-`CheckEG`との違いは、MSCCを用いるか、Fair MSCC を用いるかだけ。
+    while T != ∅:
+        s = T.pop()
+        for t in s.parents():
+            if (t ∈ S’) and (EG f1 ∉ label(t))
+                label(t) += EG f1
+                T += t
+```
 
-しかし、Fair MSCC を求めるには、公平性を検査する必要があるため、計算量は$O((|S| + |R|)\cdot|F|)$に増加。
+## 計算量
+Fair MSCCを求める部分は、例えば次のように実装できる。
 
+```py
+def get_all_fair_mscc(S):
+    FairMSCCs = ∅
+    MSCCs = get_all_mscc(S)
+
+    # key: 状態
+    # value: その状態を含む P_i (∈ F) の集合
+    d = {}
+
+    # O(|F||S|)
+    for P in Fair {
+        for s in P {
+            d[s] ∪= P
+        }
+    }
+
+    for m in MSCCs {
+        local = ∅
+        for s in m:
+            local ∪= map[s]
+        if local.len() == |F|:
+            FairMSCCs ∪= m
+    }
+
+    return FairMSCCs
+```
+
+公平性を検査する必要があるため、計算量は$O((|S| + |R|)\cdot|F|)$に増加。
+
+## EX, EU
 他のCTL式を公平クリプキ構造の元で検証するため、特別な原子式 $\textit{fair}$ を定義する。
 $$ s \vDash \textit{fair} \iff \text{(There is a fair path starting from } s \text{. )} $$
 
