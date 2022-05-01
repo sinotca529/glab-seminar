@@ -195,10 +195,11 @@ $M,s \vDash \text{EG}f_1$ は、次の2条件を両方満たすことと同値�
 1. $s \in S'$
 2. $M'$上に、$s$ から グラフ$(S', R')$の nontrivial MSCC上のノード $t$ までのパスが存在
 
-<details>
+<details class="filled-box">
 <summary>証明</summary>
 
-#### ($\Longrightarrow$)
+**($\Longrightarrow$)**<br>
+::: {.indent}
 $M,s \vDash \text{EG}f_1$ を仮定する。<br>
 $s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に着目する。<br>
 このとき、$\pi$ の要素は全て $f_1$ を満たすので、次が言える。
@@ -210,10 +211,12 @@ $s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に
 
 $\pi$上に現れる状態の集合を$C$とおく。<br>
 このとき、$\pi_1$ から適当な(有限長の)部分パスを取ってくれば、 $C$ 上の任意の2状態を結ぶことができる。<br>
-よって、$C$はSCCであり、したがって何らかのMSCC $C'$ に内包される。<br>
+よって、$C$ は SCC であり、したがって何らかの MSCC $C'$ に内包される。<br>
 よって、条件1, 2ともに満たされる。
+:::
 
-#### ($\Longleftarrow$)
+**($\Longleftarrow$)**<br>
+::: {.indent}
 以下の条件1, 2の成立を仮定する。<br>
 1. $s \in S'$
 2. $M'$上に、$s$ から グラフ$(S', R')$の nontrivial MSCC上のノード $t$ までのパスが存在
@@ -221,6 +224,10 @@ $\pi$上に現れる状態の集合を$C$とおく。<br>
 $s$ から $t$ へのパスを $\pi_0$ とおく。<br>
 またnontrivial MSCC上にある、$t$ から $t$ への長さ1以上のパスを取り、$\pi_1$ とおく。<br>
 このとき、 パス $\pi_0\pi_1$ 上の全状態は $f_1$ を満たすので、$M,s \vDash \text{EG}f_1$ が成立する。
+:::
+
+以上より、$\Rightarrow$, $\Leftarrow$ の両方が示されたので、これらは同値である。<br>
+$\square$
 
 </details>
 

@@ -11,7 +11,7 @@ plug:
 この節の目的:
 : Fairness constraints を扱えるよう、5.1節の手法を拡張すること。
 
-この節では、Fiarness constraints を $F = \{ P_1, \cdots, P_k\}$ と書く。
+以降では、Fiarness constraints を $F = \{ P_1, \cdots, P_k\}$ と書く。
 
 ## 概要
 CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる。<br>
@@ -64,12 +64,13 @@ def CheckFairEG(f1):
 ```
 
 ## 計算量
-Fair MSCCを求める部分は、例えば次のように $O(|F|\cdot|S|)$ 実装できる。<br>
-よって、`CheckFairEG`の計算量は$O((|S| + |R|)\cdot|F|)$。
+Fair MSCCを求める部分は、例えば次のように $O(|F|\cdot|S| + |R|)$ で実装できる。<br>
+よって、`CheckFairEG`の計算量は(少し多めに見積もって)  $O((|S| + |R|)\cdot|F|)$。
 
 ```py
 def get_all_fair_mscc(S):
     FairMSCCs = ∅
+    # O(|S| + |R|)
     MSCCs = get_all_mscc(S)
 
     # key: 状態
@@ -79,7 +80,7 @@ def get_all_fair_mscc(S):
     # O(|F||S|)
     for P in Fair {
         for s in P {
-            d[s] ∪= P
+            d[s] ∪= P # 実際にはベクタへのpush O(1) で良い
         }
     }
 
@@ -89,9 +90,9 @@ def get_all_fair_mscc(S):
     for m in MSCCs {
         local = ∅
         for s in m:
-            local ∪= map[s]
+            local ∪= map[s] # 実際にはベクタへのpush O(1) で良い
         if local.len() == |F|:
-            FairMSCCs ∪= m
+            FairMSCCs ∪= m  # 実際にはベクタへのpush O(1) で良い
     }
     return FairMSCCs
 ```

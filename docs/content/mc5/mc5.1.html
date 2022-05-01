@@ -265,11 +265,12 @@ class="math inline">s</span> から グラフ<span
 class="math inline">(S&#39;, R&#39;)</span>の nontrivial MSCC上のノード
 <span class="math inline">t</span> までのパスが存在</li>
 </ol>
-<details>
+<details class="filled-box">
 <summary>証明</summary>
 
-<h4 id="longrightarrow">(<span
-class="math inline">\Longrightarrow</span>)</h4>
+<p><strong>(<span
+class="math inline">\Longrightarrow</span>)</strong><br></p>
+<div class="indent">
 <p><span class="math inline">M,s \vDash \text{EG}f_1</span>
 を仮定する。<br> <span class="math inline">s</span> で始まり、<span
 class="math inline">\text{EG}f_1</span> を満たす<span
@@ -295,12 +296,13 @@ class="math inline">C</span>とおく。<br> このとき、<span
 class="math inline">\pi_1</span>
 から適当な(有限長の)部分パスを取ってくれば、 <span
 class="math inline">C</span> 上の任意の2状態を結ぶことができる。<br>
-よって、<span
-class="math inline">C</span>はSCCであり、したがって何らかのMSCC <span
-class="math inline">C&#39;</span> に内包される。<br> よって、条件1,
-2ともに満たされる。</p>
-<h4 id="longleftarrow">(<span
-class="math inline">\Longleftarrow</span>)</h4>
+よって、<span class="math inline">C</span> は SCC
+であり、したがって何らかの MSCC <span class="math inline">C&#39;</span>
+に内包される。<br> よって、条件1, 2ともに満たされる。</p>
+</div>
+<p><strong>(<span
+class="math inline">\Longleftarrow</span>)</strong><br></p>
+<div class="indent">
 <p>以下の条件1, 2の成立を仮定する。<br></p>
 <ol type="1">
 <li><span class="math inline">s \in S&#39;</span></li>
@@ -318,6 +320,11 @@ class="math inline">\pi_1</span> とおく。<br> このとき、 パス <span
 class="math inline">\pi_0\pi_1</span> 上の全状態は <span
 class="math inline">f_1</span> を満たすので、<span
 class="math inline">M,s \vDash \text{EG}f_1</span> が成立する。</p>
+</div>
+<p>以上より、<span class="math inline">\Rightarrow</span>, <span
+class="math inline">\Leftarrow</span>
+の両方が示されたので、これらは同値である。<br> <span
+class="math inline">\square</span></p>
 </details>
 
 <h3 id="アルゴリズム">アルゴリズム</h3>

@@ -56,11 +56,11 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 
 つまり、
 - $\textit{true} = S$
-- $\textit{false} = \emptyset$
+- $\textit{false} =$ <quiz>$\emptyset$</quiz>
 
 である。
 
-また、$\tau$ を*precitate toransformer* と呼ぶ。
+また、$\tau$ を *precitate toransformer* と呼ぶ。
 
 ### 単調, $\cup$-連続, $\cap$-連続 の定義
 <p>
@@ -81,47 +81,44 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 </p>
 
 ## 不動点に関する定理・補題
-MC本とは一部順序を入れ替えている。
+説明の都合上、MC本とは一部順序を入れ替えている。
 
-### Lemma SP (単調な列の収束)
-#### 主張1 : 単調増加する列について
-$\mathcal{P}(S)$ 上の 単調増加する列 $\{P_i\}_i$ について、次を全て満たす $k$ が存在する。
-$$
-    \begin{align*}
-        &k \leq |S|\\
-        &\forall j < k,\  P_j \subset P_k\\
-        &\forall j > k,\  P_j = P_k
-    \end{align*}
-$$
+### Lemma 5.7
+$\tau$が単調ならば、任意の $i$ について次が成立。
+- $\tau^i(\textit{false}) \subseteq \tau^{i+1}(\textit{false})$
+- $\tau^i(\textit{true}) \supseteq \tau^{i+1}(\textit{true})$
 
-また、このとき次が成り立つ。
-$$ \lim_{i \to \infty} P_i = \bigcup_{i=0}^\infty P_i = P_k $$
+証明 : 数学的帰納法を使う。
+
+### Lemma 5.8
+$\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
+- $\forall k \geq i,\ \tau^k(\textit{false}) = \tau^i(\textit{false})$
+- $\forall k \geq j,\ \tau^k(\textit{true}) = \tau^j(\textit{true})$
 
 <details class="filled-box">
-<summary>証明</summary>
+<summary>証明 (1つ目について)</summary>
 
-$k$ を $P_i = P_{i+1}$ が成り立つ最小の$i$だとすると、次式が成り立つ。。
-$$ P_0 \subset P_1 \subset \cdots \subset P_{k-1} \subset P_k = P_{k+1} = \cdots $$
+示したい式は、次のように変形できる。
+$$ \exist i, \forall k, (k \geq i) \Rightarrow \tau^k(\textit{false}) = \tau^i(\textit{false})$$
 
-ここで、$P_i \subseteq S$ であることを踏まえると、$k$はたかだか$|S|$である。
+背理法を用いて証明する。示すべき式の否定は次式である。
+$$ \forall i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \neq \tau^i(\textit{false})$$
 
-したがって、この $k$ は3つの条件全てを満たす。
+Lemma 5.7 より、列 $\{\tau^j(\textit{false})_j\}$ は単調増加列なので、次が成り立つ。
+$$ \forall i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \supset \tau^i(\textit{false})$$
+
+この式より、$i = 0$ について次を満たす $l_1$ の存在が言える。
+$$ \tau^{l_1} \supset \tau^0(\textit{false}) $$
+
+また、同様に $i = l_1$ について次を満たす $l_2$ の存在が言える。
+$$ \tau^{l_2} \supset \tau^{l_1}(\textit{false}) $$
+
+これを繰り返すことで、狭義単調な無限列 $\{ \tau^{l_j}(\textit{false}) \}_j$ を得る ($l_0 = 0$ とした)。
+このとき、$|\tau^{l_j}| \geq j$ であり、$j = |S| + 1$ のときそのサイズは $|S| + 1$ 以上となるが、これはドメインが $\mathcal{P}(S)$ であることに矛盾。
+
+よって仮定は誤りであり、示したい式の成立が示された。<br>
+$\square$
 </details>
-
-#### 主張2 : 単調減少する列について
-$\mathcal{P}(S)$ 上の 単調減少する列 $\{P_i\}_i$ について、次を全て満たす $k$ が存在する。
-$$
-    \begin{align*}
-        &k \leq |S|\\
-        &\forall j < k,\  P_j \supset P_k\\
-        &\forall j > k,\  P_j = P_k
-    \end{align*}
-$$
-
-また、このとき次が成り立つ。
-$$ \lim_{i \to \infty} P_i = \bigcap_{i=0}^\infty P_i = P_k $$
-
-(証明は主張1と同様。)
 
 ### Theorem 5.5 (Tarski-Knaster)
 #### 主張1
@@ -179,42 +176,34 @@ $$ P \supseteq \tau(P) $$
 </details>
 
 #### 主張2
-- $\tau$が$\cap$-連続ならば、$\nu Z.\tau(Z) = \cap\tau^i(\textit{true})$
-- $\tau$が$\cup$-連続ならば、$\mu Z.\tau(Z) = \cup\tau^i(\textit{false})$
+- $\tau$が単調で$\cap$-連続ならば、$\nu Z.\tau(Z) = \cap\tau^i(\textit{true})$
+- $\tau$が単調で$\cup$-連続ならば、$\mu Z.\tau(Z) = \cup\tau^i(\textit{false})$
 
 <details class="filled-box">
 <summary>証明 (最大不動点について)</summary>
 
 $P = \cap\tau^i(S)$ を示すには、次の両立を示せば良い。
-- (1) $P \supseteq \cap\tau^i(S)$
-- (2) $P \subseteq \cap\tau^i(S)$
+- $P \supseteq \cap\tau^i(S)$
+- $P \subseteq \cap\tau^i(S)$
 
-**(1) $P \supseteq \cap\tau^i(S)$について:**<br>
+**($P \supseteq \cap\tau^i(S)$について)**<br>
 ::: {.indent}
-$S$は$\mathcal{P}(S)$の最大元なので、
-$$ S \supseteq \tau(S) $$
+Lemma 5.8より、次を満たす $j$ が存在する。
+$$ \forall k \geq j,\ \tau^k(S) = \tau^j(S) $$
 
-$\tau$は単調なので、両辺に$\tau$を$i$回適用しても大小は変わらず、
-$$ \tau^i(S) \supseteq \tau^{i+1}(S)$$
-
-よって、列 $\{ \tau^i(S)\}_i$ は単調減少するため、Lemma SP より、次を満たす$k$が存在する。<br>
-$$
-    \begin{align*}
-        (1)\ \ \ \ &\forall j > k,\  P_j = P_k\\
-        (2)\ \ \ \ &\cap \tau^i(S) = \tau^k(S)
-    \end{align*}
-$$
-
-(1)より $\tau^k(S)$ は不動点であるから、(2)より、$\cap \tau^i(S)$は不動点である。
-
+このとき、$\tau^j(S)$ は不動点である。<br>
+また、$\{\tau^j(S)_j\}$ は単調減少する列なので次が成り立つ。
+$$ \cup_i \tau^i(S) = \tau^j(S) $$
+したがって、$\cup_i \tau^i(S)$ は不動点である。<br>
 いま、$P$は最大不動点なので、
 $$ P \supseteq \cap \tau^i(S) $$
+が成り立つ。
 :::
 
-**(2) $P \subseteq \cap\tau^i(S)$について:**<br>
+**($P \subseteq \cap\tau^i(S)$について)**<br>
 ::: {.indent}
 $S$は$\mathcal{P}(S)$の最大元なので、
-$$ P \subseteq \tau(S) $$
+$$ P \subseteq S $$
 
 $\tau$は単調なので、両辺に$\tau$を$\infty$回適用しても大小は変わらず、
 $$ \tau^\infty(P) \subseteq \tau^\infty(S) $$
@@ -223,6 +212,8 @@ $P$は不動点なので左辺は$P$であり、また右辺は$\cap\tau^i(S)$�
 $$ P \subseteq \cap\tau^i(S) $$
 :::
 
+以上より、$\Rightarrow$ と $\Leftarrow$ が示されたので、最大不動点 $P = (\nu Z.\tau(Z))$ は $\cap\tau^i(S)$ に等しい。<br>
+$\square$
 </details>
 
 ### Lemma 5.6
@@ -234,47 +225,28 @@ $S$が有限で$\tau$が単調ならば、$\tau$は$\cup$-連続であり$\cap$-
 <details class="filled-box">
 <summary>証明 (<span class="math inline">\cup</span>-連続について)</summary>
 
-列 $\{P_i\}_i$は 単調増加するので、Lemma SPより、次を満たす $j$ が存在。
+列 $\{P_i\}_i$ は単調増加するので、Lemma 5.8の証明と同様にして、次を満たす $j$ の存在が示せる。<br>
 $$ \cup_i P_i = P_j $$
 
 よって、
 $$ \tau\left(\cup_i P_i\right) = \tau(P_j) $$
 
 また、$\tau$は単調なので、$j$について次も成り立つ。
-$$ \cup_i \tau(P_i) = \tau(P_{j_0}) $$
+$$ \cup_i \tau(P_i) = \tau(P_j) $$
 
 以上より、次が成立。
 $$ \tau\left(\cup_i P_i\right) = \cup_i \tau(P_i) $$
+$\square$
 
 </details>
 
-### Lemma 5.7
-$\tau$が単調ならば、任意の $i$ について次が成立。
-- $\tau^i(\textit{false}) \subseteq \tau^{i+1}(\textit{false})$
-- $\tau^i(\textit{true}) \supseteq \tau^{i+1}(\textit{true})$
-
-証明 : 数学的帰納法を使う。
-
-### Lemma 5.8
-$\tau$が単調で$S$が有限なら、次を満たす$i_0$, $j_0$が存在する。
-- $\forall k \geq i_0,\ \tau^k(\textit{false}) = \tau^{i_0}(\textit{false})$
-- $\forall k \geq j_0,\ \tau^k(\textit{true}) = \tau^{j_0}(\textit{true})$
-
-#### 証明
-Lemma 5.7 より 列 $\{\tau^i(\textit{false})\}_i$, $\{\tau^i(\textit{true})\}_i$ は単調である。<br>
-よって、Lemma SPより条件を満たす $i_0$, $j_0$ が存在する。
-
-
 ### Lemma 5.9
-$\tau$が単調で$S$が有限なら、次を満たす$i_0$, $j_0$が存在する。
-- $\mu Z.\tau(Z) = \tau^{i_0}(\textit{false})$
-- $\nu Z.\tau(Z) = \tau^{j_0}(\textit{true})$
-
-#### 直感的な意味
-$\textit{false}$/$\textit{true}$に$\tau$を適用し続けて収束したなら、それは最大不動点/最小不動点である。
+$\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
+- $\mu Z.\tau(Z) = \tau^i(\textit{false})$
+- $\nu Z.\tau(Z) = \tau^j(\textit{true})$
 
 #### 証明
-Theorem 5.5の主張2とLemma5.7, Lemma5.8 より示せる。
+Theorem 5.5の主張2, Lemma5.6, Lemma5.8 より示せる。
 
 <!-- これクイズにいいかもね -->
 

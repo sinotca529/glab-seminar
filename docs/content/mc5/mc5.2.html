@@ -86,7 +86,7 @@ Model-Checking CTL with Fairness Constraints</h1>
 Fairness constraints を扱えるよう、5.1節の手法を拡張すること。
 </dd>
 </dl>
-<p>この節では、Fiarness constraints を <span class="math inline">F = \{
+<p>以降では、Fiarness constraints を <span class="math inline">F = \{
 P_1, \cdots, P_k\}</span> と書く。</p>
 <h2 id="概要">概要</h2>
 <p>CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる。<br>
@@ -142,12 +142,13 @@ class="math inline">t</span>までのパスが存在</li>
                 T += t</code></pre></figure>
 <h2 id="計算量">計算量</h2>
 <p>Fair MSCCを求める部分は、例えば次のように <span
-class="math inline">O(|F|\cdot|S|)</span> 実装できる。<br>
-よって、<code>CheckFairEG</code>の計算量は<span
+class="math inline">O(|F|\cdot|S| + |R|)</span> で実装できる。<br>
+よって、<code>CheckFairEG</code>の計算量は(少し多めに見積もって) <span
 class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
 
 <figure><pre><code class="py">def get_all_fair_mscc(S):
     FairMSCCs = ∅
+    # O(|S| + |R|)
     MSCCs = get_all_mscc(S)
 
     # key: 状態
@@ -157,7 +158,7 @@ class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
     # O(|F||S|)
     for P in Fair {
         for s in P {
-            d[s] ∪= P
+            d[s] ∪= P # 実際にはベクタへのpush O(1) で良い
         }
     }
 
@@ -167,9 +168,9 @@ class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
     for m in MSCCs {
         local = ∅
         for s in m:
-            local ∪= map[s]
+            local ∪= map[s] # 実際にはベクタへのpush O(1) で良い
         if local.len() == |F|:
-            FairMSCCs ∪= m
+            FairMSCCs ∪= m  # 実際にはベクタへのpush O(1) で良い
     }
     return FairMSCCs</code></pre></figure>
 <h2 id="ex-eu">EX, EU</h2>

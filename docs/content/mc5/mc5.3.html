@@ -159,10 +159,11 @@ S&#39;</span> となる条件式 ( <em>predicate</em> )</li>
 <p>つまり、</p>
 <ul>
 <li><span class="math inline">\textit{true} = S</span></li>
-<li><span class="math inline">\textit{false} = \emptyset</span></li>
+<li><span class="math inline">\textit{false} =</span> <quiz><span
+class="math inline">\emptyset</span></quiz></li>
 </ul>
 <p>である。</p>
-<p>また、<span class="math inline">\tau</span> を<em>precitate
+<p>また、<span class="math inline">\tau</span> を <em>precitate
 toransformer</em> と呼ぶ。</p>
 <h3 id="単調-cup-連続-cap-連続-の定義">単調, <span
 class="math inline">\cup</span>-連続, <span
@@ -202,53 +203,61 @@ class="math inline">\cap</span>-continuous) とは:</dt>
 </p>
 
 <h2 id="不動点に関する定理補題">不動点に関する定理・補題</h2>
-<p>MC本とは一部順序を入れ替えている。</p>
-<h3 id="lemma-sp-単調な列の収束">Lemma SP (単調な列の収束)</h3>
-<h4 id="主張1--単調増加する列について">主張1 :
-単調増加する列について</h4>
-<p><span class="math inline">\mathcal{P}(S)</span> 上の 単調増加する列
-<span class="math inline">\{P_i\}_i</span> について、次を全て満たす
-<span class="math inline">k</span> が存在する。 <span
-class="math display">
-\begin{align*}
-&amp;k \leq |S|\\
-&amp;\forall j &lt; k,\  P_j \subset P_k\\
-&amp;\forall j &gt; k,\  P_j = P_k
-\end{align*}
-</span></p>
-<p>また、このとき次が成り立つ。 <span class="math display"> \lim_{i \to
-\infty} P_i = \bigcup_{i=0}^\infty P_i = P_k </span></p>
+<p>説明の都合上、MC本とは一部順序を入れ替えている。</p>
+<h3 id="lemma-57">Lemma 5.7</h3>
+<p><span class="math inline">\tau</span>が単調ならば、任意の <span
+class="math inline">i</span> について次が成立。</p>
+<ul>
+<li><span class="math inline">\tau^i(\textit{false}) \subseteq
+\tau^{i+1}(\textit{false})</span></li>
+<li><span class="math inline">\tau^i(\textit{true}) \supseteq
+\tau^{i+1}(\textit{true})</span></li>
+</ul>
+<p>証明 : 数学的帰納法を使う。</p>
+<h3 id="lemma-58">Lemma 5.8</h3>
+<p><span class="math inline">\tau</span>が単調で<span
+class="math inline">S</span>が有限なら、次を満たす<span
+class="math inline">i</span>, <span
+class="math inline">j</span>が存在する。</p>
+<ul>
+<li><span class="math inline">\forall k \geq i,\ \tau^k(\textit{false})
+= \tau^i(\textit{false})</span></li>
+<li><span class="math inline">\forall k \geq j,\ \tau^k(\textit{true}) =
+\tau^j(\textit{true})</span></li>
+</ul>
 <details class="filled-box">
-<summary>証明</summary>
+<summary>証明 (1つ目について)</summary>
 
-<p><span class="math inline">k</span> を <span class="math inline">P_i =
-P_{i+1}</span> が成り立つ最小の<span
-class="math inline">i</span>だとすると、次式が成り立つ。。 <span
-class="math display"> P_0 \subset P_1 \subset \cdots \subset P_{k-1}
-\subset P_k = P_{k+1} = \cdots </span></p>
-<p>ここで、<span class="math inline">P_i \subseteq S</span>
-であることを踏まえると、<span
-class="math inline">k</span>はたかだか<span
-class="math inline">|S|</span>である。</p>
-<p>したがって、この <span class="math inline">k</span>
-は3つの条件全てを満たす。</p>
+<p>示したい式は、次のように変形できる。 <span class="math display">
+\exist i, \forall k, (k \geq i) \Rightarrow \tau^k(\textit{false}) =
+\tau^i(\textit{false})</span></p>
+<p>背理法を用いて証明する。示すべき式の否定は次式である。 <span
+class="math display"> \forall i, \exist k, (k \geq i)
+\land  \tau^k(\textit{false}) \neq \tau^i(\textit{false})</span></p>
+<p>Lemma 5.7 より、列 <span
+class="math inline">\{\tau^j(\textit{false})_j\}</span>
+は単調増加列なので、次が成り立つ。 <span class="math display"> \forall
+i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \supset
+\tau^i(\textit{false})</span></p>
+<p>この式より、<span class="math inline">i = 0</span> について次を満たす
+<span class="math inline">l_1</span> の存在が言える。 <span
+class="math display"> \tau^{l_1} \supset \tau^0(\textit{false})
+</span></p>
+<p>また、同様に <span class="math inline">i = l_1</span>
+について次を満たす <span class="math inline">l_2</span> の存在が言える。
+<span class="math display"> \tau^{l_2} \supset
+\tau^{l_1}(\textit{false}) </span></p>
+<p>これを繰り返すことで、狭義単調な無限列 <span class="math inline">\{
+\tau^{l_j}(\textit{false}) \}_j</span> を得る (<span
+class="math inline">l_0 = 0</span> とした)。 このとき、<span
+class="math inline">|\tau^{l_j}| \geq j</span> であり、<span
+class="math inline">j = |S| + 1</span> のときそのサイズは <span
+class="math inline">|S| + 1</span> 以上となるが、これはドメインが <span
+class="math inline">\mathcal{P}(S)</span> であることに矛盾。</p>
+<p>よって仮定は誤りであり、示したい式の成立が示された。<br> <span
+class="math inline">\square</span></p>
 </details>
 
-<h4 id="主張2--単調減少する列について">主張2 :
-単調減少する列について</h4>
-<p><span class="math inline">\mathcal{P}(S)</span> 上の 単調減少する列
-<span class="math inline">\{P_i\}_i</span> について、次を全て満たす
-<span class="math inline">k</span> が存在する。 <span
-class="math display">
-\begin{align*}
-&amp;k \leq |S|\\
-&amp;\forall j &lt; k,\  P_j \supset P_k\\
-&amp;\forall j &gt; k,\  P_j = P_k
-\end{align*}
-</span></p>
-<p>また、このとき次が成り立つ。 <span class="math display"> \lim_{i \to
-\infty} P_i = \bigcap_{i=0}^\infty P_i = P_k </span></p>
-<p>(証明は主張1と同様。)</p>
 <h3 id="theorem-55-tarski-knaster">Theorem 5.5 (Tarski-Knaster)</h3>
 <h4 id="主張1">主張1</h4>
 <p><span class="math inline">\tau</span>が単調ならば、次で定義する{最大,
@@ -313,11 +322,11 @@ class="math inline">P</span> は <span class="math inline">\Gamma</span>
 
 <h4 id="主張2">主張2</h4>
 <ul>
-<li><span class="math inline">\tau</span>が<span
+<li><span class="math inline">\tau</span>が単調で<span
 class="math inline">\cap</span>-連続ならば、<span
 class="math inline">\nu Z.\tau(Z) =
 \cap\tau^i(\textit{true})</span></li>
-<li><span class="math inline">\tau</span>が<span
+<li><span class="math inline">\tau</span>が単調で<span
 class="math inline">\cup</span>-連続ならば、<span
 class="math inline">\mu Z.\tau(Z) =
 \cup\tau^i(\textit{false})</span></li>
@@ -328,39 +337,31 @@ class="math inline">\mu Z.\tau(Z) =
 <p><span class="math inline">P = \cap\tau^i(S)</span>
 を示すには、次の両立を示せば良い。</p>
 <ul>
-<li>(1) <span class="math inline">P \supseteq \cap\tau^i(S)</span></li>
-<li>(2) <span class="math inline">P \subseteq \cap\tau^i(S)</span></li>
+<li><span class="math inline">P \supseteq \cap\tau^i(S)</span></li>
+<li><span class="math inline">P \subseteq \cap\tau^i(S)</span></li>
 </ul>
-<p><strong>(1) <span class="math inline">P \supseteq
-\cap\tau^i(S)</span>について:</strong><br></p>
+<p><strong>(<span class="math inline">P \supseteq
+\cap\tau^i(S)</span>について)</strong><br></p>
 <div class="indent">
-<p><span class="math inline">S</span>は<span
-class="math inline">\mathcal{P}(S)</span>の最大元なので、 <span
-class="math display"> S \supseteq \tau(S) </span></p>
-<p><span class="math inline">\tau</span>は単調なので、両辺に<span
-class="math inline">\tau</span>を<span
-class="math inline">i</span>回適用しても大小は変わらず、 <span
-class="math display"> \tau^i(S) \supseteq \tau^{i+1}(S)</span></p>
-<p>よって、列 <span class="math inline">\{ \tau^i(S)\}_i</span>
-は単調減少するため、Lemma SP より、次を満たす<span
-class="math inline">k</span>が存在する。<br> <span class="math display">
-\begin{align*}
-(1)\ \ \ \ &amp;\forall j &gt; k,\  P_j = P_k\\
-(2)\ \ \ \ &amp;\cap \tau^i(S) = \tau^k(S)
-\end{align*}
-</span></p>
-<p>(1)より <span class="math inline">\tau^k(S)</span>
-は不動点であるから、(2)より、<span class="math inline">\cap
-\tau^i(S)</span>は不動点である。</p>
-<p>いま、<span class="math inline">P</span>は最大不動点なので、 <span
-class="math display"> P \supseteq \cap \tau^i(S) </span></p>
+<p>Lemma 5.8より、次を満たす <span class="math inline">j</span>
+が存在する。 <span class="math display"> \forall k \geq j,\ \tau^k(S) =
+\tau^j(S) </span></p>
+<p>このとき、<span class="math inline">\tau^j(S)</span>
+は不動点である。<br> また、<span
+class="math inline">\{\tau^j(S)_j\}</span>
+は単調減少する列なので次が成り立つ。 <span class="math display"> \cup_i
+\tau^i(S) = \tau^j(S) </span> したがって、<span
+class="math inline">\cup_i \tau^i(S)</span> は不動点である。<br>
+いま、<span class="math inline">P</span>は最大不動点なので、 <span
+class="math display"> P \supseteq \cap \tau^i(S) </span>
+が成り立つ。</p>
 </div>
-<p><strong>(2) <span class="math inline">P \subseteq
-\cap\tau^i(S)</span>について:</strong><br></p>
+<p><strong>(<span class="math inline">P \subseteq
+\cap\tau^i(S)</span>について)</strong><br></p>
 <div class="indent">
 <p><span class="math inline">S</span>は<span
 class="math inline">\mathcal{P}(S)</span>の最大元なので、 <span
-class="math display"> P \subseteq \tau(S) </span></p>
+class="math display"> P \subseteq S </span></p>
 <p><span class="math inline">\tau</span>は単調なので、両辺に<span
 class="math inline">\tau</span>を<span
 class="math inline">\infty</span>回適用しても大小は変わらず、 <span
@@ -371,6 +372,11 @@ class="math inline">P</span>であり、また右辺は<span
 class="math inline">\cap\tau^i(S)</span>に等しいので、 <span
 class="math display"> P \subseteq \cap\tau^i(S) </span></p>
 </div>
+<p>以上より、<span class="math inline">\Rightarrow</span> と <span
+class="math inline">\Leftarrow</span> が示されたので、最大不動点 <span
+class="math inline">P = (\nu Z.\tau(Z))</span> は <span
+class="math inline">\cap\tau^i(S)</span> に等しい。<br> <span
+class="math inline">\square</span></p>
 </details>
 
 <h3 id="lemma-56">Lemma 5.6</h3>
@@ -390,64 +396,33 @@ class="math inline">P_1 \supseteq P_2 \supseteq \cdots \implies
 <details class="filled-box">
 <summary>証明 (<span class="math inline">\cup</span>-連続について)</summary>
 
-<p>列 <span class="math inline">\{P_i\}_i</span>は
-単調増加するので、Lemma SPより、次を満たす <span
-class="math inline">j</span> が存在。 <span class="math display"> \cup_i
-P_i = P_j </span></p>
+<p>列 <span class="math inline">\{P_i\}_i</span>
+は単調増加するので、Lemma 5.8の証明と同様にして、次を満たす <span
+class="math inline">j</span> の存在が示せる。<br> <span
+class="math display"> \cup_i P_i = P_j </span></p>
 <p>よって、 <span class="math display"> \tau\left(\cup_i P_i\right) =
 \tau(P_j) </span></p>
 <p>また、<span class="math inline">\tau</span>は単調なので、<span
 class="math inline">j</span>について次も成り立つ。 <span
-class="math display"> \cup_i \tau(P_i) = \tau(P_{j_0}) </span></p>
+class="math display"> \cup_i \tau(P_i) = \tau(P_j) </span></p>
 <p>以上より、次が成立。 <span class="math display"> \tau\left(\cup_i
-P_i\right) = \cup_i \tau(P_i) </span></p>
+P_i\right) = \cup_i \tau(P_i) </span> <span
+class="math inline">\square</span></p>
 </details>
 
-<h3 id="lemma-57">Lemma 5.7</h3>
-<p><span class="math inline">\tau</span>が単調ならば、任意の <span
-class="math inline">i</span> について次が成立。</p>
-<ul>
-<li><span class="math inline">\tau^i(\textit{false}) \subseteq
-\tau^{i+1}(\textit{false})</span></li>
-<li><span class="math inline">\tau^i(\textit{true}) \supseteq
-\tau^{i+1}(\textit{true})</span></li>
-</ul>
-<p>証明 : 数学的帰納法を使う。</p>
-<h3 id="lemma-58">Lemma 5.8</h3>
-<p><span class="math inline">\tau</span>が単調で<span
-class="math inline">S</span>が有限なら、次を満たす<span
-class="math inline">i_0</span>, <span
-class="math inline">j_0</span>が存在する。</p>
-<ul>
-<li><span class="math inline">\forall k \geq i_0,\
-\tau^k(\textit{false}) = \tau^{i_0}(\textit{false})</span></li>
-<li><span class="math inline">\forall k \geq j_0,\ \tau^k(\textit{true})
-= \tau^{j_0}(\textit{true})</span></li>
-</ul>
-<h4 id="証明">証明</h4>
-<p>Lemma 5.7 より 列 <span
-class="math inline">\{\tau^i(\textit{false})\}_i</span>, <span
-class="math inline">\{\tau^i(\textit{true})\}_i</span>
-は単調である。<br> よって、Lemma SPより条件を満たす <span
-class="math inline">i_0</span>, <span class="math inline">j_0</span>
-が存在する。</p>
 <h3 id="lemma-59">Lemma 5.9</h3>
 <p><span class="math inline">\tau</span>が単調で<span
 class="math inline">S</span>が有限なら、次を満たす<span
-class="math inline">i_0</span>, <span
-class="math inline">j_0</span>が存在する。</p>
+class="math inline">i</span>, <span
+class="math inline">j</span>が存在する。</p>
 <ul>
 <li><span class="math inline">\mu Z.\tau(Z) =
-\tau^{i_0}(\textit{false})</span></li>
+\tau^i(\textit{false})</span></li>
 <li><span class="math inline">\nu Z.\tau(Z) =
-\tau^{j_0}(\textit{true})</span></li>
+\tau^j(\textit{true})</span></li>
 </ul>
-<h4 id="直感的な意味">直感的な意味</h4>
-<p><span class="math inline">\textit{false}</span>/<span
-class="math inline">\textit{true}</span>に<span
-class="math inline">\tau</span>を適用し続けて収束したなら、それは最大不動点/最小不動点である。</p>
-<h4 id="証明-1">証明</h4>
-<p>Theorem 5.5の主張2とLemma5.7, Lemma5.8 より示せる。</p>
+<h4 id="証明">証明</h4>
+<p>Theorem 5.5の主張2, Lemma5.6, Lemma5.8 より示せる。</p>
 <!-- これクイズにいいかもね -->
 
 <h2 id="不動点を計算するアルゴリズム">不動点を計算するアルゴリズム</h2>
