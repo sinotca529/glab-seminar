@@ -11,8 +11,10 @@ date: yyyy-mm-dd
 1. ${\llbracket f \rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash f\})$を求める。
 2. $S_0 \subseteq {\llbracket f \rrbracket}_M$ を調べる。
 
+2番は簡単なので、この節では1番にフォーカスする。
+
 ## この章の流れ
-- ([5.1節](./mc5.1.html)) クリプキ構造の陽な表示 (explicit representation)について、モデルチェックのアルゴリズムを示す。
+- ([5.1節](./mc5.1.html)) クリプキ構造の explicit representation について、モデル検査のアルゴリズムを示す。
 - ([5.2節](./mc5.2.html)) それに対し、公平性を踏まえた拡張をする。
 - ([5.3節](./mc5.3.html)) 不動点を用いたアルゴリズムを示す。
 

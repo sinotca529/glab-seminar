@@ -39,7 +39,7 @@
   <script>
     window.addEventListener("DOMContentLoaded", function() {
       document.querySelectorAll(".graphviz")
-        .forEach(e => e.innerHTML = Viz(e.innerText));
+        .forEach(e => e.innerHTML = Viz(e.textContent));
     });
   </script>
 
@@ -93,8 +93,8 @@ P_1, \cdots, P_k\}</span> と書く。</p>
 よって、5.1節と同じく、これらを処理する関数を設計すれば良い。</p>
 <p>このうち、¬, ∧, ∨ については5.1節で設計した関数を流用できる。</p>
 <p>この節では、残るEG, EX, EUについて考える。</p>
-<h2 id="textbfe_ftextbfgの処理"><span
-class="math inline">\textbf{E}_f\textbf{G}</span>の処理</h2>
+<h2 id="textbfe_ftextbfg-の処理"><span
+class="math inline">\textbf{E}_f\textbf{G}</span> の処理</h2>
 <h2 id="用語--公平なscc">用語 : 公平なSCC</h2>
 <p>クリプキ構造<span class="math inline">M</span>上のSCC <span
 class="math inline">C</span> が次を満たすとき、 <span
@@ -173,7 +173,9 @@ class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
             FairMSCCs ∪= m  # 実際にはベクタへのpush O(1) で良い
     }
     return FairMSCCs</code></pre></figure>
-<h2 id="ex-eu">EX, EU</h2>
+<h2 id="textbfe_ftextbfx-textbfe_ftextbfu-の処理"><span
+class="math inline">\textbf{E}_f\textbf{X}</span>, <span
+class="math inline">\textbf{E}_f\textbf{U}</span> の処理</h2>
 <h3 id="原子式-textitfair-の導入">原子式 <span
 class="math inline">\textit{fair}</span> の導入。</h3>
 <p>特別な原子式 <span class="math inline">\textit{fair}</span>
@@ -182,12 +184,14 @@ class="math inline">\textit{fair}</span> の導入。</h3>
 <p>なお、<span class="math inline">\textit{fair} =
 \textbf{E}_F\textbf{G}\textit{true}</span>
 であるから、<code>CheckFairEG(true)</code>で求まる。</p>
-<h3 id="exについて">EXについて</h3>
+<h3 id="textbfe_ftextbfx-について"><span
+class="math inline">\textbf{E}_f\textbf{X}</span> について</h3>
 <p><span class="math inline">M,s \vDash_F
 \textbf{E}_f\textbf{X}f_1</span>を検査するには、 <span
 class="math inline">M,s \vDash \textbf{EX}(f_1  \land
 \textit{fair})</span>を調べれば良い。</p>
-<h3 id="euについて">EUについて</h3>
+<h3 id="textbfe_ftextbfu-について"><span
+class="math inline">\textbf{E}_f\textbf{U}</span> について</h3>
 <p><span class="math inline">M,s \vDash_F \textbf{E}_f(f_1 \textbf{U}
 f_2)</span>を検査するには、 <span class="math inline">M,s \vDash
 \textbf{E}(f_1 \textbf{U} (f_2 \land

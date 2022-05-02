@@ -25,8 +25,16 @@
 
 
 
+  <!-- viz.js (graphviz) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/1.8.2/viz.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".graphviz")
+        .forEach(e => e.innerHTML = Viz(e.textContent));
+    });
+  </script>
 
-  <title>Model Checking (Sec.5.3a)</title>
+  <title>Model Checking (Sec.5.3)</title>
   <meta name="keywords" content="MC"/>
   <meta name="date" content="yyyy-mm-dd"/>
 
@@ -421,32 +429,51 @@ class="math inline">j</span>が存在する。</p>
 <li><span class="math inline">\nu Z.\tau(Z) =
 \tau^j(\textit{true})</span></li>
 </ul>
-<h4 id="証明">証明</h4>
-<p>Theorem 5.5の主張2, Lemma5.6, Lemma5.8 より示せる。</p>
-<!-- これクイズにいいかもね -->
-
+<h4 id="q-最小不動点について証明せよ">Q. 最小不動点について証明せよ</h4>
+<p><strong>材料 :</strong></p>
+<dl>
+<dt>(Lemma 5.6)</dt>
+<dd>
+<span class="math inline">S</span>が有限で<span
+class="math inline">\tau</span>が単調ならば、<span
+class="math inline">\tau</span>は<span
+class="math inline">\cup</span>-連続。
+</dd>
+<dt>(Theorem 5.5)</dt>
+<dd>
+<span class="math inline">\tau</span>が単調で<span
+class="math inline">\cup</span>-連続ならば、<span
+class="math inline">\mu Z.\tau(Z) = \cup\tau^i(\textit{false})</span>
+</dd>
+<dt>(Lemma 5.8)</dt>
+<dd>
+<span class="math inline">\tau</span>が単調で<span
+class="math inline">S</span>が有限なら、<span class="math inline">\exist
+i,\ \forall k \geq i,\ \tau^k(\textit{false}) =
+\tau^i(\textit{false})</span>
+</dd>
+</dl>
 <h2 id="不動点を計算するアルゴリズム">不動点を計算するアルゴリズム</h2>
 <p>上で見てきた定理・補題より、不動点は次のようにして求められる。</p>
 
 <figure><figcaption class="code-caption">最小不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Lfp(tau: PredicateTransformer) -&gt; Predicate:
-    prevQ = ∅
+    (prevQ, Q) = (∅, tau(∅))
     Q = tau(prevQ)
     while prevQ != Q:
-        prevQ = Q
-        Q = tau(prevQ)
+        (prevQ, Q) = (Q, tau(prevQ))
     return Q</code></pre></figure>
 
 <figure><figcaption class="code-caption">最大不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Mfp(tau: PredicateTransformer) -&gt; Predicate:
-    prevQ = S
+    (prevQ, Q) = (S, tau(S))
     Q = tau(prevQ)
     while prevQ != Q:
-        prevQ = Q
-        Q = tau(prevQ)
+        (prevQ, Q) = (Q, tau(prevQ))
     return Q</code></pre></figure>
 <h3 id="アルゴリズムの停止性-lfpについて">アルゴリズムの停止性
 (<code>Lfp</code>について)</h3>
-<p>Lemma SP より、ループは たかだか <span class="math inline">|S|</span>
-回で終わる。<br> よって関数<code>Lfp</code>は有限時間で停止する。</p>
+<p>Lemma 5.8の証明 より、ループは たかだか <span
+class="math inline">|S|</span> 回で終わる。<br>
+よって関数<code>Lfp</code>は有限時間で停止する。</p>
 <h2 id="fixpoint-based-reachability-analysis">Fixpoint-Based
 Reachability Analysis</h2>
 <dl>
@@ -456,17 +483,16 @@ Reachability Analysis</h2>
 class="math inline">M</span>について、初期状態から到達可能な状態の集合を求める解析。
 </dd>
 </dl>
-<p>不動点を用いて、reachability analysisをおこなう。</p>
-<p>まず、状態集合<span
+<p>不動点を用いて、reachability analysisをおこなう。<br>
+まず、状態集合<span
 class="math inline">Q</span>について、そこから1手で到達できる状態の集合<span
 class="math inline">\textit{post-image}(Q)</span>を定義する : <span
 class="math display"> \textit{post-image}(Q) = \{s&#39; \ |\ \exist s
-\in Q\ \text{ s.t. }\ R(s, s&#39;)\} </span></p>
-<p>これを用いて、<span class="math inline">\tau</span>を定義する : <span
-class="math display"> \tau(Q) = S_0 \cup \textit{post-image}(Q)
-</span></p>
-<p>このとき、最小不動点<span class="math inline">\mu
-Q.\tau(Q)</span>が、初期状態から到達可能な状態の集合となる。</p>
+\in Q\ \text{ s.t. }\ R(s, s&#39;)\} </span> これを用いて、<span
+class="math inline">\tau</span>を定義する : <span class="math display">
+\tau(Q) = S_0 \cup \textit{post-image}(Q) </span> このとき、最小不動点
+<span class="math inline">\mu Q.\tau(Q)</span>
+は、初期状態から到達可能な状態の集合である。</p>
 <h3
 id="reachability-analysis-の-m-vdash-textbfagp-の検査への応用">Reachability
 analysis の <span class="math inline">M \vDash \textbf{AG}p</span>
@@ -482,13 +508,11 @@ class="math inline">M \vDash \textbf{AG}p</span> を検査できる。</p>
 #   1. M ⊨ AG p を判定する
 #   2. AG p を満たす、到達可能な状態集合を求める
 def on_the_fly_Reach(M, p):
-    prevQ = ∅
-    Q = tau(prevQ)
+    (prevQ, Q) = (∅, tau(∅))
     while Q != prevQ:
         if ∃s ∈ Q s.t. s ⊭ p:
             return (&quot;Model doesn't satisfy AG p&quot;, ∅)
-        prevQ = Q
-        Q = tau(prevQ)
+        (prevQ, Q) = (Q, tau(Q))
     return (&quot;Model satisfy AG p&quot;, Q)</code></pre></figure>
 <h2 id="fixpoint-based-model-checking-algorithm-for-ctl">Fixpoint-Based
 Model-Checking Algorithm for CTL</h2>
@@ -515,56 +539,62 @@ Model-Checking Algorithm for CTL</h2>
 <p>EG, EU についてのみ証明する。</p>
 <h3 id="eu-について">EU について</h3>
 <h4 id="lemma-510">Lemma 5.10</h4>
-<p><span class="math inline">\textbf{E}(f_1 \textbf{U}
-f_2)</span>は、次で定義する関数<span
-class="math inline">\tau</span>の最小不動点である。 <span
-class="math display"> \tau(Z) = f_2 \lor (f_1 \land \textbf{EX}Z)
-</span></p>
+<p><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span>
+は、次で定義する関数 <span class="math inline">\tau</span>
+の最小不動点である。 <span class="math display"> \tau(Z) = f_2 \lor (f_1
+\land \textbf{EX}Z) </span></p>
 <details class="filled-box">
 <summary>証明</summary>
 
 <p>この <span class="math inline">\tau</span> は単調なので、Lemma
-5.6より、<span class="math inline">\cup</span>-連続である。<br>
-また、<span class="math inline">\textbf{E}(f_1 \textbf{U}
-f_2)</span>は<span
-class="math inline">\tau</span>の不動点である。<br></p>
+5.6より <span class="math inline">\cup</span>-連続である。<br>
+また、<span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span>,
+<span class="math inline">\tau(\textbf{E}(f_1 \textbf{U} f_2))</span>
+について <span class="math inline">\subseteq</span>, <span
+class="math inline">\supseteq</span> を調べることで、<span
+class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span> は <span
+class="math inline">\tau</span> の不動点とわかる。<br></p>
 <p>あとは、<span class="math inline">\textbf{E}(f_1 \textbf{U}
 f_2)</span>が最小不動点であること、つまり次を示せば良い。 <span
 class="math display"> \textbf{E}(f_1 \textbf{U} f_2) = \cup_i
 \tau^i(\textit{false}) </span></p>
-<p>これは次を示すのと同値である。</p>
-<ol type="1">
+<p>これは次の両立と同値である。</p>
+<ul>
 <li><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2) \supseteq
 \cup_i \tau^i(\textit{false})</span></li>
 <li><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2) \subseteq
 \cup_i \tau^i(\textit{false})</span></li>
-</ol>
-<p><strong>(1) <span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)
-\supseteq \cup_i \tau^i(\textit{false})</span> について</strong><br></p>
+</ul>
+<p><strong>(<span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)
+\supseteq \cup_i \tau^i(\textit{false})</span>
+について)</strong><br></p>
 <div class="indent">
 <p><span class="math inline">\textit{false}</span>
 は最小元であるから、<span class="math inline">\textbf{E}(f_1 \textbf{U}
 f_2) \supseteq \textit{false}</span> である。<br> この両辺に <span
 class="math inline">\tau</span> を <span class="math inline">i</span>
-回適用して、次式を得る。<br> (<span class="math inline">\textbf{E}(f_1
-\textbf{U} f_2)</span>が不動点であることを用いた。) <span
-class="math display"> \textbf{E}(f_1 \textbf{U} f_2) \supseteq
-\tau^i(\textit{false}) </span></p>
+回適用して、次式を得る。<br> <span class="math display">
+\tau^i(\textbf{E}(f_1 \textbf{U} f_2)) \supseteq \tau^i(\textit{false})
+</span> <span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span>
+は不動点なので、これは次のように変形できる。 <span class="math display">
+\textbf{E}(f_1 \textbf{U} f_2) \supseteq \tau^i(\textit{false})
+</span></p>
 <p><span class="math inline">i = 0, ...</span>
 についてこの式を考え、両辺の和集合を取って、次を得る。 <span
 class="math display"> \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i
 \tau^i(\textit{false}) </span></p>
 </div>
-<p><strong>(2) <span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)
-\subseteq \cup_i \tau^i(\textit{false})</span> について</strong><br></p>
+<p><strong>(<span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)
+\subseteq \cup_i \tau^i(\textit{false})</span>
+について)</strong><br></p>
 <div class="indent">
 <p><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span>
-を満たすパス <span class="math inline">\pi</span>
-のprefixの長さに関する帰納法を使う。<br> ここでprefixは、パス<span
+を満たすパス <span class="math inline">\pi</span> の prefix
+の長さに関する帰納法を使う。<br> ここで prefix は、パス<span
 class="math inline">\pi</span>の始点から、初めて<span
 class="math inline">f_2</span>を満たす状態までの部分パスを指す。<br></p>
 
-<figure><figcaption class="code-caption">prefixの長さがjのパス</figcaption><div class="graphviz">digraph G {
+<figure><figcaption class="code-caption">prefix の長さが j のパス</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
     N0 [xlabel=&quot;1&quot; label=&quot;f1&quot;]
@@ -575,25 +605,40 @@ class="math inline">f_2</span>を満たす状態までの部分パスを指す�
     N0 -&gt; N1 -&gt; N2 -&gt; N3 -&gt; N4
 }</div></figure>
 <p>prefixの長さが <span class="math inline">j</span>
-であるパスの始点全体の集合を <span class="math inline">S_j</span>
-と置き、次を示す。 <span class="math display"> \forall j,\ S_j \subseteq
-\tau^j(\textit{false}) </span></p>
-<p>[<span class="math inline">j = 1</span>のとき]<br> <span
-class="math inline">s \vDash f_2</span>なので、 <span
+なパスの始点の集合を <span class="math inline">S_j</span>
+と置き、次を帰納法で示す。 <span class="math display"> \forall j,\ S_j
+\subseteq \tau^j(\textit{false}) </span></p>
+<p><strong>[<span class="math inline">j =
+1</span>のとき]</strong><br></p>
+<div class="indent">
+<p><span class="math inline">s \vDash f_2</span>なので、 <span
 class="math display"> s \in (f_2 \lor (f_1 \land
 \textbf{EX}(\textit{false}))) = \tau(\textit{false}) \subseteq \cup_i
 \tau^i(\textit{false}) </span> よって成立。</p>
-<p>[<span class="math inline">j = k</span> のときの成立を仮定]<br>
-prefixの長さが<span class="math inline">k+1</span>なパス<span
-class="math inline">\pi = s_1, s_2, ...</span>を考える。<br> <span
-class="math inline">s_2</span>はprefixの長さが<span
-class="math inline">k</span>なパスの始点なので、仮定より<span
-class="math inline">s_2 \in \tau^k(false)</span>である。<br>
+</div>
+<p><strong>[<span class="math inline">j = k</span>
+のときの成立を仮定]</strong><br></p>
+<div class="indent">
+<p>prefix の長さが <span class="math inline">k+1</span> なパス <span
+class="math inline">\pi = s_1, s_2, ...</span> を考える。<br> <span
+class="math inline">s_2</span> は prefix の長さが <span
+class="math inline">k</span> なパスの始点なので、仮定より <span
+class="math inline">s_2 \in \tau^k(false)</span> である。<br>
 したがって、 <span class="math display"> s_1 \in (f_2 \lor (f_1 \land
 \textbf{EX}(\tau^k(\textit{false})))) = \tau^{k+1}(\textit{false})
 </span> であるから、<span class="math inline">j = k+1</span>
 においても成り立つ。</p>
 </div>
+<p>したがって、数学的帰納法によって <span class="math inline">\forall
+j,\ S_j \subseteq \tau^j(\textit{false})</span> が成り立つので、よって
+<span class="math inline">\textbf{E}(f_1 \textbf{U} f_2) \subseteq
+\cup_i \tau^i(\textit{false})</span> が成立。</p>
+</div>
+<p>以上より、<span class="math inline">\subseteq</span>, <span
+class="math inline">\supseteq</span> が示せたので、<span
+class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span> は <span
+class="math inline">\tau</span> の最小不動点である。<br> <span
+class="math inline">\square</span></p>
 </details>
 
 <h3 id="egについて">EGについて</h3>
@@ -619,14 +664,15 @@ s&#39;) \in R) \land (s&#39; \in \tau^{i_0}(\textit{true}))</span></li>
 
 <p><span class="math inline">\tau^{i_0}(\textit{true})</span>
 は不動点なので、<span class="math inline">\tau^{i_0}(\textit{true}) =
-\tau^{i_1}(\textit{true})</span>である。<br> そのため、<span
+\tau^{i_0 + 1}(\textit{true})</span> である。<br> そのため、<span
 class="math inline">s \in \tau^{i_0}(\textit{true})</span>
 のとき次が成り立つ。 <span class="math display">s \in
 \tau^{i_0}(\textit{true}) = \tau^{i_0 + 1}(\textit{true}) = (f_1 \land
 \textbf{EX}(\tau^{i_0}(\textit{true})))</span> よって、<span
 class="math inline">s \vDash f_1</span> であり、<span
 class="math inline">\exist s&#39; \ \text{ s.t. }\ ((s, s&#39;) \in R)
-\land (s&#39; \in \tau^{i_0}(\textit{true}))</span> である。</p>
+\land (s&#39; \in \tau^{i_0}(\textit{true}))</span> である。<br> <span
+class="math inline">\square</span></p>
 </details>
 
 <h4 id="lemma-513">Lemma 5.13</h4>
@@ -638,8 +684,8 @@ class="math inline">\tau(Z) = f_1 \land \textbf{EX}Z</span>
 
 <p><span class="math inline">s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash
 \textbf{EXEG}f_1</span> を示す。</p>
-<p><strong>(<span
-class="math inline">\Longrightarrow</span>について)</strong><br></p>
+<p><strong>(<span class="math inline">\Longrightarrow</span>
+について)</strong><br></p>
 <div class="indent">
 <p><span class="math inline">s_0 \vDash \textbf{EG}f_1</span>
 のとき、<span
@@ -652,12 +698,15 @@ class="math display"> \forall k,\ s_k \vDash f_1</span></p>
 \textbf{EG}f_1 \subseteq (f_1 \land \textbf{EXEG} f_1) </span>
 である。</p>
 </div>
-<p><strong>(<span
-class="math inline">\Longleftarrow</span>について)</strong><br></p>
+<p><strong>(<span class="math inline">\Longleftarrow</span>
+について)</strong><br></p>
 <div class="indent">
 <p>(<span class="math inline">\Rightarrow</span>)
 と同様の考察で示せる。</p>
 </div>
+<p>以上より、<span class="math inline">s_0 \vDash \textbf{EG}f_1 \iff
+s_0 \vDash \textbf{EXEG}f_1</span> である。<br> <span
+class="math inline">\square</span></p>
 </details>
 
 <h4 id="lemma-514">Lemma 5.14</h4>
@@ -667,28 +716,15 @@ class="math inline">\tau(Z) = f_1 \land \textbf{EX}(Z)</span>
 <details class="filled-box">
 <summary>証明</summary>
 
-<p>Lemma 5.11 より <span
-class="math inline">\tau</span>は単調なので、Lemma 5.6 より <span
-class="math inline">\cap</span>-連続である。<br>
-最大不動点であることを示すには、 <span
+<p>最大不動点であることを示すには、 <span
 class="math inline">\textbf{EG}f_1 = \cap_i \tau^i(\textit{true})</span>
-を示せば良い。<br></p>
+を示せば良い。<br> いま、Lemma 5.11 より <span
+class="math inline">\tau</span>は単調なので、Lemma 5.6 より <span
+class="math inline">\cap</span>-連続である。</p>
 <p><strong>(<span class="math inline">\textbf{EG} f_1 \subseteq \cap_i
 \tau^i (\textit{true})</span>について)</strong><br></p>
 <div class="indent">
-<p><span class="math inline">\forall i,\ \textbf{EG} f_1 \subseteq
-\tau^i (\textit{true})</span> を数学的帰納法で示す。<br> <strong>[<span
-class="math inline">i = 0</span> のとき]</strong><br> 自明。</p>
-<p><strong>[<span class="math inline">i = n</span>
-での成立を仮定]</strong><br> <span class="math inline">\textbf{EG} f_1
-\subseteq \tau^n (\textit{true})</span> を仮定する。<br> <span
-class="math inline">\tau</span> は単調なので、<span
-class="math inline">\tau(\textbf{EG} f_1) \subseteq
-\tau^{n+1}(\textit{true})</span>である。</p>
-<p>Lemma 5.13 より、<span class="math inline">\tau (\textbf{EG} f_1) =
-\textbf{EG} f_1</span> なので、 <span class="math display"> \textbf{EG}
-f_1 \subseteq \tau^{n+1}(\textit{true}) </span> よって <span
-class="math inline">i = n+1</span> でも成立。</p>
+<p>数学的帰納法で示せる。</p>
 </div>
 <p><strong>(<span class="math inline">\textbf{EG} f_1 \supseteq \cap_i
 \tau^i (\textit{true})</span>について)</strong><br></p>
@@ -701,6 +737,9 @@ Lemma 5.12 より、<span class="math inline">s</span> から始まり常に<spa
 class="math inline">f_1</span>を満たすパスが存在するので、<span
 class="math inline">s \vDash \textbf{EG} f_1</span> である。</p>
 </div>
+<p>以上より、<span class="math inline">\textbf{EG}f_1</span> は <span
+class="math inline">\tau(Z) = f_1 \land \textbf{EX}(Z)</span>
+の最大不動点である。<br> <span class="math inline">\square</span></p>
 </details>
 
 <h2 id="characterizing-fairness-with-fixpoints">Characterizing Fairness

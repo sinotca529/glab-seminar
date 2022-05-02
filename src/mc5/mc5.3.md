@@ -1,7 +1,9 @@
 ---
-title: Model Checking (Sec.5.3a)
+title: Model Checking (Sec.5.3)
 tag: MC
 date: yyyy-mm-dd
+plug:
+    graphviz: true
 ---
 
 # 5.3 CTL Model Checking via Fixpoint Computation
@@ -245,53 +247,54 @@ $\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
 - $\mu Z.\tau(Z) = \tau^i(\textit{false})$
 - $\nu Z.\tau(Z) = \tau^j(\textit{true})$
 
-#### 証明
-Theorem 5.5の主張2, Lemma5.6, Lemma5.8 より示せる。
+#### Q. 最小不動点について証明せよ
+**材料 :**
 
-<!-- これクイズにいいかもね -->
+(Lemma 5.6)
+: $S$が有限で$\tau$が単調ならば、$\tau$は$\cup$-連続。
+
+(Theorem 5.5)
+: $\tau$が単調で$\cup$-連続ならば、$\mu Z.\tau(Z) = \cup\tau^i(\textit{false})$
+
+
+(Lemma 5.8)
+: $\tau$が単調で$S$が有限なら、$\exist i,\ \forall k \geq i,\ \tau^k(\textit{false}) = \tau^i(\textit{false})$
 
 ## 不動点を計算するアルゴリズム
 上で見てきた定理・補題より、不動点は次のようにして求められる。
 
 ```py {caption=最小不動点を求めるアルゴリズム}
 def Lfp(tau: PredicateTransformer) -> Predicate:
-    prevQ = ∅
+    (prevQ, Q) = (∅, tau(∅))
     Q = tau(prevQ)
     while prevQ != Q:
-        prevQ = Q
-        Q = tau(prevQ)
+        (prevQ, Q) = (Q, tau(prevQ))
     return Q
 ```
 
 ```py {caption=最大不動点を求めるアルゴリズム}
 def Mfp(tau: PredicateTransformer) -> Predicate:
-    prevQ = S
+    (prevQ, Q) = (S, tau(S))
     Q = tau(prevQ)
     while prevQ != Q:
-        prevQ = Q
-        Q = tau(prevQ)
+        (prevQ, Q) = (Q, tau(prevQ))
     return Q
 ```
 
 ### アルゴリズムの停止性 (`Lfp`について)
-Lemma SP より、ループは たかだか $|S|$ 回で終わる。<br>
+Lemma 5.8の証明 より、ループは たかだか $|S|$ 回で終わる。<br>
 よって関数`Lfp`は有限時間で停止する。
 
 ## Fixpoint-Based Reachability Analysis
 Reachability Analysis:
 : クリプキ構造$M$について、初期状態から到達可能な状態の集合を求める解析。
 
-
-不動点を用いて、reachability analysisをおこなう。
-
+不動点を用いて、reachability analysisをおこなう。<br>
 まず、状態集合$Q$について、そこから1手で到達できる状態の集合$\textit{post-image}(Q)$を定義する :
 $$ \textit{post-image}(Q) = \{s' \ |\ \exist s \in Q\ \text{ s.t. }\ R(s, s')\} $$
-
 これを用いて、$\tau$を定義する :
 $$ \tau(Q) = S_0 \cup \textit{post-image}(Q) $$
-
-このとき、最小不動点$\mu Q.\tau(Q)$が、初期状態から到達可能な状態の集合となる。
-
+このとき、最小不動点 $\mu Q.\tau(Q)$ は、初期状態から到達可能な状態の集合である。
 
 ### Reachability analysis の $M \vDash \textbf{AG}p$ の検査への応用
 到達可能な状態すべてが$p$を満たすか調べることで、$M \vDash \textbf{AG}p$ を検査できる。
@@ -304,13 +307,11 @@ def tau(Q):
 #   1. M ⊨ AG p を判定する
 #   2. AG p を満たす、到達可能な状態集合を求める
 def on_the_fly_Reach(M, p):
-    prevQ = ∅
-    Q = tau(prevQ)
+    (prevQ, Q) = (∅, tau(∅))
     while Q != prevQ:
         if ∃s ∈ Q s.t. s ⊭ p:
             return ("Model doesn't satisfy AG p", ∅)
-        prevQ = Q
-        Q = tau(prevQ)
+        (prevQ, Q) = (Q, tau(Q))
     return ("Model satisfy AG p", Q)
 ```
 
@@ -330,39 +331,40 @@ EG, EU についてのみ証明する。
 
 ### EU について
 #### Lemma 5.10
-$\textbf{E}(f_1 \textbf{U} f_2)$は、次で定義する関数$\tau$の最小不動点である。
+$\textbf{E}(f_1 \textbf{U} f_2)$ は、次で定義する関数 $\tau$ の最小不動点である。
 $$ \tau(Z) = f_2 \lor (f_1 \land \textbf{EX}Z) $$
 
 <details class="filled-box">
 <summary>証明</summary>
 
-この $\tau$ は単調なので、Lemma 5.6より、$\cup$-連続である。<br>
-また、$\textbf{E}(f_1 \textbf{U} f_2)$は$\tau$の不動点である。<br>
+この $\tau$ は単調なので、Lemma 5.6より $\cup$-連続である。<br>
+また、$\textbf{E}(f_1 \textbf{U} f_2)$, $\tau(\textbf{E}(f_1 \textbf{U} f_2))$ について $\subseteq$, $\supseteq$ を調べることで、$\textbf{E}(f_1 \textbf{U} f_2)$ は $\tau$ の不動点とわかる。<br>
 
 あとは、$\textbf{E}(f_1 \textbf{U} f_2)$が最小不動点であること、つまり次を示せば良い。
 $$ \textbf{E}(f_1 \textbf{U} f_2) = \cup_i \tau^i(\textit{false}) $$
 
-これは次を示すのと同値である。
-1. $\textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false})$
-2. $\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$
+これは次の両立と同値である。
+- $\textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false})$
+- $\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$
 
-**(1) $\textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false})$ について**<br>
+**($\textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false})$ について)**<br>
 ::: {.indent}
 $\textit{false}$ は最小元であるから、$\textbf{E}(f_1 \textbf{U} f_2) \supseteq \textit{false}$ である。<br>
 この両辺に $\tau$ を $i$ 回適用して、次式を得る。<br>
-($\textbf{E}(f_1 \textbf{U} f_2)$が不動点であることを用いた。)
+$$ \tau^i(\textbf{E}(f_1 \textbf{U} f_2)) \supseteq \tau^i(\textit{false}) $$
+$\textbf{E}(f_1 \textbf{U} f_2)$ は不動点なので、これは次のように変形できる。
 $$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \tau^i(\textit{false}) $$
 
 $i = 0, ...$ についてこの式を考え、両辺の和集合を取って、次を得る。
 $$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false}) $$
 :::
 
-**(2) $\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ について**<br>
+**($\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ について)**<br>
 ::: {.indent}
-$\textbf{E}(f_1 \textbf{U} f_2)$ を満たすパス $\pi$ のprefixの長さに関する帰納法を使う。<br>
-ここでprefixは、パス$\pi$の始点から、初めて$f_2$を満たす状態までの部分パスを指す。<br>
+$\textbf{E}(f_1 \textbf{U} f_2)$ を満たすパス $\pi$ の prefix の長さに関する帰納法を使う。<br>
+ここで prefix は、パス$\pi$の始点から、初めて$f_2$を満たす状態までの部分パスを指す。<br>
 
-```graphviz {caption="prefixの長さがjのパス"}
+```graphviz {caption="prefix の長さが j のパス"}
 digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
@@ -375,21 +377,29 @@ digraph G {
 }
 ```
 
-prefixの長さが $j$ であるパスの始点全体の集合を $S_j$ と置き、次を示す。
+prefixの長さが $j$ なパスの始点の集合を $S_j$ と置き、次を帰納法で示す。
 $$ \forall j,\ S_j \subseteq \tau^j(\textit{false}) $$
 
-\[$j = 1$のとき\]<br>
+**\[$j = 1$のとき\]**<br>
+:::::: {.indent}
 $s \vDash f_2$なので、
 $$ s \in (f_2 \lor (f_1 \land \textbf{EX}(\textit{false}))) = \tau(\textit{false}) \subseteq \cup_i \tau^i(\textit{false}) $$
 よって成立。
+::::::
 
-\[$j = k$ のときの成立を仮定\]<br>
-prefixの長さが$k+1$なパス$\pi = s_1, s_2, ...$を考える。<br>
-$s_2$はprefixの長さが$k$なパスの始点なので、仮定より$s_2 \in \tau^k(false)$である。<br>
+**\[$j = k$ のときの成立を仮定\]**<br>
+:::::: {.indent}
+prefix の長さが $k+1$ なパス $\pi = s_1, s_2, ...$ を考える。<br>
+$s_2$ は prefix の長さが $k$ なパスの始点なので、仮定より $s_2 \in \tau^k(false)$ である。<br>
 したがって、
 $$ s_1 \in (f_2 \lor (f_1 \land \textbf{EX}(\tau^k(\textit{false})))) = \tau^{k+1}(\textit{false}) $$
 であるから、$j = k+1$ においても成り立つ。
+::::::
+したがって、数学的帰納法によって $\forall j,\ S_j \subseteq \tau^j(\textit{false})$ が成り立つので、よって $\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ が成立。
 :::
+
+以上より、$\subseteq$, $\supseteq$ が示せたので、$\textbf{E}(f_1 \textbf{U} f_2)$ は $\tau$ の最小不動点である。<br>
+$\square$
 </details>
 
 ### EGについて
@@ -407,10 +417,11 @@ $\tau(Z) = f_1 \land \textbf{EX}Z$, 列 $\{ \tau^i(\textit{true}) \}_i$ の極�
 <details class="filled-box">
 <summary>証明</summary>
 
-$\tau^{i_0}(\textit{true})$ は不動点なので、$\tau^{i_0}(\textit{true}) = \tau^{i_1}(\textit{true})$である。<br>
+$\tau^{i_0}(\textit{true})$ は不動点なので、$\tau^{i_0}(\textit{true}) = \tau^{i_0 + 1}(\textit{true})$ である。<br>
 そのため、$s \in \tau^{i_0}(\textit{true})$ のとき次が成り立つ。
 $$s \in \tau^{i_0}(\textit{true}) = \tau^{i_0 + 1}(\textit{true}) = (f_1 \land \textbf{EX}(\tau^{i_0}(\textit{true})))$$
-よって、$s \vDash f_1$ であり、$\exist s' \ \text{ s.t. }\ ((s, s') \in R) \land (s' \in \tau^{i_0}(\textit{true}))$ である。
+よって、$s \vDash f_1$ であり、$\exist s' \ \text{ s.t. }\ ((s, s') \in R) \land (s' \in \tau^{i_0}(\textit{true}))$ である。<br>
+$\square$
 </details>
 
 #### Lemma 5.13
@@ -421,7 +432,7 @@ $\textbf{EG} f_1$ は $\tau(Z) = f_1 \land \textbf{EX}Z$ の不動点である�
 
 $s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash \textbf{EXEG}f_1$ を示す。
 
-**($\Longrightarrow$について)**<br>
+**($\Longrightarrow$ について)**<br>
 ::: {.indent}
 $s_0 \vDash \textbf{EG}f_1$ のとき、$\textbf{EG}$の定義より次を満たすパス $\pi = s_0, s_1, ...$ が存在する。<br>
 $$ \forall k,\ s_k \vDash f_1$$
@@ -432,10 +443,12 @@ $$ \textbf{EG}f_1 \subseteq (f_1 \land \textbf{EXEG} f_1) $$
 である。
 :::
 
-**($\Longleftarrow$について)**<br>
+**($\Longleftarrow$ について)**<br>
 ::: {.indent}
 ($\Rightarrow$) と同様の考察で示せる。
 :::
+以上より、$s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash \textbf{EXEG}f_1$ である。<br>
+$\square$
 </details>
 
 #### Lemma 5.14
@@ -444,22 +457,12 @@ $\textbf{EG}f_1$ は $\tau(Z) = f_1 \land \textbf{EX}(Z)$ の最大不動点で�
 <details class="filled-box">
 <summary>証明</summary>
 
-Lemma 5.11 より $\tau$は単調なので、Lemma 5.6 より $\cap$-連続である。<br>
 最大不動点であることを示すには、 $\textbf{EG}f_1 = \cap_i \tau^i(\textit{true})$ を示せば良い。<br>
+いま、Lemma 5.11 より $\tau$は単調なので、Lemma 5.6 より $\cap$-連続である。
 
 **($\textbf{EG} f_1 \subseteq \cap_i \tau^i (\textit{true})$について)**<br>
 ::: {.indent}
-$\forall i,\ \textbf{EG} f_1 \subseteq \tau^i (\textit{true})$ を数学的帰納法で示す。<br>
-**\[$i = 0$ のとき\]**<br>
-自明。
-
-**\[$i = n$ での成立を仮定\]**<br>
-$\textbf{EG} f_1 \subseteq \tau^n (\textit{true})$ を仮定する。<br>
-$\tau$ は単調なので、$\tau(\textbf{EG} f_1) \subseteq \tau^{n+1}(\textit{true})$である。
-
-Lemma 5.13 より、$\tau (\textbf{EG} f_1) = \textbf{EG} f_1$ なので、
-$$ \textbf{EG} f_1 \subseteq \tau^{n+1}(\textit{true}) $$
-よって $i = n+1$ でも成立。
+数学的帰納法で示せる。
 :::
 
 **($\textbf{EG} f_1 \supseteq \cap_i \tau^i (\textit{true})$について)**<br>
@@ -468,6 +471,8 @@ $$ \textbf{EG} f_1 \subseteq \tau^{n+1}(\textit{true}) $$
 このとき、$s$は不動点 $\tau^{i_0}(\textit{true})$に含まれる。<br>
 Lemma 5.12 より、$s$ から始まり常に$f_1$を満たすパスが存在するので、$s \vDash \textbf{EG} f_1$ である。
 :::
+以上より、$\textbf{EG}f_1$ は $\tau(Z) = f_1 \land \textbf{EX}(Z)$ の最大不動点である。<br>
+$\square$
 </details>
 
 ## Characterizing Fairness with Fixpoints

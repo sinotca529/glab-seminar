@@ -21,7 +21,7 @@ CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる�
 
 この節では、残るEG, EX, EUについて考える。
 
-## $\textbf{E}_f\textbf{G}$の処理
+## $\textbf{E}_f\textbf{G}$ の処理
 ## 用語 : 公平なSCC
 クリプキ構造$M$上のSCC $C$ が次を満たすとき、 $C$ は $F$ について公平である。
 $$ \forall P_i \in F,\ \exist t_i \in (C \cup P_i) $$
@@ -97,18 +97,18 @@ def get_all_fair_mscc(S):
     return FairMSCCs
 ```
 
-## EX, EU
+## $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ の処理
 ### 原子式 $\textit{fair}$ の導入。
 特別な原子式 $\textit{fair}$ を定義する。
 $$ s \vDash \textit{fair} \iff \text{(There is a fair path starting from } s \text{. )} $$
 
 なお、$\textit{fair} = \textbf{E}_F\textbf{G}\textit{true}$ であるから、`CheckFairEG(true)`で求まる。
 
-### EXについて
+### $\textbf{E}_f\textbf{X}$ について
 $M,s \vDash_F \textbf{E}_f\textbf{X}f_1$を検査するには、
 $M,s \vDash \textbf{EX}(f_1  \land \textit{fair})$を調べれば良い。
 
-### EUについて
+### $\textbf{E}_f\textbf{U}$ について
 $M,s \vDash_F \textbf{E}_f(f_1 \textbf{U} f_2)$を検査するには、
 $M,s \vDash \textbf{E}(f_1 \textbf{U} (f_2 \land \textit{fair})))$を調べれば良い。
 
