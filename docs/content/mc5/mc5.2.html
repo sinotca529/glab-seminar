@@ -45,7 +45,7 @@
 
   <title>Model Checking (Sec.5.2)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd"/>
+  <meta name="date" content="yyyy-mm-dd(2)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -74,7 +74,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd</date>
+  <date>yyyy-mm-dd(2)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -83,16 +83,23 @@ Model-Checking CTL with Fairness Constraints</h1>
 <dl>
 <dt>この節の目的:</dt>
 <dd>
-Fairness constraints を扱えるよう、5.1節の手法を拡張すること。
+公平性を扱えるよう、5.1節の手法を拡張すること。
 </dd>
 </dl>
 <p>以降では、Fiarness constraints を <span class="math inline">F = \{
 P_1, \cdots, P_k\}</span> と書く。</p>
 <h2 id="概要">概要</h2>
-<p>CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる。<br>
-よって、5.1節と同じく、これらを処理する関数を設計すれば良い。</p>
-<p>このうち、¬, ∧, ∨ については5.1節で設計した関数を流用できる。</p>
-<p>この節では、残るEG, EX, EUについて考える。</p>
+<p>公平性を踏まえたCTL式は、¬, ∧, ∨, <span
+class="math inline">\textbf{E}_f\textbf{G}</span>, <span
+class="math inline">\textbf{E}_f\textbf{X}</span>, <span
+class="math inline">\textbf{E}_f\textbf{U}</span>
+だけの形に変形(正規化)できる。<br>
+よって、5.1節と同じく、これらを処理する関数を設計すれば良い。<br>
+このうち、¬, ∧, ∨ については5.1節で設計した関数を流用できる。</p>
+<p>この節では、残る <span
+class="math inline">\textbf{E}_f\textbf{G}</span>, <span
+class="math inline">\textbf{E}_f\textbf{X}</span>, <span
+class="math inline">\textbf{E}_f\textbf{U}</span> について考える。</p>
 <h2 id="textbfe_ftextbfg-の処理"><span
 class="math inline">\textbf{E}_f\textbf{G}</span> の処理</h2>
 <h2 id="用語--公平なscc">用語 : 公平なSCC</h2>
@@ -173,6 +180,34 @@ class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
             FairMSCCs ∪= m  # 実際にはベクタへのpush O(1) で良い
     }
     return FairMSCCs</code></pre></figure>
+<p>Q. 2つの MSCC が共通部分を持つことがないのはなぜか？</p>
+<details class="filled-box">
+<summary>答え</summary>
+
+<p>MSCC <span class="math inline">A</span> と <span
+class="math inline">B</span> について、<span class="math inline">A \cap
+B = \emptyset</span> を背理法で示す。<br> <span class="math inline">s
+\in A \cap B</span> を仮定する。<br> このとき、<span
+class="math inline">\forall a \in A</span>, <span
+class="math inline">\forall b \in B</span> について次が言える。</p>
+<ul>
+<li><span class="math inline">A</span> は SCC なので、<span
+class="math inline">a</span> から <span class="math inline">s</span>
+へのパスが存在する。</li>
+<li><span class="math inline">B</span> は SCC なので、<span
+class="math inline">s</span> から <span class="math inline">b</span>
+へのパスが存在する。</li>
+</ul>
+<p>したがって、<span class="math inline">a</span> から <span
+class="math inline">b</span> へのパスが存在するため、<span
+class="math inline">A \cup B</span> は SCC である。<br> このとき、<span
+class="math inline">A \subset (A \cup B)</span> であるが、これは <span
+class="math inline">A</span> が MSCC であることに矛盾する。<br>
+よって仮定は誤りであり、<span class="math inline">A \cap B =
+\emptyset</span> の成立が示された。<br> <span
+class="math inline">\square</span></p>
+</details>
+
 <h2 id="textbfe_ftextbfx-textbfe_ftextbfu-の処理"><span
 class="math inline">\textbf{E}_f\textbf{X}</span>, <span
 class="math inline">\textbf{E}_f\textbf{U}</span> の処理</h2>

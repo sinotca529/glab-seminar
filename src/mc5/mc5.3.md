@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5.3)
 tag: MC
-date: yyyy-mm-dd
+date: yyyy-mm-dd(3)
 plug:
     graphviz: true
 ---
@@ -16,7 +16,7 @@ plug:
 | 5.1節の手法 | 各状態・遷移 | $\propto \|S\|$   | 大きい                   |
 | 5.3節の手法 | 状態集合     | $\propto \|S\|^2$ | (OBDDと併用すれば)小さい |
 
-## 節の流れ
+## この節の流れ
 1. 前準備
    - 不動点の定義
    - 単調, $\cup$-連続, $\cap$-連続 の定義
@@ -49,7 +49,7 @@ $$ \tau(p) = p $$
 $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 不動点を用いたモデル検査は、ドメインを $\mathcal{P}(S)$ として、次の手順でおこなわれる。
 
-1. 関数 $\tau$ を、その(最大/最小)不動点が $\llbracket f \rrbracket_M$ となるよう設計する。
+1. 関数 $\tau$ を、その最大 or 最小不動点が $\llbracket f \rrbracket_M$ となるよう設計する。
 2. $\tau$ の不動点を求める。
 
 以下では、次の2つを同一視する。
@@ -57,7 +57,7 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 -  $\llbracket \cdot \rrbracket = S'$ となる条件式 ( *predicate* )
 
 つまり、
-- $\textit{true} = S$
+- $\textit{true} =$ <quiz>$S$</quiz>
 - $\textit{false} =$ <quiz>$\emptyset$</quiz>
 
 である。
@@ -83,7 +83,7 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 </p>
 
 ## 不動点に関する定理・補題
-説明の都合上、MC本とは一部順序を入れ替えている。
+説明の都合上、MC本とは順序・証明を一部変えている。
 
 ### Lemma 5.7
 $\tau$が単調ならば、任意の $i$ について次が成立。
@@ -577,10 +577,11 @@ $\square$
 よって、右辺を検査することで $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ を検査できる。
 
 ## Fxipoint Characterization over Finite Paths
-今まで、クリプキ構造が left-total であることを仮定していた。<br>
-この仮定を外すと、CTL式に対応付けた $\tau$ も大きく変える必要がある。<br>
+今までは、left-total な (任意のノードが子を持つ) クリプキ構造を仮定していた。<br>
+ここでは、left-total でないクリプキ構造について考える。<br>
+そのためには、CTL式に対応付けた $\tau$ をいくつか変える必要がある。<br>
 
-まずは、有限パスに関する temporal operator を定義する :
+まずは、有限パスに関する temporal operator を定義しておく :
 $$
   \begin{align*}
     M,\pi \vDash \textbf{F} g_1 &\iff \exist 0 \leq i \leq \textit{length}(\pi)\ \text{ s.t. }\ M,\pi^i \vDash g_1\\
@@ -588,15 +589,28 @@ $$
   \end{align*}
 $$
 
-この元で、$\tau$ は次のように変更される。
-$$
-  \begin{align*}
-    \llbracket \textbf{AF} f_1 \rrbracket_M &= \mu Z.(f_1 \lor (\textbf{AX}Z \land \textbf{EX}\textit{true}))\\
-    \llbracket \textbf{EG} f_1 \rrbracket_M &= \nu Z.(f_1 \land (\textbf{EX}Z \lor \textbf{AX}\textit{false}))
-  \end{align*}
-$$
+以下では代表として、$\llbracket \textbf{AF} f_1 \rrbracket_M$ と $\llbracket \textbf{EG} f_1 \rrbracket_M$ の変化を観察する。
 
-同様に、他のCTL式についても fixpoint characterization が定義できる。<br>
+### $\llbracket \textbf{AF} f_1 \rrbracket_M$ について
+Left-total では:
+- $\mu Z.(f_1 \lor \textbf{AX}Z)$
 
-$\textbf{AF} f_1$ について、もし ある状態が$f_1$を満たさないなら、その状態には子がなくてはならない。
-これは left-total なら不要な制約。
+Not left-total では:
+- $\mu Z.(f_1 \lor (\textbf{AX}Z \land \textbf{EX}\textit{true}))$
+
+Left-total でない場合、子ノードが無いノードが存在する。<br>
+しかし、$f_1$ を満たさない場合は子ノードが存在する必要がある。<br>
+よって、子ノードの存在を保証するべく $\textbf{EX}\textit{true}$ が条件に加わる。
+
+### $\llbracket \textbf{EG} f_1 \rrbracket_M$ について
+Left-total では:
+- $\nu Z.(f_1 \land \textbf{EX}Z)$
+
+Not left-total では:
+- $\nu Z.(f_1 \land (\textbf{EX}Z \lor \textbf{AX}\textit{false})$
+
+Left-total でない場合、パスが終了する可能性も考える必要がある。<br>
+よって、子ノードがない場合にのみ満たされる $\textbf{AX}\textit{false}$ が条件に加わる。
+
+---
+次節 : [振り返り & Bibriographic Notes](mc5.html)

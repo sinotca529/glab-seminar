@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5.1)
 tag: MC
-date: yyyy-mm-dd
+date: yyyy-mm-dd(1)
 plug:
     graphviz: true
     pseudocode: true
@@ -9,35 +9,39 @@ plug:
 
 # 5.1 Explicit-State CTL Model Checking
 この節の目的:
-: クリプキ構造の explicit representation を検査するアルゴリズムの説明。
+: クリプキ構造の explicit representation  を検査するのアルゴリズムを示す。
 
 ## アルゴリズム概要
 ### 入出力
-- 入力 : クリプキ構造$M$, CTL式 $f$
+- 入力 : クリプキ構造 $M$, CTL式 $f$
 - 出力 : ${\llbracket f \rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash f\})$
 
 ### 背景
-CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる。<br>
+CTL式は、¬, ∧, ∨, EX, EU, EG だけの形に変形(正規化)できる。<br>
 よって、変形後の式について ${\llbracket f \rrbracket}_M$ が得られれば十分。
 
-なお、正規化による式の大きさの増加は線形である。
-
 ### 方針
-状態 $s$ に付いているラベルの集合を、$\textit{label}(s)$ とおく。<br>
-$\textit{label}(s)$に、状態 $s$ が満たすCTL式を加えていく。<br>
-最終的に $f \in \textit{label}(s)$ であれば、$s \in \llbracket f \rrbracket_M$ である。
+状態 $s$ に貼られたラベルの集合を、$\textit{label}(s)$ とおく。<br>
 
-具体的には、次のアルゴリズムを使う。<br>
-このアルゴリズムは、$f$ の部分式について、ネストの浅い (構造が単純な) ものから順に、それを満たす全状態にラベルを貼っていく。
+方針は次の通り :
+1. $\textit{label}(s)$に、状態 $s$ が満たすCTL式を加えていく。
+2. 最終的に $f \in \textit{label}(s)$ であれば、$s \in \llbracket f \rrbracket_M$ である。
 
-```py {caption=${\llbracket f \rrbracket}_M$を得るアルゴリズム}
+## アルゴリズム全体
+$f$ の部分式について、ネストの浅い (構造が単純な) ものから順に、それを満たす全状態にラベルを貼っていく。
+
+ネストの例 ($f, g, u \in \textbf{AP}$):
+- $f$ のネストは0
+- $f \land g$ のネストは1
+- $(f \land g) \lor u$ のネストは2
+
+```py {caption="<span class='math inline'>{\llbracket f \rrbracket}_M</span> を得るアルゴリズム"}
+# f は正規化しておく
 def set_of_state_which_sat_f(M, f):
-    f = f.normalize()
-
     # ネストの浅い (構造が単純な) 部分式から処理する
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            f1         => CheckAtomic(f1), # Do nothing.
+            atom       => # Do nothing.
             ¬f1       => CheckNot(f1),
             (f1 ∧ f2) => CheckAnd(f1, f2),
             (f1 ∨ f2) => CheckOr(f1, f2),
@@ -55,25 +59,25 @@ def set_of_state_which_sat_f(M, f):
 ```py {caption=CheckNot}
 # O(|S|)
 def CheckNot(f1):
-    T := {s | f1 ∉ label(s)}
-    for s in T:
-        label(s) += ¬f1
+    for s in S:
+        if f1 ∉ label(s):
+            label(s) += ¬f1
 ```
 
 ```py {caption=CheckAnd}
 # O(|S|)
 def CheckAnd(f1, f2):
-    T := {s | f1 ∈ label(s) and f2 ∈ label(s)}
-    for s in T:
-        label(s) += f1 ∧ f2
+    for s in S:
+        if f1 ∈ label(s) and f2 ∈ label(s)
+            label(s) += f1 ∧ f2
 ```
 
 ```py {caption=CheckOr}
 # O(|S|)
 def CheckOr(f1, f2):
-    T := {s | f1 ∈ label(s) or f2 ∈ label(s)}
-    for s in T:
-        label(s) += f1 ∨ f2
+    for s in S:
+        if f1 ∈ label(s) or f2 ∈ label(s):
+            label(s) += f1 ∨ f2
 ```
 
 ```py {caption=CheckEX}
@@ -98,7 +102,7 @@ def CheckEU(f1, f2):
         for t in s.parents():
             if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
                 label(t) += E(f1 U f2)
-                T.push(t)n
+                T.push(t)
 ```
 
 ### 動作
@@ -141,7 +145,7 @@ digraph G {
 ```
 
 ### 計算量
-前半部分は$O(|S|)$で計算できる。
+前半部分は $O(|S|)$ で計算できる。
 ```py {caption=前半部分}
 T := {s | f2 ∈ label(s)}
 for s in T:
@@ -149,18 +153,18 @@ for s in T:
 ```
 <br>
 
-後半部分は$O(|R|)$で計算できる。<br>
-(`s.parents()` の総和は $|R|$ なので、`for` は合計$|R|$回まわる。)
+後半部分は $O(|R|)$ で計算できる。<br>
+(`s.parents()` の総和は $|R|$ なので、`for` は合計 $|R|$ 回まわる。)
 ```py {caption=後半部分}
 while T != ∅:
     s = T.pop()
     for t in s.parents():
         if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
             label(t) += E(f1 U f2)
-            T.push(t)n
+            T.push(t)
 ```
 
-なお、`s.parents()`は $O(|R|)$ で事前に計算しておける。
+なお、`s.parents()` は $O(|R|)$ で事前に計算しておける。
 ```py { caption="<code>s.parents()</code>を求める処理"}
 for (parent, child) in R:
     child.parents() += parent
@@ -191,9 +195,9 @@ $$
 $$
 
 ### Lemma 5.1
-$M,s \vDash \text{EG}f_1$ は、次の2条件を両方満たすことと同値である。
+$M,s \vDash \text{EG}f_1$ は、次の2条件の両立と同値である。
 1. $s \in S'$
-2. $M'$上に、$s$ から グラフ$(S', R')$の nontrivial MSCC上のノード $t$ までのパスが存在
+2. $M'$ 上に、$s$ から グラフ $(S', R')$ の nontrivial MSCC上のノード $t$ までのパスが存在
 
 <details class="filled-box">
 <summary>証明</summary>
@@ -247,23 +251,22 @@ def CheckEG(f1):
 ```
 
 ### 計算量
-MSCCは$O(|S| + |R|)$で求まる。<br>
-また、`for`文は合計$|R|$回回る。<br>
-よって、`CheckEG`の計算量は$O(|S| + |R|)$である。
+MSCCは $O(|S| + |R|)$ で[求まる](https://manabitimes.jp/math/1250)。<br>
+また、`for` 文は合計 $|R|$ 回回る。<br>
+よって、`CheckEG` の計算量は $O(|S| + |R|)$ である。
 
 ## アルゴリズム全体の計算量
-- `CheckXX`はすべて$O(|S|+|R|)$
-- 処理する部分式の数は高々$|f|$
+- `CheckXX`はすべて $O(|S|+|R|)$
+- 処理する部分式の数は高々 $|f|$ 個
 
 よって、全体の計算量は$O(|f|\cdot(|S|+|R|))$である。
 ```py {caption=${\llbracket f \rrbracket}_M$を得るアルゴリズム(再掲)}
+# f は正規化しておく
 def set_of_state_which_sat_f(M, f):
-    f = f.normalize()
-
     # ネストの浅い (構造が単純な) 部分式から処理する
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            f1         => CheckAtomic(f1), # Do nothing.
+            atom       => # Do nothing.
             ¬f1       => CheckNot(f1),
             (f1 ∧ f2) => CheckAnd(f1, f2),
             (f1 ∨ f2) => CheckOr(f1, f2),
@@ -274,7 +277,7 @@ def set_of_state_which_sat_f(M, f):
 ```
 
 ## 具体例
-次のクリプキ構造について、$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$を調べる。
+次のクリプキ構造について、$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ を調べる。
 
 ```graphviz {caption=クリプキ構造}
 digraph G {
@@ -309,12 +312,12 @@ digraph G {
 ```
 
 ### 考察
-$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。
+$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。
 
 ここで、パス $\pi = 1, 2, 5, 2, 5, \cdots$ に着目する。<br>
-状態$2$で $\textit{Start}$ を満たすが、このパスが$\textit{Heat}$に到達することはない。
+このパスは状態2で $\textit{Start}$ を満たすが、その後 $\textit{Heat}$ な状態には至らない。
 
-したがって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) =$ <quiz>$\emptyset$</quiz>となるはずである。
+よって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) =$ <quiz>$\emptyset$</quiz>である。
 
 ### ステップ1 : 正規化
 $$
@@ -370,7 +373,12 @@ $\llbracket\textit{Start}\rrbracket = \{2, 5, 6, 7\}$, $\llbracket\textbf{EG}\ne
 
 ## まとめ
 ### Theorem 5.2
-クリプキ構造$M$, CTL式 $f$ について、$\llbracket f \rrbracket_M$ を $O(|f|\cdot(|S| + |R|))$で求めるアルゴリズムが存在する。
+クリプキ構造$M$, CTL式 $f$ について、$\llbracket f \rrbracket_M$ を $O(|f|\cdot(|S| + |R|))$ で求めるアルゴリズムが存在する。
+
+#### 証明
+CTL式 $f$ を正規化した式を $f'$ とおく。<br>
+$\llbracket f' \rrbracket_M$ を $O(|f'|\cdot(|S| + |R|))$ で求めるアルゴリズムは上で示した。<br>
+いま、$|f'|$ は $|f|$ のたかだか整数倍であるから、$f$ についても $O(|f'|\cdot(|S| + |R|))$ で処理ができる。
 
 ### したがって...
 $S \subseteq \llbracket f \rrbracket_M$ を調べることで $M \vDash f$ を $O(|f|\cdot(|S| + |R|))$ で判定できる。

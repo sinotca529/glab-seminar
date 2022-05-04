@@ -36,7 +36,7 @@
 
   <title>Model Checking (Sec.5.3)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd"/>
+  <meta name="date" content="yyyy-mm-dd(3)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -65,7 +65,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd</date>
+  <date>yyyy-mm-dd(3)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -104,7 +104,7 @@ Checking via Fixpoint Computation</h1>
 </tr>
 </tbody>
 </table>
-<h2 id="節の流れ">節の流れ</h2>
+<h2 id="この節の流れ">この節の流れ</h2>
 <ol type="1">
 <li>前準備
 <ul>
@@ -152,9 +152,9 @@ id="不動点を用いたモデル検査の流れ">不動点を用いたモデ�
 class="math inline">\mathcal{P}(S)</span>
 として、次の手順でおこなわれる。</p>
 <ol type="1">
-<li>関数 <span class="math inline">\tau</span>
-を、その(最大/最小)不動点が <span class="math inline">\llbracket f
-\rrbracket_M</span> となるよう設計する。</li>
+<li>関数 <span class="math inline">\tau</span> を、その最大 or
+最小不動点が <span class="math inline">\llbracket f \rrbracket_M</span>
+となるよう設計する。</li>
 <li><span class="math inline">\tau</span> の不動点を求める。</li>
 </ol>
 <p>以下では、次の2つを同一視する。</p>
@@ -166,7 +166,8 @@ S&#39;</span> となる条件式 ( <em>predicate</em> )</li>
 </ul>
 <p>つまり、</p>
 <ul>
-<li><span class="math inline">\textit{true} = S</span></li>
+<li><span class="math inline">\textit{true} =</span> <quiz><span
+class="math inline">S</span></quiz></li>
 <li><span class="math inline">\textit{false} =</span> <quiz><span
 class="math inline">\emptyset</span></quiz></li>
 </ul>
@@ -211,7 +212,7 @@ class="math inline">\cap</span>-continuous) とは:</dt>
 </p>
 
 <h2 id="不動点に関する定理補題">不動点に関する定理・補題</h2>
-<p>説明の都合上、MC本とは一部順序を入れ替えている。</p>
+<p>説明の都合上、MC本とは順序・証明を一部変えている。</p>
 <h3 id="lemma-57">Lemma 5.7</h3>
 <p><span class="math inline">\tau</span>が単調ならば、任意の <span
 class="math inline">i</span> について次が成立。</p>
@@ -903,10 +904,12 @@ class="math inline">\textbf{E}_f\textbf{X}</span>, <span
 class="math inline">\textbf{E}_f\textbf{U}</span> を検査できる。</p>
 <h2 id="fxipoint-characterization-over-finite-paths">Fxipoint
 Characterization over Finite Paths</h2>
-<p>今まで、クリプキ構造が left-total であることを仮定していた。<br>
-この仮定を外すと、CTL式に対応付けた <span
-class="math inline">\tau</span> も大きく変える必要がある。<br></p>
-<p>まずは、有限パスに関する temporal operator を定義する : <span
+<p>今までは、left-total な (任意のノードが子を持つ)
+クリプキ構造を仮定していた。<br> ここでは、left-total
+でないクリプキ構造について考える。<br> そのためには、CTL式に対応付けた
+<span class="math inline">\tau</span>
+をいくつか変える必要がある。<br></p>
+<p>まずは、有限パスに関する temporal operator を定義しておく : <span
 class="math display">
 \begin{align*}
 M,\pi \vDash \textbf{F} g_1 &amp;\iff \exist 0 \leq i \leq
@@ -915,20 +918,43 @@ M,\pi \vDash \textbf{G} g_1 &amp;\iff \forall 0 \leq i \leq
 \textit{length}(\pi),\ M,\pi^i \vDash g_1
 \end{align*}
 </span></p>
-<p>この元で、<span class="math inline">\tau</span>
-は次のように変更される。 <span class="math display">
-\begin{align*}
-\llbracket \textbf{AF} f_1 \rrbracket_M &amp;= \mu Z.(f_1 \lor
-(\textbf{AX}Z \land \textbf{EX}\textit{true}))\\
-\llbracket \textbf{EG} f_1 \rrbracket_M &amp;= \nu Z.(f_1 \land
-(\textbf{EX}Z \lor \textbf{AX}\textit{false}))
-\end{align*}
-</span></p>
-<p>同様に、他のCTL式についても fixpoint characterization
-が定義できる。<br></p>
-<p><span class="math inline">\textbf{AF} f_1</span> について、もし
-ある状態が<span
-class="math inline">f_1</span>を満たさないなら、その状態には子がなくてはならない。
-これは left-total なら不要な制約。</p>
+<p>以下では代表として、<span class="math inline">\llbracket \textbf{AF}
+f_1 \rrbracket_M</span> と <span class="math inline">\llbracket
+\textbf{EG} f_1 \rrbracket_M</span> の変化を観察する。</p>
+<h3 id="llbracket-textbfaf-f_1-rrbracket_m-について"><span
+class="math inline">\llbracket \textbf{AF} f_1 \rrbracket_M</span>
+について</h3>
+<p>Left-total では:</p>
+<ul>
+<li><span class="math inline">\mu Z.(f_1 \lor \textbf{AX}Z)</span></li>
+</ul>
+<p>Not left-total では:</p>
+<ul>
+<li><span class="math inline">\mu Z.(f_1 \lor (\textbf{AX}Z \land
+\textbf{EX}\textit{true}))</span></li>
+</ul>
+<p>Left-total でない場合、子ノードが無いノードが存在する。<br>
+しかし、<span class="math inline">f_1</span>
+を満たさない場合は子ノードが存在する必要がある。<br>
+よって、子ノードの存在を保証するべく <span
+class="math inline">\textbf{EX}\textit{true}</span> が条件に加わる。</p>
+<h3 id="llbracket-textbfeg-f_1-rrbracket_m-について"><span
+class="math inline">\llbracket \textbf{EG} f_1 \rrbracket_M</span>
+について</h3>
+<p>Left-total では:</p>
+<ul>
+<li><span class="math inline">\nu Z.(f_1 \land \textbf{EX}Z)</span></li>
+</ul>
+<p>Not left-total では:</p>
+<ul>
+<li><span class="math inline">\nu Z.(f_1 \land (\textbf{EX}Z \lor
+\textbf{AX}\textit{false})</span></li>
+</ul>
+<p>Left-total でない場合、パスが終了する可能性も考える必要がある。<br>
+よって、子ノードがない場合にのみ満たされる <span
+class="math inline">\textbf{AX}\textit{false}</span>
+が条件に加わる。</p>
+<hr />
+<p>次節 : <a href="mc5.html">振り返り &amp; Bibriographic Notes</a></p>
 </body>
 </html>

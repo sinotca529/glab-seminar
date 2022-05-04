@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5.2)
 tag: MC
-date: yyyy-mm-dd
+date: yyyy-mm-dd(2)
 plug:
     graphviz: true
     pseudocode: true
@@ -9,17 +9,16 @@ plug:
 
 # 5.2 Model-Checking CTL with Fairness Constraints
 この節の目的:
-: Fairness constraints を扱えるよう、5.1節の手法を拡張すること。
+: 公平性を扱えるよう、5.1節の手法を拡張すること。
 
 以降では、Fiarness constraints を $F = \{ P_1, \cdots, P_k\}$ と書く。
 
 ## 概要
-CTL式は、¬, ∧, ∨, EG, EX, EU のみの形に変形(正規化)できる。<br>
-よって、5.1節と同じく、これらを処理する関数を設計すれば良い。
-
+公平性を踏まえたCTL式は、¬, ∧, ∨, $\textbf{E}_f\textbf{G}$, $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ だけの形に変形(正規化)できる。<br>
+よって、5.1節と同じく、これらを処理する関数を設計すれば良い。<br>
 このうち、¬, ∧, ∨ については5.1節で設計した関数を流用できる。
 
-この節では、残るEG, EX, EUについて考える。
+この節では、残る $\textbf{E}_f\textbf{G}$, $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ について考える。
 
 ## $\textbf{E}_f\textbf{G}$ の処理
 ## 用語 : 公平なSCC
@@ -96,6 +95,22 @@ def get_all_fair_mscc(S):
     }
     return FairMSCCs
 ```
+
+Q. 2つの MSCC が共通部分を持つことがないのはなぜか？
+<details class="filled-box">
+<summary>答え</summary>
+
+MSCC $A$ と $B$ について、$A \cap B = \emptyset$ を背理法で示す。<br>
+$s \in A \cap B$ を仮定する。<br>
+このとき、$\forall a \in A$, $\forall b \in B$ について次が言える。
+- $A$ は SCC なので、$a$ から $s$ へのパスが存在する。
+- $B$ は SCC なので、$s$ から $b$ へのパスが存在する。
+
+したがって、$a$ から $b$ へのパスが存在するため、$A \cup B$ は SCC である。<br>
+このとき、$A \subset (A \cup B)$ であるが、これは $A$ が MSCC であることに矛盾する。<br>
+よって仮定は誤りであり、$A \cap B = \emptyset$ の成立が示された。<br>
+$\square$
+</details>
 
 ## $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ の処理
 ### 原子式 $\textit{fair}$ の導入。

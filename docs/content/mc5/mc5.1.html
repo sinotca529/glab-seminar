@@ -45,7 +45,7 @@
 
   <title>Model Checking (Sec.5.1)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd"/>
+  <meta name="date" content="yyyy-mm-dd(1)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -74,7 +74,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd</date>
+  <date>yyyy-mm-dd(1)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -83,42 +83,51 @@ Model Checking</h1>
 <dl>
 <dt>この節の目的:</dt>
 <dd>
-クリプキ構造の explicit representation を検査するアルゴリズムの説明。
+クリプキ構造の explicit representation を検査するのアルゴリズムを示す。
 </dd>
 </dl>
 <h2 id="アルゴリズム概要">アルゴリズム概要</h2>
 <h3 id="入出力">入出力</h3>
 <ul>
-<li>入力 : クリプキ構造<span class="math inline">M</span>, CTL式 <span
+<li>入力 : クリプキ構造 <span class="math inline">M</span>, CTL式 <span
 class="math inline">f</span></li>
 <li>出力 : <span class="math inline">{\llbracket f \rrbracket}_M \ (=
 \{s \in S\ | \ M,s \vDash f\})</span></li>
 </ul>
 <h3 id="背景">背景</h3>
-<p>CTL式は、¬, ∧, ∨, EX, EU, EG のみの形に変形(正規化)できる。<br>
+<p>CTL式は、¬, ∧, ∨, EX, EU, EG だけの形に変形(正規化)できる。<br>
 よって、変形後の式について <span class="math inline">{\llbracket f
 \rrbracket}_M</span> が得られれば十分。</p>
-<p>なお、正規化による式の大きさの増加は線形である。</p>
 <h3 id="方針">方針</h3>
 <p>状態 <span class="math inline">s</span>
-に付いているラベルの集合を、<span
-class="math inline">\textit{label}(s)</span> とおく。<br> <span
-class="math inline">\textit{label}(s)</span>に、状態 <span
-class="math inline">s</span> が満たすCTL式を加えていく。<br> 最終的に
-<span class="math inline">f \in \textit{label}(s)</span> であれば、<span
-class="math inline">s \in \llbracket f \rrbracket_M</span> である。</p>
-<p>具体的には、次のアルゴリズムを使う。<br> このアルゴリズムは、<span
-class="math inline">f</span> の部分式について、ネストの浅い
+に貼られたラベルの集合を、<span
+class="math inline">\textit{label}(s)</span> とおく。<br></p>
+<p>方針は次の通り :</p>
+<ol type="1">
+<li><span class="math inline">\textit{label}(s)</span>に、状態 <span
+class="math inline">s</span> が満たすCTL式を加えていく。</li>
+<li>最終的に <span class="math inline">f \in \textit{label}(s)</span>
+であれば、<span class="math inline">s \in \llbracket f
+\rrbracket_M</span> である。</li>
+</ol>
+<h2 id="アルゴリズム全体">アルゴリズム全体</h2>
+<p><span class="math inline">f</span> の部分式について、ネストの浅い
 (構造が単純な)
 ものから順に、それを満たす全状態にラベルを貼っていく。</p>
+<p>ネストの例 (<span class="math inline">f, g, u \in
+\textbf{AP}</span>):</p>
+<ul>
+<li><span class="math inline">f</span> のネストは0</li>
+<li><span class="math inline">f \land g</span> のネストは1</li>
+<li><span class="math inline">(f \land g) \lor u</span> のネストは2</li>
+</ul>
 
-<figure><pre><code class="py">def set_of_state_which_sat_f(M, f):
-    f = f.normalize()
-
+<figure><figcaption class="code-caption"><span class='math inline'>{\llbracket f \rrbracket}_M</span> を得るアルゴリズム</figcaption><pre><code class="py"># f は正規化しておく
+def set_of_state_which_sat_f(M, f):
     # ネストの浅い (構造が単純な) 部分式から処理する
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            f1         =&gt; CheckAtomic(f1), # Do nothing.
+            atom       =&gt; # Do nothing.
             ¬f1       =&gt; CheckNot(f1),
             (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
             (f1 ∨ f2) =&gt; CheckOr(f1, f2),
@@ -135,21 +144,21 @@ class="math inline">f_1</span>, <span class="math inline">f_2</span>
 
 <figure><figcaption class="code-caption">CheckNot</figcaption><pre><code class="py"># O(|S|)
 def CheckNot(f1):
-    T := {s | f1 ∉ label(s)}
-    for s in T:
-        label(s) += ¬f1</code></pre></figure>
+    for s in S:
+        if f1 ∉ label(s):
+            label(s) += ¬f1</code></pre></figure>
 
 <figure><figcaption class="code-caption">CheckAnd</figcaption><pre><code class="py"># O(|S|)
 def CheckAnd(f1, f2):
-    T := {s | f1 ∈ label(s) and f2 ∈ label(s)}
-    for s in T:
-        label(s) += f1 ∧ f2</code></pre></figure>
+    for s in S:
+        if f1 ∈ label(s) and f2 ∈ label(s)
+            label(s) += f1 ∧ f2</code></pre></figure>
 
 <figure><figcaption class="code-caption">CheckOr</figcaption><pre><code class="py"># O(|S|)
 def CheckOr(f1, f2):
-    T := {s | f1 ∈ label(s) or f2 ∈ label(s)}
-    for s in T:
-        label(s) += f1 ∨ f2</code></pre></figure>
+    for s in S:
+        if f1 ∈ label(s) or f2 ∈ label(s):
+            label(s) += f1 ∨ f2</code></pre></figure>
 
 <figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
 def CheckEX(f):
@@ -169,7 +178,7 @@ def CheckEU(f1, f2):
         for t in s.parents():
             if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
                 label(t) += E(f1 U f2)
-                T.push(t)n</code></pre></figure>
+                T.push(t)</code></pre></figure>
 <h3 id="動作">動作</h3>
 <p>色付きはラベルが貼られたことを表す。</p>
 
@@ -203,25 +212,25 @@ def CheckEU(f1, f2):
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
 <h3 id="計算量">計算量</h3>
-<p>前半部分は<span class="math inline">O(|S|)</span>で計算できる。</p>
+<p>前半部分は <span class="math inline">O(|S|)</span> で計算できる。</p>
 
 <figure><figcaption class="code-caption">前半部分</figcaption><pre><code class="py">T := {s | f2 ∈ label(s)}
 for s in T:
     label(s) += E(f1 U f2)</code></pre></figure>
 <br>
 
-<p>後半部分は<span class="math inline">O(|R|)</span>で計算できる。<br>
+<p>後半部分は <span class="math inline">O(|R|)</span> で計算できる。<br>
 (<code>s.parents()</code> の総和は <span class="math inline">|R|</span>
-なので、<code>for</code> は合計<span
-class="math inline">|R|</span>回まわる。)</p>
+なので、<code>for</code> は合計 <span class="math inline">|R|</span>
+回まわる。)</p>
 
 <figure><figcaption class="code-caption">後半部分</figcaption><pre><code class="py">while T != ∅:
     s = T.pop()
     for t in s.parents():
         if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
             label(t) += E(f1 U f2)
-            T.push(t)n</code></pre></figure>
-<p>なお、<code>s.parents()</code>は <span
+            T.push(t)</code></pre></figure>
+<p>なお、<code>s.parents()</code> は <span
 class="math inline">O(|R|)</span> で事前に計算しておける。</p>
 
 <figure><figcaption class="code-caption"><code>s.parents()</code>を求める処理</figcaption><pre><code class="py">for (parent, child) in R:
@@ -257,12 +266,12 @@ M&#39; = &amp;(S&#39;, R&#39;, L&#39;)\ \ \text{ where}\\
 </span></p>
 <h3 id="lemma-51">Lemma 5.1</h3>
 <p><span class="math inline">M,s \vDash \text{EG}f_1</span>
-は、次の2条件を両方満たすことと同値である。</p>
+は、次の2条件の両立と同値である。</p>
 <ol type="1">
 <li><span class="math inline">s \in S&#39;</span></li>
-<li><span class="math inline">M&#39;</span>上に、<span
-class="math inline">s</span> から グラフ<span
-class="math inline">(S&#39;, R&#39;)</span>の nontrivial MSCC上のノード
+<li><span class="math inline">M&#39;</span> 上に、<span
+class="math inline">s</span> から グラフ <span
+class="math inline">(S&#39;, R&#39;)</span> の nontrivial MSCC上のノード
 <span class="math inline">t</span> までのパスが存在</li>
 </ol>
 <details class="filled-box">
@@ -341,27 +350,27 @@ class="math inline">\square</span></p>
                 label(t) += EG f1
                 T += t</code></pre></figure>
 <h3 id="計算量-1">計算量</h3>
-<p>MSCCは<span class="math inline">O(|S| + |R|)</span>で求まる。<br>
-また、<code>for</code>文は合計<span
-class="math inline">|R|</span>回回る。<br>
-よって、<code>CheckEG</code>の計算量は<span class="math inline">O(|S| +
-|R|)</span>である。</p>
+<p>MSCCは <span class="math inline">O(|S| + |R|)</span> で<a
+href="https://manabitimes.jp/math/1250">求まる</a>。<br>
+また、<code>for</code> 文は合計 <span class="math inline">|R|</span>
+回回る。<br> よって、<code>CheckEG</code> の計算量は <span
+class="math inline">O(|S| + |R|)</span> である。</p>
 <h2 id="アルゴリズム全体の計算量">アルゴリズム全体の計算量</h2>
 <ul>
-<li><code>CheckXX</code>はすべて<span
+<li><code>CheckXX</code>はすべて <span
 class="math inline">O(|S|+|R|)</span></li>
-<li>処理する部分式の数は高々<span class="math inline">|f|</span></li>
+<li>処理する部分式の数は高々 <span class="math inline">|f|</span>
+個</li>
 </ul>
 <p>よって、全体の計算量は<span
 class="math inline">O(|f|\cdot(|S|+|R|))</span>である。</p>
 
-<figure><pre><code class="py">def set_of_state_which_sat_f(M, f):
-    f = f.normalize()
-
+<figure><pre><code class="py"># f は正規化しておく
+def set_of_state_which_sat_f(M, f):
     # ネストの浅い (構造が単純な) 部分式から処理する
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            f1         =&gt; CheckAtomic(f1), # Do nothing.
+            atom       =&gt; # Do nothing.
             ¬f1       =&gt; CheckNot(f1),
             (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
             (f1 ∨ f2) =&gt; CheckOr(f1, f2),
@@ -372,7 +381,7 @@ class="math inline">O(|f|\cdot(|S|+|R|))</span>である。</p>
 <h2 id="具体例">具体例</h2>
 <p>次のクリプキ構造について、<span
 class="math inline">\textbf{AG}(\textit{Start} \rightarrow
-\textbf{AF}\textit{Heat})</span>を調べる。</p>
+\textbf{AF}\textit{Heat})</span> を調べる。</p>
 
 <figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
     splines = false
@@ -405,15 +414,15 @@ class="math inline">\textbf{AG}(\textit{Start} \rightarrow
 }</div></figure>
 <h3 id="考察">考察</h3>
 <p><span class="math inline">\textbf{AG}(\textit{Start} \rightarrow
-\textbf{AF}\textit{Heat})</span>は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。</p>
+\textbf{AF}\textit{Heat})</span>
+は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。</p>
 <p>ここで、パス <span class="math inline">\pi = 1, 2, 5, 2, 5,
-\cdots</span> に着目する。<br> 状態<span class="math inline">2</span>で
-<span class="math inline">\textit{Start}</span>
-を満たすが、このパスが<span
-class="math inline">\textit{Heat}</span>に到達することはない。</p>
-<p>したがって、<span class="math inline">\textbf{AG}(\textit{Start}
+\cdots</span> に着目する。<br> このパスは状態2で <span
+class="math inline">\textit{Start}</span> を満たすが、その後 <span
+class="math inline">\textit{Heat}</span> な状態には至らない。</p>
+<p>よって、<span class="math inline">\textbf{AG}(\textit{Start}
 \rightarrow \textit{Heat}) =</span> <quiz><span
-class="math inline">\emptyset</span></quiz>となるはずである。</p>
+class="math inline">\emptyset</span></quiz>である。</p>
 <h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
 <p><span class="math display">
 \begin{align*}
@@ -524,8 +533,19 @@ class="math inline">\llbracket\neg\textbf{E}(\textit{true} \textbf{U}
 <p>クリプキ構造<span class="math inline">M</span>, CTL式 <span
 class="math inline">f</span> について、<span
 class="math inline">\llbracket f \rrbracket_M</span> を <span
-class="math inline">O(|f|\cdot(|S| +
-|R|))</span>で求めるアルゴリズムが存在する。</p>
+class="math inline">O(|f|\cdot(|S| + |R|))</span>
+で求めるアルゴリズムが存在する。</p>
+<h4 id="証明">証明</h4>
+<p>CTL式 <span class="math inline">f</span> を正規化した式を <span
+class="math inline">f&#39;</span> とおく。<br> <span
+class="math inline">\llbracket f&#39; \rrbracket_M</span> を <span
+class="math inline">O(|f&#39;|\cdot(|S| + |R|))</span>
+で求めるアルゴリズムは上で示した。<br> いま、<span
+class="math inline">|f&#39;|</span> は <span
+class="math inline">|f|</span> のたかだか整数倍であるから、<span
+class="math inline">f</span> についても <span
+class="math inline">O(|f&#39;|\cdot(|S| + |R|))</span>
+で処理ができる。</p>
 <h3 id="したがって">したがって…</h3>
 <p><span class="math inline">S \subseteq \llbracket f
 \rrbracket_M</span> を調べることで <span class="math inline">M \vDash
