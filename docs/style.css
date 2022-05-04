@@ -54,15 +54,16 @@ code {
 
 quiz {
     color: transparent;
-    border-style: solid;
-    border-color: black;
-    margin-left: 0.ch;
+    border: 1px solid black;
+    font-size: 0.875em;
+    margin-left: 0.5ch;
     margin-right: 0.5ch;
     padding-left: 0.5ch;
     padding-right: 0.5ch;
 }
 
 tag {
+    font-size: 0.875em;
     border-width: 2px;
     border-radius: 1ch;
     padding-right: 0.5ch;
