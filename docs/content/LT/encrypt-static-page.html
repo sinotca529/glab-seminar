@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>静的サイトをパスワードで保護</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2022-05-06"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2022-05-06</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1
+id="静的サイトのパスワードによる保護">静的サイトのパスワードによる保護</h1>
+<p>GitHub
+Pages等の静的サイトホスティングサービスは無料で使えて便利。<br>
+でも、Basic認証などによるアクセス制限ができない。<br></p>
+<p>→ JavaScript で頑張れる、という話。</p>
+<h2 id="流れ">流れ</h2>
+<ol type="1">
+<li>守りたいHTMLを暗号化する。</li>
+<li>その暗号文をJavaScriptの変数として埋め込んだHTMLを公開する。</li>
+<li>ユーザにパスワードを入力させ、復号し、得られた平HTML文を表示する (by
+JavaScript)。</li>
+</ol>
+<h2 id="実装例">実装例</h2>
+<p><a href="https://github.com/robinmoisson/staticrypt">StatiCrypt</a> :
+<a
+href="https://robinmoisson.github.io/staticrypt/example_encrypted.html">暗号化されたページの例</a></p>
+</body>
+</html>
