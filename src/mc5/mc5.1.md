@@ -181,7 +181,46 @@ MSCC (Maximal SCC):
 nontrivial SCC:
 : 頂点が2つ以上のSCC or ある頂点からその頂点への辺があるSCC。
 
-逆に、trivial SCC はノードが<quiz> 0 </quiz>個でエッジが<quiz> 0 </quiz>本なグラフ。
+<br>
+
+**Q. 以下よりグラフ全体が nontrivial SSC なものを選べ**<br>
+```graphviz
+digraph G {
+    graph [rankdir=TB]
+    node [shape=circle, style=filled, fillcolor="white", fixedsize="true", compound=true]
+
+    subgraph cluster_A {
+        label="GraphA"
+        labelloc = "t"
+        labeljust = "l"
+        A0 -> A1 -> A2
+        A0 -> A2 -> A1
+    };
+    subgraph cluster_B {
+        label="GraphB"
+        labelloc = "t"
+        labeljust = "l"
+        B0 -> B1 -> B2 -> B0
+    }
+    subgraph cluster_C {
+        label="GraphC"
+        labelloc = "t"
+        labeljust = "l"
+        C0 -> C0
+    }
+    subgraph cluster_D {
+        label="GraphD"
+        labelloc = "t"
+        labeljust = "l"
+        D0 -> D1 -> D0
+    }
+}
+```
+
+<details>
+<summary>答え</summary>
+GraphB, GraphD
+</details>
 
 ### 記法
 クリプキ構造$M$のうち、$f_1$を満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
@@ -236,6 +275,7 @@ $\square$
 </details>
 
 ### アルゴリズム
+Lemma 5.1 をもとに、EGを処理するアルゴリズムを作る。
 ```py {caption="CheckEG"}
 def CheckEG(f1):
     S’ = { s ∈ S | f1 ∈ label(s) }

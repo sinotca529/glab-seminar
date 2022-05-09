@@ -251,8 +251,46 @@ SCCのうち、他のSCCに包含されないもの。
 頂点が2つ以上のSCC or ある頂点からその頂点への辺があるSCC。
 </dd>
 </dl>
-<p>逆に、trivial SCC はノードが<quiz> 0 </quiz>個でエッジが<quiz> 0
-</quiz>本なグラフ。</p>
+<br>
+
+<p><strong>Q. 以下よりグラフ全体が nontrivial SSC
+なものを選べ</strong><br></p>
+
+<figure><div class="graphviz">digraph G {
+    graph [rankdir=TB]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;, compound=true]
+
+    subgraph cluster_A {
+        label=&quot;GraphA&quot;
+        labelloc = &quot;t&quot;
+        labeljust = &quot;l&quot;
+        A0 -&gt; A1 -&gt; A2
+        A0 -&gt; A2 -&gt; A1
+    };
+    subgraph cluster_B {
+        label=&quot;GraphB&quot;
+        labelloc = &quot;t&quot;
+        labeljust = &quot;l&quot;
+        B0 -&gt; B1 -&gt; B2 -&gt; B0
+    }
+    subgraph cluster_C {
+        label=&quot;GraphC&quot;
+        labelloc = &quot;t&quot;
+        labeljust = &quot;l&quot;
+        C0 -&gt; C0
+    }
+    subgraph cluster_D {
+        label=&quot;GraphD&quot;
+        labelloc = &quot;t&quot;
+        labeljust = &quot;l&quot;
+        D0 -&gt; D1 -&gt; D0
+    }
+}</div></figure>
+<details>
+<summary>答え</summary>
+GraphB, GraphD
+</details>
+
 <h3 id="記法">記法</h3>
 <p>クリプキ構造<span class="math inline">M</span>のうち、<span
 class="math inline">f_1</span>を満たすノードのみを残したクリプキ構造を、<span
@@ -337,6 +375,7 @@ class="math inline">\square</span></p>
 </details>
 
 <h3 id="アルゴリズム">アルゴリズム</h3>
+<p>Lemma 5.1 をもとに、EGを処理するアルゴリズムを作る。</p>
 
 <figure><figcaption class="code-caption">CheckEG</figcaption><pre><code class="py">def CheckEG(f1):
     S’ = { s ∈ S | f1 ∈ label(s) }
