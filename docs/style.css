@@ -192,3 +192,28 @@ details {
 .katex {
     font-size: 1.1em !important;
 }
+
+.flex {
+	display: flex;
+}
+
+.flex-left {
+	margin-right: 15px
+}
+
+.flex-right {
+	margin-left: 15px
+}
+
+.sticky {
+	position: sticky;
+	top: 15px;
+}
+
+img {
+    border: 1px solid black;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    width: 100%;
+}
