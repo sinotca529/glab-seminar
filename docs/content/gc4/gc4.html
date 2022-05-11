@@ -81,16 +81,16 @@ reference counting</h2>
 <thead>
 <tr class="header">
 <th style="text-align: right;"></th>
-<th style="text-align: center;">Mark-sweep</th>
+<th style="text-align: center;">Mark-Sweep</th>
 <th style="text-align: center;">Reference Count</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">Cyclic data structure</td>
-<td style="text-align: center;">特殊な処理なしで扱える</td>
+<td style="text-align: right;">Cyclic data structure の対応</td>
+<td style="text-align: center;">特殊な処理は不要</td>
 <td
-style="text-align: center;">特殊な処理が必要<br>限られた条件下でのみ扱える</td>
+style="text-align: center;">特殊な処理が必要<br>限られた条件下で対応可</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">Collectのタイミング</td>
@@ -100,12 +100,12 @@ style="text-align: center;">特殊な処理が必要<br>限られた条件下で
 <tr class="odd">
 <td style="text-align: right;">オーバヘッドの時間的分散</td>
 <td style="text-align: center;">局所的<br>(アプリに長く割り込む)</td>
-<td style="text-align: center;">分散</td>
+<td style="text-align: center;">分散している</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">Update のオーバヘッド</td>
-<td style="text-align: center;">Non-incremental, non-generational
-なら、なし</td>
+<td style="text-align: center;">(Non-incremental, non-generational なら)
+なし</td>
 <td style="text-align: center;">あり</td>
 </tr>
 <tr class="odd">
@@ -115,9 +115,9 @@ style="text-align: center;">特殊な処理が必要<br>限られた条件下で
 </tr>
 <tr class="even">
 <td style="text-align: right;">扱いやすさ</td>
-<td style="text-align: center;">Non-incremental なら、楽</td>
+<td style="text-align: center;">(Non-incremental なら) 楽</td>
 <td
-style="text-align: center;">参照カウントの不変条件を壊さぬよう要注意</td>
+style="text-align: center;">参照カウントの不変条件を破らぬよう要注意</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">空間オーバヘッド (実装依存)</td>
@@ -128,8 +128,8 @@ style="text-align: center;">参照カウントの不変条件を壊さぬよう�
 <tr class="even">
 <td
 style="text-align: right;">ヒープの大半を使う<br>プログラムでのオーバヘッド</td>
-<td style="text-align: center;">比較的大きい</td>
-<td style="text-align: center;">比較的小さい</td>
+<td style="text-align: center;">大きい</td>
+<td style="text-align: center;">小さい</td>
 </tr>
 </tbody>
 </table>
@@ -144,7 +144,7 @@ style="text-align: right;">ヒープの大半を使う<br>プログラムでの�
 <li>Mark の改善
 <ul>
 <li>再帰をやめてスタックを使う</li>
-<li>スタックが深くならないよう工夫する</li>
+<li>スタックが浅くなるよう工夫する</li>
 <li>スタックオーバーフロー対策をする</li>
 <li>スタックの利用もやめて、メモリ使用量を定数にする</li>
 </ul></li>
@@ -167,7 +167,7 @@ style="text-align: right;">ヒープの大半を使う<br>プログラムでの�
 <p>2章での mark は再帰関数だったが、これは効率が悪い。<br> なぜなら
 :</p>
 <ul>
-<li>→ 関数呼び出しで時間を浪費</li>
+<li>→ 大量の関数呼び出しで時間を浪費</li>
 <li>→ スタックフレームが大量に積まれ、メモリを浪費</li>
 </ul>
 
@@ -193,8 +193,8 @@ mark() =
                 mark_bit(*M) = marked
                 if not atom(*M)
                     push(*M, mark_stack)</code></pre></figure>
-<h2 id="42-mark-の改善--スタックの浅くする工夫">(4.2) Mark の改善 |
-スタックの浅くする工夫</h2>
+<h2 id="42-mark-の改善--スタックを浅くする工夫">(4.2) Mark の改善 |
+スタックを浅くする工夫</h2>
 <p>スタックを使う場合、スタックオーバーフローの対策が必要になる。<br>
 まずは、スタックの浅くする工夫を見る。</p>
 <h3 id="工夫1--訪問の対象">工夫1 : 訪問の対象</h3>
@@ -216,7 +216,7 @@ class="math inline">|E| = |V| - 1</span>
 <p><strong>グラフ一般の場合 :</strong><br> → 多くの場合 <span
 class="math inline">|E| &gt; |V|</span>
 なので、ノードを訪問するほうが有利。</p>
-<div class="flex">
+<div class="flex55">
 <div class="flex-left">
 
 <figure><figcaption class="code-caption">全ノードを訪問</figcaption><pre><code class="txt">mark_heap() =
@@ -253,11 +253,11 @@ mark() =
 </div>
 </div>
 <h4 id="具体例">具体例</h4>
-<p>次のグラフの探索を考える (ルートは <span class="math inline">A</span>
-とする)。</p>
-<div class="flex">
+<div class="flex55">
 <div class="flex-left">
 <div class="sticky">
+<p>次のグラフの探索を考える。<br> <span class="math inline">A</span>
+はルートだとする。</p>
 
 <figure><div class="graphviz">digraph G {
     graph [layout=neato]
@@ -271,14 +271,16 @@ mark() =
 <div class="flex-right">
 <h5
 id="全ノードを訪問する場合のスタック">全ノードを訪問する場合のスタック</h5>
+<p><code>push</code> 時にマークする。</p>
 <ul>
-<li>[A] (marked : )</li>
-<li>[B, C] (marked : A)</li>
-<li>[B] (marked : A, C)</li>
-<li>[] (marked : A, C, B)</li>
+<li>[A] (marked : A)</li>
+<li>[B, C] (marked : A, B, C)</li>
+<li>[B] (marked : A, B, C)</li>
+<li>[] (marked : A, B, C)</li>
 </ul>
 <h5
 id="全エッジを訪問する場合のスタック">全エッジを訪問する場合のスタック</h5>
+<p><code>pop</code> 時にマークする。</p>
 <ul>
 <li>[A] (marked : )</li>
 <li>[B, C] (marked : A)</li>
@@ -293,21 +295,23 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 </div>
 <h3 id="工夫2--push-後に即-pop-するのは無駄なのでやめる">工夫2 :
 <code>push</code> 後に即 <code>pop</code> するのは無駄なのでやめる</h3>
-<p>今のアルゴリズムで、<code>Children(N)</code>
-の最後の非アトミックな要素は <code>push</code> された後 即
-<code>pop</code> される。</p>
-
-<figure><figcaption class="code-caption">全ノードを訪問</figcaption><pre><code class="txt">mark() =
-    while mark_stack != empty
-        N = pop(mark_stack)
-        for M in Children(N)
-            if mark_bit(*M) == unmarked
-                mark_bit(*M) = marked
-                if not atom(*M)
-                    push(*M, mark_stack)</code></pre></figure>
-<p>最後の子を <code>push</code>
-せずに処理することで、この無駄を回避できる。<br>
-これは、スタックの最大の深さの削減につながる。</p>
+<div class="flex55">
+<div class="flex-left">
+<p>着目する問題 :</p>
+<ul>
+<li>現状、<code>Children(N)</code> の最後の非アトミックな要素は
+<code>push</code> された後 即 <code>pop</code> される。</li>
+<li>これは無駄。</li>
+</ul>
+<p>解決策 :</p>
+<ul>
+<li>最後の子を <code>push</code> せずに処理する。</li>
+<li>→ スタックが浅くなる。</li>
+</ul>
+<p>最後の子を <code>push</code> せずに処理する。<br> →
+スタックが浅くなる。</p>
+</div>
+<div class="flex-right">
 
 <figure><figcaption class="code-caption">最後の子を push しない (渡辺の解釈)</figcaption><pre><code class="txt">mark() =
     while mark_stack != empty
@@ -329,9 +333,48 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
             if not atom(*M)
                 N = *M
                 goto LABEL</code></pre></figure>
-<h3 id="工夫3--訪問順の工夫">工夫3 : 訪問順の工夫</h3>
-<p>リスト <code>Chidren(N)</code> の子の訪問順を工夫する。</p>
-<p>非アトミックな子を多くもつノードの訪問は後回しにしたほうが、スタックが浅くなりやすい。</p>
+</div>
+</div>
+<h3 id="工夫3--子ノードの訪問順の工夫">工夫3 :
+子ノードの訪問順の工夫</h3>
+<p>非アトミックな子を多くもつノードの訪問を後回しにする。<br> →
+スタックが浅くなりやすい。</p>
+<h4 id="具体例-1">具体例</h4>
+<div class="flex55">
+<div class="flex-left">
+<div class="sticky">
+
+<figure><div class="graphviz">digraph G {
+    graph [rank=LR]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;]
+    A -&gt; B -&gt; D -&gt; D
+    A -&gt; C -&gt; E -&gt; E
+    C -&gt; F -&gt; F
+    C -&gt; G -&gt; G
+}</div></figure>
+</div>
+</div>
+<div class="flex-right">
+<p>非アトミックな子ノードの多い <span class="math inline">C</span>
+を優先した場合。</p>
+<ul>
+<li>[A]</li>
+<li>[A, B, C]</li>
+<li>[A, B, E, F, G ]</li>
+<li>…</li>
+</ul>
+<p>非アトミックな子ノードの少ない <span class="math inline">B</span>
+を優先した場合。</p>
+<ul>
+<li>[A, C, B]</li>
+<li>[A, C, D ]</li>
+<li>[A, C]</li>
+<li>[A, E, F, G]</li>
+<li>…</li>
+</ul>
+</div>
+</div>
+<h4 id="consリストの場合">Consリストの場合</h4>
 <p>Consリストについては、経験的に次が分かっている :</p>
 <ul>
 <li><code>cdr</code> の方が <code>car</code>
@@ -346,6 +389,9 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 <p>ことで、スタックを浅くできる可能性がある。</p>
 <h3 id="工夫4--大量の子を持つノードの対処">工夫4 :
 大量の子を持つノードの対処</h3>
+<div class="flex55">
+<div class="flex-left">
+<div class="sticky">
 <p>着目する問題 :</p>
 <ul>
 <li>大量の子を持つノードについて、全ての子を <code>push</code>
@@ -358,11 +404,16 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 <li>各イテレーションでは、スタックトップにあるノードの頭128-wordのみを処理する。</li>
 <li>(ノードの残りの部分はスタックに戻す。)</li>
 </ul>
+</div>
+</div>
+<div class="flex-right">
 <p><img src="img/bdw-mark.dio.svg" /></p>
+</div>
+</div>
 <h2 id="42-mark-の改善--スタックオーバーフロー時の対処">(4.2) Mark
 の改善 | スタックオーバーフロー時の対処</h2>
 <p>スタックを浅く保つ工夫をしても、オーバーフローする確率は0にならない。<br>
-そのため、オーバーフローしても上手く動く機構が必要。</p>
+→ オーバーフローしても上手く動く機構が必要。</p>
 <h3 id="スタックオーバーフローの検知">スタックオーバーフローの検知</h3>
 <p>オーバーフローを検知する方法として、次の2つがある。</p>
 <table>
@@ -377,9 +428,9 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 <tr class="odd">
 <td style="text-align: right;">処理</td>
 <td
-style="text-align: center;"><code>push</code>の度に境界チェックする。</td>
+style="text-align: center;"><code>push</code>の度に境界チェック。</td>
 <td
-style="text-align: center;">スタックの終わりに書き込み禁止なページを置く。<br>オーバーフロー時には書き込み禁止なメモリへの書き込みで例外が発生する。</td>
+style="text-align: center;">スタックの直後に書き込み禁止なページを置く。<br>オーバーフロー時には書き込み違反で例外が発生する。</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">オーバヘッドの発生頻度</td>
@@ -389,10 +440,10 @@ style="text-align: center;"><code>push</code>ごと。<br>(子ノードの数を
 style="text-align: center;">オーバーフロー時以外はオーバヘッド無し</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">オーバヘッドの大きさ</td>
-<td style="text-align: center;">1回のチェックは低オーバヘッド。</td>
 <td
-style="text-align: center;">例外処理をするため、1回のチェックは高オーバヘッド
+style="text-align: right;">オーバヘッドの大きさ<br>(1チェックあたり)</td>
+<td style="text-align: center;">低オーバヘッド。</td>
+<td style="text-align: center;">例外処理をするため、高オーバヘッド
 (境界チェックの数万倍)。</td>
 </tr>
 </tbody>
