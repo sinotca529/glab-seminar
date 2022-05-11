@@ -209,3 +209,11 @@ details {
 	position: sticky;
 	top: 15px;
 }
+
+img {
+    border: 1px solid black;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    width: 100%;
+}
