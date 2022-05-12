@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>autogobble のススメ</title>
+  <meta name="keywords" content="LT, LaTeX"/>
+  <meta name="date" content="2022-05-13"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2022-05-13</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+      <tag><a href="../../tag.html?tag=LaTeX">LaTeX</a></tag>
+  </p>
+
+<h1 id="autogobble-のススメ">autogobble のススメ</h1>
+<ul>
+<li><span class="math inline">\LaTeX</span>
+にコード片を書くとき、インデントの扱いが面倒。</li>
+<li>この問題は、<code>autogobble</code> パッケージで解決できる。</li>
+</ul>
+<h2 id="解決したい問題">解決したい問題</h2>
+<p>左のコードをタイプセットすると、右のような見た目になったりする。</p>
+<div class="flex">
+<div class="flex-left">
+
+<figure><figcaption class="code-caption">ソース</figcaption><pre><code class="tex">\begin{lstlisting}[]
+    fn main() {
+        println!(&quot;Hello, world!&quot;);
+    }
+\end{lstlisting}</code></pre></figure>
+</div>
+<div class="flex-right">
+
+<figure><figcaption class="code-caption">出力</figcaption><pre><code class="txt">    fn main() {
+        println!(&quot;Hello, world!&quot;);
+    }</code></pre></figure>
+</div>
+</div>
+<h2 id="解決-autogobble-を使う">[解決] autogobble を使う。</h2>
+<div class="flex">
+<div class="flex-left">
+
+<figure><figcaption class="code-caption">ソース(autogobble使用)</figcaption><pre><code class="tex">\usepackage{lstautogobble}
+
+\begin{lstlisting}[autogobble=true]
+    fn main() {
+        println!(&quot;Hello, world!&quot;);
+    }
+\end{lstlisting}</code></pre></figure>
+</div>
+<div class="flex-right">
+
+<figure><figcaption class="code-caption">出力</figcaption><pre><code class="txt">fn main() {
+    println!(&quot;Hello, world!&quot;);
+}</code></pre></figure>
+</div>
+</div>
+<p><code>lstlisting</code>
+のグローバルオプションとして設定しておくともっと便利。<br>
+(<code>\lstset{..., autogobble=true}</code> とする。)</p>
+<h2 id="余談">余談</h2>
+<p>autogobble を使わずとも、オプションで <code>gobble=x</code>
+とすれば前から<code>x</code>文字切り取ってくれる。<br>
+ただし、<code>x</code>　は手動で決めなくてはならない。</p>
+</body>
+</html>
