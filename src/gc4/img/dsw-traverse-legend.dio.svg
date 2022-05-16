@@ -1,4 +1,4 @@
-<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="191px" height="141px" viewBox="-0.5 -0.5 191 141" content="&lt;mxfile&gt;&lt;diagram id=&quot;sL-YO-sjHqYGiRHssrWp&quot; name=&quot;ページ1&quot;&gt;5VdLc9sgEP41Osajh2Vbx9hO00tnMuND0yMRa4kJEh6EbSm/vmBAL9wm0yptOvXBw34sC/t9y0NetCnqe44O+ReGgXqhj2sv2nphGAax/FdAYwB/roGME6yhoAN25AUM6Bv0SDBUA0fBGBXkMARTVpaQigGGOGfnodue0eGsB5SBA+xSRF30K8Ei1+gqXHb4ZyBZbmcOFonuKZB1NplUOcLs3IOiOy/acMaEbhX1BqjizvKix336QW+7MA6leMuAUA84IXo0uZl1icYmy9mxxKD8fS9an3MiYHdAqeo9S3UllouCSiuQTXd+s6QTcAF1DzLruQdWgOCNdLG9S8ONKY4gNNVy7qieG5e8x7LFkBE3ayN3+cuGoeA6HdHHo6Mt+r9Ax3xiOvasFGY3h/5E1bJ4nZ7gCj3hBPTE/yA98z9Hz8Khp0D8+eaJCIcmmY0YcoEoyUrZTmXuwCWgcibyCL41HQXBWA1fc6jIC3q6hFKsHRgpxWXZ8dqLtyrWUbBK86pCV4KzZ9gwymTcbclKFWVPKB1D08sxUmPlO2IkV8SIJhBj6Yixpyj7v8WIh1sjcdVYvZMaq9dPDijxrXqqKNopqiqSDjWRefPm0dB8Mb4pYxZbc1v3O7eNsTCq8suB9NP7SSCegb1JNAR48Chyae3xFl/hzWIcKBLkNHxKXSPTzPCgSqh3ovkj2YKRHhU78hTMqP7TZxSoPeNsoOUokObACXTRtk37TXInE8hdE/GoBfZDYyvBb/yZ3wKd5MpoesYDcCIXrDZvVxPvVj1agsHB0y+o+GMVVBDPgtWoppJZFCXdb/lrJeY8Ze3t+9slJs3uI0G7d19a0d13&lt;/diagram&gt;&lt;/mxfile&gt;">
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="191px" height="141px" viewBox="-0.5 -0.5 191 141" content="&lt;mxfile&gt;&lt;diagram id=&quot;sL-YO-sjHqYGiRHssrWp&quot; name=&quot;ページ1&quot;&gt;5VfLcpswFP0alvbwMK+lY6fppp3MeNF0qYAMmgjkCmFDvr6SJRkEOMl0SJtMs3B0z5WudM+5emB5m6K5o+CQfyMpxJZrp43lbS3XDf0V/xVAqwDHk0BGUSohpwN26Bkq0FZojVJYGR0ZIZihgwkmpCxhwgwMUEpOZrc9weasB5DBEbBLAB6jP1DKcolGbtjhXyHKcj2zE8TSUwDdWWVS5SAlpx7k3VrehhLCZKtoNhAL7jQvctyXK97Lwigs2VsGuHLAEeBa5abWxVqdLCV1mULR37a8m1OOGNwdQCK8J64ux3JWYG45vDmeXy3pCCmDTQ9S67mDpICMtryL9oaKG1UcjutL+9RRvVJd8h7LGgNK3OwSucufNxQF03R4H4+OS9H/AzpWM9OxJyVTu9m1Z6qW4HV6nAl63Bno8T8hPau/R08woqcA9GnxiNiIJp4NM7kAGGUlbyc8d0g5IHJG/AheK0eB0lQMv6GwQs/g8RxKsHYgqGTnZfs3lr8VsWpGKsmrCF0xSp7ghmDC425LUoooe4TxEJpfjoEakT0SI54Qw5tBjHAkxh6D7P8Wwze3RjxWI3onNaLXTw5YpmvxVBG0Y1BVKDE14XnT9kHRfDZ+CmPpa3Pb9J3bVlkpqPLzgfTi/cQAzaC+SSQEU+NRNKa1x5s/wZvGKMSAoaP5lJoiU81wL0qod6LZA9mcgR4VqWkC1aj+02cQ6HLG6UDhIJDkYBTorO0l7TfJHc8gd4PYgxTYdpUtBF/YS/sCdJILo+0Z95AivmCxebuaeLfqkRIYB0+/oPyPVVCOv3SiQU3FS8+Lu7/wz0ps9JTVt+/8JaZ3gVFjAWbq6DSKLfhVE+1YyLN4zTtwKZvOyVuZ+P+df7zpSHwRMph0fY6b48q1MFG4119R0UBHe3xVBPO8orjZff3JOug+ob3b3w==&lt;/diagram&gt;&lt;/mxfile&gt;">
     <defs/>
     <g>
         <rect x="110" y="45" width="40" height="40" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"/>
@@ -43,6 +43,25 @@
         <path d="M 98.98 54.54 L 91.16 54.83 L 94.2 52.36 L 94.06 48.45 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
         <path d="M 45.16 109.94 L 94.63 78.42" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="stroke"/>
         <path d="M 99.06 75.6 L 95.03 82.31 L 94.63 78.42 L 91.27 76.41 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"/>
+        <rect x="120" y="20" width="60" height="20" fill="none" stroke="none" pointer-events="all"/>
+        <g transform="translate(-0.5 -0.5)">
+            <switch>
+                <foreignObject pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;">
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 1px; height: 1px; padding-top: 30px; margin-left: 150px;">
+                        <div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; font-size: 0px; text-align: center;">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: nowrap;">
+                                <font style="font-size: 20px">
+                                    Node
+                                </font>
+                            </div>
+                        </div>
+                    </div>
+                </foreignObject>
+                <text x="150" y="34" fill="rgb(0, 0, 0)" font-family="Helvetica" font-size="12px" text-anchor="middle">
+                    Node
+                </text>
+            </switch>
+        </g>
     </g>
     <switch>
         <g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/>

@@ -73,15 +73,35 @@
 Garbage Collection (GC Sec.4)</h1>
 <p>Mark-Sweep
 の使用メモリ量・時間オーバヘッドを改善する手法を見ていく。</p>
-<h2 id="41-comparisons-with-reference-counting">4.1 Comparisons with
-reference counting</h2>
+<h2 id="流れ">流れ</h2>
+<ul>
+<li>Mark-Sweep vs Copy</li>
+<li>Mark の改善
+<ul>
+<li>再帰をやめてスタックを使う</li>
+<li>スタックが浅くなるよう工夫する</li>
+<li>スタックオーバーフロー対策をする</li>
+<li>スタックの利用もやめて、メモリ使用量を定数にする</li>
+</ul></li>
+<li>Mark-bit を置く位置の改善
+<ul>
+<li>Bitmap の利用</li>
+</ul></li>
+<li>Sweep の改善
+<ul>
+<li>Lazy に sweep する</li>
+</ul></li>
+<li>Mark-Sweep vs Copy</li>
+</ul>
+<h2 id="41-mark-sweep-と-rc-の比較">(4.1) Mark-sweep と RC の比較</h2>
 <p>改善の前に、Mark-Sweep の立ち位置を確認しておく。<br>
 ここでは、Reference counting と比較する。</p>
 <table>
 <thead>
 <tr class="header">
 <th style="text-align: right;"></th>
-<th style="text-align: center;">Mark-Sweep</th>
+<th style="text-align: center;">Mark-Sweep<br>(non-incrementa,
+non-generational)</th>
 <th style="text-align: center;">Reference Count</th>
 </tr>
 </thead>
@@ -104,8 +124,7 @@ style="text-align: center;">特殊な処理が必要<br>限られた条件下で
 </tr>
 <tr class="even">
 <td style="text-align: right;">Update のオーバヘッド</td>
-<td style="text-align: center;">(Non-incremental, non-generational なら)
-なし</td>
+<td style="text-align: center;">なし</td>
 <td style="text-align: center;">あり</td>
 </tr>
 <tr class="odd">
@@ -115,15 +134,15 @@ style="text-align: center;">特殊な処理が必要<br>限られた条件下で
 </tr>
 <tr class="even">
 <td style="text-align: right;">扱いやすさ</td>
-<td style="text-align: center;">(Non-incremental なら) 楽</td>
+<td style="text-align: center;">楽</td>
 <td
 style="text-align: center;">参照カウントの不変条件を破らぬよう要注意</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">空間オーバヘッド (実装依存)</td>
-<td style="text-align: center;">1 [bit/node]</td>
+<td style="text-align: right;">空間オーバヘッド</td>
+<td style="text-align: center;">1 [bit/node] (実装依存)</td>
 <td style="text-align: center;"><span class="math inline">\geq</span> 1
-[bit/node]</td>
+[bit/node] (実装依存)</td>
 </tr>
 <tr class="even">
 <td
@@ -139,29 +158,6 @@ style="text-align: right;">ヒープの大半を使う<br>プログラムでの�
 が起こる頻度を減らせる。</li>
 <li>ただし、データが多くのページに分散することになるので非効率。</li>
 </ul>
-<h2 id="以降の流れ">以降の流れ</h2>
-<ol type="1">
-<li>Mark の改善
-<ul>
-<li>再帰をやめてスタックを使う</li>
-<li>スタックが浅くなるよう工夫する</li>
-<li>スタックオーバーフロー対策をする</li>
-<li>スタックの利用もやめて、メモリ使用量を定数にする</li>
-</ul></li>
-<li>Mark-bit を置く位置の改善</li>
-<li>Sweep の改善
-<ul>
-<li>Lazy に sweep する</li>
-</ul></li>
-</ol>
-<!--
-1. Mark が再帰的である問題について
-   - Stack overflow の発生確率を下げる方法
-   - Stack overflow から回復する方法
-   - 決まったメモリ使用量でグラフに mark する方法
-2.  Sweep について
-3.  仮想メモリの扱いを改善について -->
-
 <h2 id="42-mark-の改善--再帰をやめてスタックを使う">(4.2) Mark の改善 |
 再帰をやめてスタックを使う</h2>
 <p>2章での mark は再帰関数だったが、これは効率が悪い。<br> なぜなら
@@ -273,23 +269,28 @@ mark() =
 id="全ノードを訪問する場合のスタック">全ノードを訪問する場合のスタック</h5>
 <p><code>push</code> 時にマークする。</p>
 <ul>
-<li>[A] (marked : A)</li>
-<li>[B, C] (marked : A, B, C)</li>
-<li>[B] (marked : A, B, C)</li>
-<li>[] (marked : A, B, C)</li>
+<li>[<span class="math inline">\bot</span>, A] (marked : A)</li>
+<li>[<span class="math inline">\bot</span>, B, C] (marked : A, B,
+C)</li>
+<li>[<span class="math inline">\bot</span>, B] (marked : A, B, C)</li>
+<li>[<span class="math inline">\bot</span>, ] (marked : A, B, C)</li>
 </ul>
 <h5
 id="全エッジを訪問する場合のスタック">全エッジを訪問する場合のスタック</h5>
 <p><code>pop</code> 時にマークする。</p>
 <ul>
-<li>[A] (marked : )</li>
-<li>[B, C] (marked : A)</li>
-<li>[B, A, B] (marked : A, C)</li>
-<li>[B, A, A, C] (marked : A, C, B)</li>
-<li>[B, A, A] (marked : A, C, B)</li>
-<li>[B, A] (marked : A, C, B)</li>
-<li>[B] (marked : A, C, B)</li>
-<li>[]</li>
+<li>[<span class="math inline">\bot</span>, A] (marked : )</li>
+<li>[<span class="math inline">\bot</span>, B, C] (marked : A)</li>
+<li>[<span class="math inline">\bot</span>, B, A, B] (marked : A,
+C)</li>
+<li>[<span class="math inline">\bot</span>, B, A, A, C] (marked : A, C,
+B)</li>
+<li>[<span class="math inline">\bot</span>, B, A, A] (marked : A, C,
+B)</li>
+<li>[<span class="math inline">\bot</span>, B, A] (marked : A, C,
+B)</li>
+<li>[<span class="math inline">\bot</span>, B] (marked : A, C, B)</li>
+<li>[<span class="math inline">\bot</span>, ]</li>
 </ul>
 </div>
 </div>
@@ -343,6 +344,8 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 <div class="flex55">
 <div class="flex-left">
 <div class="sticky">
+<p>次のグラフの探索を考える。<br> <span class="math inline">A</span>
+はルートだとする。</p>
 
 <figure><div class="graphviz">digraph G {
     graph [rank=LR]
@@ -358,18 +361,18 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 <p>非アトミックな子ノードの多い <span class="math inline">C</span>
 を優先した場合。</p>
 <ul>
-<li>[A]</li>
-<li>[A, B, C]</li>
-<li>[A, B, E, F, G ]</li>
+<li>[<span class="math inline">\bot</span>, A]</li>
+<li>[<span class="math inline">\bot</span>, A, B, C]</li>
+<li>[<span class="math inline">\bot</span>, A, B, E, F, G ]</li>
 <li>…</li>
 </ul>
 <p>非アトミックな子ノードの少ない <span class="math inline">B</span>
 を優先した場合。</p>
 <ul>
-<li>[A, C, B]</li>
-<li>[A, C, D ]</li>
-<li>[A, C]</li>
-<li>[A, E, F, G]</li>
+<li>[<span class="math inline">\bot</span>, A, C, B]</li>
+<li>[<span class="math inline">\bot</span>, A, C, D ]</li>
+<li>[<span class="math inline">\bot</span>, A, C]</li>
+<li>[<span class="math inline">\bot</span>, A, E, F, G]</li>
 <li>…</li>
 </ul>
 </div>
@@ -397,12 +400,12 @@ id="全エッジを訪問する場合のスタック">全エッジを訪問す�
 <li>大量の子を持つノードについて、全ての子を <code>push</code>
 するとスタックが深くなる。<br></li>
 </ul>
-<p>解決策 (Boehm-Demers-Weiser mark-sweeping) :</p>
+<p>解決策 (Boehm-Demers-Weiser mark-sweep) :</p>
 <ul>
-<li>ノードの代わりに (ノードが始まるアドレス, 終わるアドレス)
-をスタックに積む。</li>
+<li>スタックには、ノードの代わりに (ノードが始まるアドレス,
+終わるアドレス) を積む。</li>
 <li>各イテレーションでは、スタックトップにあるノードの頭128-wordのみを処理する。</li>
-<li>(ノードの残りの部分はスタックに戻す。)</li>
+<li>ノードの残りの部分はスタックに戻す。</li>
 </ul>
 </div>
 </div>
@@ -443,12 +446,13 @@ style="text-align: center;">オーバーフロー時以外はオーバヘッド�
 <td
 style="text-align: right;">オーバヘッドの大きさ<br>(1チェックあたり)</td>
 <td style="text-align: center;">低オーバヘッド。</td>
-<td style="text-align: center;">例外処理をするため、高オーバヘッド
-(境界チェックの数万倍)。</td>
+<td style="text-align: center;">境界チェックの数万倍
+(例外処理をするため)。</td>
 </tr>
 </tbody>
 </table>
-<h3 id="knuth-の方法">Knuth の方法</h3>
+<h3 id="オーバーフローの対処--knuth-の方法">オーバーフローの対処 | Knuth
+の方法</h3>
 <p>スタックの代わりにリングバッファを使う。</p>
 <h4 id="オーバーフロー時の処理">オーバーフロー時の処理</h4>
 <ul>
@@ -469,7 +473,9 @@ id="スタックが空になった際の処理-未処理ノードの処理">ス�
 </ul>
 <p>なお、常にヒープの底から走査する必要はない。<br>
 前回までの処理でマークを付けたノードのアドレスの最小値から走査すれば良い。</p>
-<h3 id="boehm-demers-weiser-の方法">Boehm-Demers-Weiser の方法</h3>
+<h3
+id="オーバーフローの対処--boehm-demers-weiser-の方法">オーバーフローの対処
+| Boehm-Demers-Weiser の方法</h3>
 <p>スタックを使う。</p>
 <h4 id="オーバーフロー時の処理-1">オーバーフロー時の処理</h4>
 <ul>
@@ -483,7 +489,8 @@ id="スタックが空になった際の処理-未処理ノードの処理-1">�
 <li>オーバーフローが起きていない場合は終了。</li>
 <li>それ以外は次を実行。
 <ul>
-<li>スタックのサイズを2倍に (オーバーフローの頻度を減らすため)</li>
+<li>スタックのサイズを2倍にする
+(オーバーフローの頻度を減らすため)。</li>
 <li>ヒープを走査して次を満たすノードを探し、スタックに積む。
 <ul>
 <li>マーク済み。</li>
@@ -492,7 +499,8 @@ id="スタックが空になった際の処理-未処理ノードの処理-1">�
 <li>処理を再開。</li>
 </ul></li>
 </ul>
-<h3 id="kurokawa-の方法">Kurokawa の方法</h3>
+<h3 id="オーバーフローの対処--kurokawa-の方法">オーバーフローの対処 |
+Kurokawa の方法</h3>
 <p>スタックを使う。</p>
 <h4 id="オーバーフロー時の処理-2">オーバーフロー時の処理</h4>
 <ul>
@@ -506,27 +514,30 @@ id="スタックが空になった際の処理-未処理ノードの処理-1">�
 </ul>
 <p>未マークの子が1個なノードについて :</p>
 <ul>
-<li>その子ノード (Cと置く) をマーク。</li>
-<li>ノードCを起点に、未マークの子を2つ以上持つノードが見つかるまで探索。</li>
+<li>その子ノード (C と置く) をマーク。</li>
+<li>C を起点に、未マークの子を2つ以上持つノードが見つかるまで探索。</li>
 <li>見つかった場合、ノードで元のノードがあったエントリを上書き。</li>
 <li>見つからなかった場合は、エントリを空にする。</li>
 </ul>
 <h4 id="この手法の問題点">この手法の問題点</h4>
-<p>スタック中に抜去できる子が0 or
-1個なノードが見つからなかった場合機能しない。</p>
-<p>なお、経験的に、共有されるノードが少数であることが分かっている。<br>
-つまり、あるノードの子がマーク済みであることは少ない。<br> → Kurokawa
-の手法を用いるのは苦肉の策。</p>
+<ul>
+<li>スタック中に、子が 0 or 1 個なノードが無い場合に機能しない。</li>
+<li>そのような状況は多々起きる。
+<ul>
+<li>(経験的に、共有されるノードは少数)</li>
+</ul></li>
+</ul>
+<p>→ Kurokawa の手法を用いるのは苦肉の策。</p>
 <h2 id="43-mark-の改善--スタックを使わない手法">(4.3) Mark の改善 |
 スタックを使わない手法</h2>
-<p>Mark の使用メモリ量が定数になるアルゴリズムを考える。<br>
-そのためには、今までスタックが持っていた情報を各ノードに持たせる他ない。<br>
-そこで、ノードが持つポインタ値を上書きする形で情報をもたせ、後に値を復元する方法を考える。</p>
+<p>目的 : Mark の使用メモリ量を定数にすること。<br> →
+今までスタックが持っていた情報を各ノードに持たせる他ない。<br> →
+ノードが持つポインタ値を上書きする形で情報をもたせ、後に値を復元する方法を考える。</p>
 <h3
 id="pointer-reversal--deutsch-schorr-waite-のアルゴリズム-2分木の場合">Pointer-reversal
-: Deutsch-Schorr-Waite のアルゴリズム (2分木の場合)</h3>
+| Deutsch-Schorr-Waite のアルゴリズム (2分木の場合)</h3>
 <p>まずは、データ構造が2分木の場合を考える。<br> ノードの探索は、①, ②,
-③の順に進むものとする。</p>
+③の順に進むものとする。B</p>
 <p><img src="img/naive-traverse.dio.svg" alt="探索の順序" /></p>
 <h4 id="flag-bit">Flag-bit</h4>
 <div class="flex">
@@ -598,7 +609,7 @@ id="pointer-reversal--deutsch-schorr-waite-のアルゴリズム-2分木の場�
             (left(prev), current, right(prev)) = (current, right(prev), left(prev))</code></pre></figure>
 <h3
 id="pointer-reversal--deutsch-schorr-waite-のアルゴリズム-一般の場合">Pointer-reversal
-: Deutsch-Schorr-Waite のアルゴリズム (一般の場合)</h3>
+| Deutsch-Schorr-Waite のアルゴリズム (一般の場合)</h3>
 <p>子ノードが2個とは限らない一般の場合を考える。<br></p>
 <div class="flex">
 <div class="flex-left">
@@ -617,49 +628,48 @@ class="math inline">\geq \log_2 n</span>-bit)</li>
 <p><img src="img/dsw-traverse-legend2.dio.svg" alt="凡例(ノード)" /></p>
 </div>
 </div>
-<h3 id="pointer-reversal-の評価-メモリ使用量">Pointer-reversal の評価
-(メモリ使用量)</h3>
-<ul>
-<li>利点 : (Mark の) メモリ使用量が定数</li>
-<li>欠点 : 各ノードに追加のフィールドが必要</li>
-</ul>
-<h4 id="最適化--wegbreit-の手法">最適化 | Wegbreit の手法</h4>
+<h3 id="pointer-reversal--wegbreit-による最適化">Pointer-reversal |
+Wegbreit による最適化</h3>
 <p>着目した性質 :</p>
 <ul>
-<li><code>flag-bit</code>
-が必要になるのは、トレースが延期されるノードだけ。</li>
+<li><code>flag-bit</code> が必要なのは、再訪問が必要なノードだけ。</li>
 </ul>
 <p>手法 :</p>
 <ul>
 <li><code>flag-bit</code>
 をノードに埋め込まずに、スタックで管理する。</li>
+<li>→ メモリ使用量減少。</li>
 </ul>
 <p>この手法の問題点 :</p>
 <ul>
 <li>スタックオーバーフローのリスクがある。</li>
-<li>スタックオーバーフローを完全に避けるには、普通の pointer-reversal
+<li>リスクを完全に避けるには、普通の pointer-reversal
 と同じメモリ量が必要。</li>
 </ul>
-<h4 id="pointer-stack-と-pointer-reversal-は等価">Pointer stack と
-pointer-reversal は等価</h4>
+<h3 id="pointer-reversal-の評価">Pointer-reversal の評価</h3>
+<p>Weibreit の最適化をしない場合 :</p>
 <ul>
-<li>pointer-reversal は pointer stack
-をノード内に移動しただけ、ということが示されている。
+<li>利点 : (Mark の) メモリ使用量が定数</li>
+<li>欠点 : 各ノードに追加のフィールドが必要</li>
+</ul>
+<h4 id="メモリ総使用量">メモリ総使用量</h4>
+<ul>
+<li>Pointer-reversal
+はスタックをノード内に移動しただけ、ということが示されている。
 <ul>
 <li>= メモリの総使用量はどちらも同じ。</li>
 </ul></li>
 <li>(この事実は program proving techniques
 の例題としてよく使用される。)</li>
 </ul>
-<h3 id="pointer-reversal-の評価-実行速度">Pointer-reversal の評価
-(実行速度)</h3>
-<p>Pointer-reversal の実行速度は、 pointer-stack
-を使う場合に比べて遅い。<br></p>
+<h4 id="実行速度">実行速度</h4>
+<p>Pointer-reversal の実行速度は、
+スタックを使う場合に比べて遅い。<br></p>
 <table>
 <thead>
 <tr class="header">
 <th style="text-align: right;"></th>
-<th style="text-align: center;">Pointer-stack</th>
+<th style="text-align: center;">Stack</th>
 <th style="text-align: center;">Pointer-reversal</th>
 </tr>
 </thead>
@@ -678,22 +688,38 @@ pointer-reversal は等価</h4>
 </table>
 <p>ノードの訪問回数が増えると、メモリアクセスの回数が増える。<br> →
 キャッシュミス・ページフォルトが起きやすくなる。</p>
+<hr />
 <p>こうした欠点から、Schorr, Waite 曰く、この手法は苦肉の策。<br>
 しかし、Miranda言語や組み込みのGCでの利用例がある。</p>
 <h2 id="44-mark-bit-の持ち方の工夫">(4.4) Mark-bit の持ち方の工夫</h2>
-<p>Mark-bit を保持する場所を改善する。<br> 今までは各ノードに mark-bit
-を持たせていた。<br>
+<p>今までは各ノードに mark-bit を持たせていた。<br>
 しかし、この手法ではメモリ効率が悪くなる場合がある。</p>
+<p>(悪くならない場合 : ポインタ変数から未使用の 1-bit
+を借りる場合等。)</p>
 <h3 id="bitmap-による管理">Bitmap による管理</h3>
-<p>この節では代わりに、ノードとは分離された bitmap による mark-bit
-の管理を考える。</p>
+<p>ノードとは分離された bitmap による mark-bit の管理を考える。</p>
 <p><code>bitmap</code> は例えば、bit の配列として実装される。<br>
 ノードの最小サイズが 64-bit で、各ノードが 64-bit
 境界にあるとすると、<br> アドレス <code>p</code> に対応する mark-bit は
 <code>bitmap[p&gt;&gt;3]</code> である。</p>
-<p>ノードのサイズ毎に異なる bitmap
-を用意することで、メモリ使用量を更に削減できる。</p>
+<h3 id="bitmap-の利点と欠点">Bitmap の利点と欠点</h3>
+<h4 id="利点">利点</h4>
+<p><strong>・ Bitmap が小さければ RAM に乗る。</strong> <br> →
+ページフォルトしない。</p>
+<p><strong>・ Mark 時にノードへの書き込みが不要。</strong><br> →
+ノードがあるページへの書き込みが起きない。<br> →
+そのページが取り除かれる際の、swap領域 への書き込みは不要。</p>
+<p><strong>・ Sweep 時に生きてるノードを触らなくて良い</strong><br></p>
+<h4 id="欠点">欠点</h4>
+<p><strong>・ ノードに mark-bit を埋める場合に比べ、mark-bit
+の取得にコストがかかる。</strong></p>
 <h3 id="bitmap-の最適化">Bitmap の最適化</h3>
+<h4
+id="オブジェクトの種別ごとに異なる-bitmap-を用意">オブジェクトの種別ごとに異なる
+bitmap を用意</h4>
+<p>一部のアドレス (オブジェクトの内部等) には mark-bit
+を用意しなくて良い。<br> → メモリ使用量の削減に繋がる。</p>
+<h4 id="解放処理の最適化">解放処理の最適化</h4>
 <p>ノードは集団で作られ、集団で不要になる傾向にあることが知られている。<br>
 そこで、</p>
 <ul>
@@ -701,52 +727,46 @@ pointer-reversal は等価</h4>
 <li>1-word 全てが 0 なら、対応するノードの集団をまとめて開放する。</li>
 </ul>
 <p>ことで、高速化が図れる。</p>
-<h3 id="bitmap-の利点と欠点">Bitmap の利点と欠点</h3>
-<p><strong>利点1 : Bitmap が小さければ RAM に乗る。</strong> <br> →
-ページフォルトしない。</p>
-<p><strong>利点2 : Mark 時にノードへの書き込みが不要。</strong><br> →
-ノードがあるページへの書き込みが起きない。<br> →
-そのページが取り除かれる際の、swap領域 への書き込みは不要。</p>
-<p><strong>利点3 : Sweep
-時に生きてるノードを触らなくて良い</strong><br></p>
+<h2 id="45-sweep-の改善--lazy-sweep">(4.5) Sweep の改善 | Lazy
+sweep</h2>
+<p>目的 : ユーザプログラムへの割り込み時間を減らすこと。</p>
+<p><strong>方法1 : 少しずつ Mark (Incremental Collector)</strong></p>
 <ul>
-<li>(Garbage ノードは <code>free-list</code>
-等に戻す必要があるかもしれないが)</li>
+<li>難しい。</li>
+<li>ユーザプログラムは、mark 済のグラフの構造を変えられる。</li>
 </ul>
-<p><strong>欠点 : ノードに mark-bit を埋める場合に比べ、mark-bit
-の取得にコストがかかる。</strong></p>
-<h2 id="45-sweep-の改善--lazy-sweeping">(4.5) Sweep の改善 | Lazy
-sweeping</h2>
-<p>ユーザプログラムへの割り込み時間を減らしたい。</p>
-<p>方法として考えられるのは2つ :</p>
+<p>(詳しくは8章)</p>
+<p><strong>方法2 : 少しずつ (lazy に) Sweep</strong></p>
 <ul>
-<li>Allocation 毎に Mark を少しずつする (incremental collector)</li>
-<li>Allocation 毎に Sweep を少しずつする</li>
+<li>比較的簡単。</li>
+<li>ユーザプログラムは、sweep の対象 (= ゴミ) を触れない。</li>
 </ul>
-<p>このうち、Mark を少しずつするのは難しい。<br>
-なぜなら、ユーザプログラムによって、mark
-済みのグラフの構造が変わりかねないから。<br> (詳しくは8章)</p>
-<p>ここでは、sweep を少しずつ (lazy に) おこなう手法を考える。<br>
-ユーザプログラムは sweep 対象に干渉できないため、これは比較的簡単。</p>
-<ul>
-<li>ユーザプログラムは mark-bit を触れない</li>
-<li>sweep対象はルートから辿れない</li>
-<li>→ sweep対象の参照を新たに作ることは不可能</li>
-<li>→ sweep対象は生き返らない</li>
-</ul>
+<p>ここでは、lazy な sweep に着目する。</p>
 <h3 id="hughes-の-lazy-sweep-アルゴリズム">Hughes の lazy sweep
 アルゴリズム</h3>
-<p>メモリを確保する際、次回の sweep
-開始位置をそのアドレスの後ろに設定する。<br> →
-新たに割り当てられた(未マークの)メモリがfreeされることはない。</p>
-<p>この手法は、メモリを必要な分だけ sweep
-可能なメモリをから探してくる。<br> → 解放済みのメモリを管理するリスト
-(<code>free-list</code>) が不要。</p>
-<p>しかし、この手法は bitmap との相性が悪い。 なぜなら、bitmap
-を効率的に扱うには word単位でのsweepが好ましいから。
-word単位でsweepする場合、余ったメモリをリスト等で管理する必要がある。</p>
+<div class="flex64">
+<div class="flex-left">
+<div class="sticky">
+<p><strong>メモリを必要な分だけ、sweep
+可能なメモリから探す。</strong></p>
+<ul>
+<li>解放済みメモリを管理するリスト (<code>free-list</code>)
+が不要。</li>
+</ul>
+<!-- メモリを確保する際、次回の sweep 開始位置をそのアドレスの後ろに設定する。<br>
+→ 新たに割り当てられた(未マークの)メモリがfreeされることはない。 -->
 
-<figure><figcaption class="code-caption">Hughes's lazy sweeping</figcaption><pre><code class="txt">allocate() =
+<p><strong>しかし、bitmap と相性が悪い。</strong></p>
+<ul>
+<li>bitmap を効率良く扱うには word 単位での sweep が好ましい。</li>
+<li>→「解放したが割り当てに使わなかった」という状況になりうる。</li>
+<li>→ <code>free-list</code> が必要になる。</li>
+</ul>
+</div>
+</div>
+<div class="flex-right">
+
+<figure><figcaption class="code-caption">Hughes's lazy sweep</figcaption><pre><code class="txt">alloc() =
     -- try finding free-able memory
     while sweep &lt; Heap_top
         if mark_bit(sweep) == marked
@@ -773,79 +793,110 @@ word単位でsweepする場合、余ったメモリをリスト等で管理す�
         return result
 
     abort &quot;Memory exhausted&quot;</code></pre></figure>
+</div>
+</div>
 <h3 id="boehm-demers-weiser-sweeper">Boehm-Demers-Weiser sweeper</h3>
 <p>2段階で割り当てる。</p>
 <ul>
-<li>low-level alloc :
-GC失敗時等に、空き領域を確保するためおこなわれる</li>
-<li>high-level alloc :
-ユーザプログラムがメモリを必要とした際におこなわれる</li>
+<li>Low-level alloc :
+GC失敗時等に、空き領域を確保するためにおこなう。</li>
+<li>High-level alloc :
+ユーザプログラムがメモリを必要とした際におこなう。</li>
 </ul>
 <p><img src="img/bdw-sweep-alloc.dio.svg" /></p>
-<p>各ブロックには、対応するヘッダが別途用意される。
+<p>各ブロックには、対応するヘッダが別途用意される。<br>
 ヘッダには、ブロック内のメモリについての bitmap がある。</p>
 <ul>
-<li>high-level free : free-list が空になったら、ブロックを順次
-mark-sweep して free-list に戻す</li>
-<li>low-level free : ヘッダの bitmap が全て 0
-なら、そのブロックは不要なので OS に返す</li>
+<li>High-level free : free-list が空になったら、ブロックを順次
+mark-sweep して free-list を伸ばす。</li>
+<li>Low-level free : ヘッダの bitmap が全て 0
+なら、そのブロックは不要なので OS に返す。</li>
 </ul>
 <h3 id="zorn-の-lazy-sweeper">Zorn の lazy sweeper</h3>
+<p><strong>特徴 :</strong></p>
 <ul>
-<li>SPARC プロセッサ上で動く alloc も sweep も高速な sweeper。
+<li>Alloc も sweep も高速な GC。</li>
+<li>Lispに 特化した SPARC プロセッサのお陰で、<code>cons</code>
+を高速に扱える。
 <ul>
-<li>SPARC プロセッサのお陰で、<code>cons</code> を高速に扱える。</li>
 <li>他のオブジェクトについても、<code>cons</code>
 には劣るが高速に扱える。</li>
 </ul></li>
+</ul>
+<p><strong>動作 :</strong></p>
+<ul>
 <li><code>free-list</code>
 の代わりに、オブジェクトのサイズ毎に用意された固定長の cache vector
 を使う。</li>
-<li>所望の cache vector が空なら、sweep
-して空き領域を確保する。<br></li>
-</ul>
-<p>sweep の各イテレーションでは、bitmap 内の 1-word
-を検査し、いらないノードを cache vector に加える。<br> なお、1-word
-内の各bitを走査する処理は、ループ展開されており、非常に高速。</p>
-<h4 id="alloc-のコスト">Alloc のコスト</h4>
-<p>Lazy sweep では、sweep を alloc 時におこなう</p>
+<li>所望の cache vector が空なら、sweep して空き領域を確保する。</li>
+<li>Sweep の各イテレーションでは :
 <ul>
-<li><p>→ sweep のコストは alloc のコストとみなせる。</p></li>
-<li><p>Zorn の手法の alloc は、10 ~ 12 サイクルで済む。</p></li>
-<li><p>ちなみに、Zorn が作った copy GC は
-5サイクルでallocできる。</p></li>
-<li><p>これがセルの初期化コストに比べて小さいなら、mark-sweep と copy の
-allocation の差を見る意味はさしてない。</p></li>
+<li>Bitmap 内の 1-word を検査。</li>
+<li>解放できるノードを cache vector に加える。</li>
+</ul></li>
 </ul>
-<h2 id="46-issues-to-consider--mark-sweep-と-copy-の比較">4.6 Issues to
-consider | Mark-sweep と copy の比較</h2>
+<p><strong>Alloc のコスト :</strong></p>
+<ul>
+<li>(Alloc 時に sweep するため、sweep のコストは alloc
+のコストに含まれる。)</li>
+<li>10 ~ 12 サイクルで済む。</li>
+</ul>
+<h2 id="46-mark-sweep-と-copy-の比較">(4.6) Mark-sweep と Copy
+の比較</h2>
 <h3 id="space-and-locality">Space and locality</h3>
 <table>
-<thead>
-<tr class="header">
-<th style="text-align: right;"></th>
-<th style="text-align: center;">Mark-sweep (bitmap, lazy-sweep)</th>
-<th style="text-align: center;">Copying</th>
-<th style="text-align: left;">備考</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: right;">アクセスが必要なアドレス空間</td>
-<td style="text-align: center;">比較的狭い</td>
-<td style="text-align: center;">比較的広い</td>
-<td
-style="text-align: left;">狭いほうがキャッシュ・仮想メモリと相性o</td>
-</tr>
-</tbody>
+    <thead>
+        <tr class="header">
+            <th style="text-align: right;"></th>
+            <th style="text-align: center;">Mark-sweep<br>(bitmap, lazy-sweep)</th>
+            <th style="text-align: center;">Copy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="odd">
+            <td style="text-align: right;">アクセスする<br>アドレス空間</td>
+            <td style="text-align: center;">狭い</td>
+            <td style="text-align: center;">広い</td>
+        </tr>
+        <tr class="even">
+            <td style="text-align: right;">特色</td>
+            <td style="text-align: left;">
+                <ul>
+                    <li>Sweep 時に生きているノードを触らない。</li>
+                    <li>1-word に対応するノード集合の死を1命令で判定可能。</li>
+                </ul>
+            </td>
+            <td style="text-align: left;">
+                <ul>
+                    <li>生きてる全ノードについて、forwarding address 等のポインタの書き換えが必要。</li>
+                </ul>
+            </td>
+        </tr>
+        <tr class="odd">
+            <td style="text-align: right;">キャッシュ・仮想メモリとの相性</td>
+            <td style="text-align: center;">良い</td>
+            <td style="text-align: center;">悪い</td>
+        </tr>
+    </tbody>
 </table>
-<p>Mark-sweep において、Garbage ノードは <code>free-list</code>
-等に戻す必要があるかもしれない。 その際に cache miss
-が起きるかもしれないが、Lazy-sweep
-をする場合は直ちにそのアドレスが再度利用される (cache hit 率大)
-ので、大きな影響はない。 どのみち、オブジェクトを確保するにはどこかで
-cache miss が起こる。</p>
-<h3 id="time-complexity">time complexity</h3>
+
+<p>ちなみに :</p>
+<ul>
+<li>Mark-sweep は、garbage を <code>free-list</code>
+に戻す必要があるかもしれない。</li>
+<li>その際、キャッシュミス/ページフォルトが起きるかもしれない。</li>
+</ul>
+<p>しかし、これらは問題にならない。なぜなら :</p>
+<ul>
+<li>Lazy sweep する場合、<code>free-list</code>
+に戻したメモリは、直ぐに再利用 (再割当て) する可能性が高い。
+<ul>
+<li>→ 再利用の際にキャッシュヒットする可能性が高い。</li>
+<li>(この場合、そのノードについてのキャッシュミス回数は合計1回。)</li>
+</ul></li>
+<li>手法を問わず、ノードへの最初のアクセスはキャッシュミスする。</li>
+</ul>
+<h3 id="time-complexity">Time complexity</h3>
 <ul>
 <li><span class="math inline">M</span> : ヒープ全体の大きさ</li>
 <li><span class="math inline">R</span> :
@@ -856,7 +907,7 @@ cache miss が起こる。</p>
 <tr class="header">
 <th style="text-align: right;"></th>
 <th style="text-align: center;">Mark-sweep (bitmap, lazy-sweep)</th>
-<th style="text-align: center;">Copying</th>
+<th style="text-align: center;">Copy</th>
 </tr>
 </thead>
 <tbody>
@@ -882,9 +933,9 @@ class="math inline">O(R)</span></td>
 <tr class="even">
 <td style="text-align: right;">Alloc</td>
 <td style="text-align: center;"><span class="math inline">\geq</span> 10
-~ 12 cycles (Zorn の手法)</td>
+~ 12 <strong>cycles</strong><br>(Zorn の手法)</td>
 <td style="text-align: center;"><span class="math inline">\geq</span> 5
-cycles (Zorn の手法)</td>
+<strong>instructions</strong><br>(Zorn の手法)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">Alloc + Init alloced data</td>
@@ -904,7 +955,7 @@ R)</span></td>
 <tr class="header">
 <th style="text-align: right;"></th>
 <th style="text-align: center;">Mark-sweep (bitmap, lazy-sweep)</th>
-<th style="text-align: center;">Copying</th>
+<th style="text-align: center;">Copy</th>
 </tr>
 </thead>
 <tbody>
@@ -918,26 +969,73 @@ R)</span></td>
 </table>
 <p>ms のallocのコストはinitialising dataが支配的では？ (なんのdata?)</p>
 <p>cp の alooc / initialize のコストは O(M - R)</p>
-<p>扱うオブジェクトの大きさについて :</p>
+<p>一般に :</p>
 <ul>
-<li>非常に小さなオブジェクトを扱う : copy が有利</li>
-<li>それ以外のオブジェクトを扱う : mark が有利</li>
+<li>オブジェクトを mark する vs オブジェクトを copy する
+<ul>
+<li>扱うオブジェクトが非常に小さい場合を<strong>除き</strong>、mark
+が有利。</li>
+</ul></li>
+<li>alloc する
+<ul>
+<li>Copy GC が有利。</li>
+</ul></li>
 </ul>
 <p>copy の alloc のコストはmsより良い</p>
-<p>allocが頻繁で、各ノードの寿命が短いなら、copyが有利
-その他はどちらが有利とも言えない。 しかし、copying
-collectorの方が実装は簡単。</p>
 <p>最終的には、ユーザプログラムのヒープの使われ方を解析して、どちらのGCを使うか判断するしか無い。</p>
+<p>allocが頻繁で、各ノードの寿命が短いなら、copyが有利
+その他はどちらが有利とも言えない。 しかし、Copy
+collectorの方が実装は簡単。</p>
 <h3 id="object-mobility">Object mobility</h3>
-<p>non-moving collector (!= copy gc) の方が扱いやすい環境もある。
-例えば、オブジェクトのアドレスが不変であることを仮定した言語とか。</p>
-<p>いわゆる conservative GC は、コンパイラの助けを借りない。
-そのため、正確なrootを把握するのが難しい。
-しかしこの問題は克服可能。</p>
-<h2 id="45-sweep-の改善--lazy-sweeping-1">(4.5) Sweep の改善 | Lazy
-sweeping</h2>
-<p>Mark-sweep と copy
-の時間オーバヘッドは、長期的に見れば大差ないことを示す。</p>
+<p>Mark-sweep の方が適している環境 (Copy GC が使えない環境) もある。<br>
+例 :</p>
+<ul>
+<li>オブジェクトのアドレスが不変であることを仮定した言語に適用する場合。</li>
+<li>デバッグをする場合。</li>
+<li>Conservative GC (コンパイラの助けを借りない GC )を作る場合。
+<ul>
+<li>あるメモリがポインタか非ポインタか区別がつかない。</li>
+<li>→ もし非ポインタを誤ってポインタとして処理すると、copy
+によって<quiz>非ポインタ値が変化してしまう</quiz>。</li>
+</ul></li>
+</ul>
+<p>Copy GC
+を使うとノードのアドレスがGC前後で変化するため、これらの環境には適さない。</p>
+<h2 id="まとめ">まとめ</h2>
+<h3 id="mark-の工夫について">Mark の工夫について</h3>
+<ul>
+<li>関数の再帰呼び出しをやめ、 ① を用いたものに変更。</li>
+<li>① を浅くする工夫。</li>
+<li>① が溢れた際の対処法。</li>
+</ul>
+<p>を見た。</p>
+<p>さらに、Mark のメモリ使用量を定数にする方法 (pointer-reversal)
+を見た。<br>
+ただし、この手法は各ノードに情報を持たせる必要があり、全体としてのメモリ使用量は、①
+を用いる場合と ② であった。</p>
+<hr />
+<p>① <quiz>スタック</quiz><br> ② <quiz>同じ</quiz></p>
+<h3 id="mark-bit-の管理">Mark-bit の管理</h3>
+<p>Mark-bit を効率よく管理する手法として、 ③ を見た。<br> ③
+を使うと、</p>
+<ul>
+<li>Mark 時にヒープに書き込まなくて良い。</li>
+<li>Sweep 時に生きているノードにアクセスしなくて良い。</li>
+</ul>
+<hr />
+<p>③ <quiz>Bitmap</quiz></p>
+<h3 id="sweep-の工夫">Sweep の工夫</h3>
+<p>Sweep を実装する上での工夫として、④ を見た。</p>
+<hr />
+<p>④ <quiz>Lazy sweep</quiz></p>
+<h3 id="mark-sweep-と-copy-の比較">Mark-sweep と Copy の比較</h3>
+<ul>
+<li>アクセスするメモリの局所性は、⑤ の方が優れていた。</li>
+<li>計算量のオーダーは ⑥
+だが、実装・環境依存な部分も多く、一概にどちらが良いとはいえない。</li>
+</ul>
+<hr />
+<p>⑤ <quiz>Mark-sweep</quiz><br> ⑥ <quiz>同じ</quiz></p>
 <h3>?</h3>
 <p>(Bitmap を使わない場合、) Sweep はヒープを走査する。</p>
 <ul>

@@ -213,6 +213,10 @@ details {
 .flex55 > .flex-left { width: 50%; }
 .flex55 > .flex-right { width: 50%; }
 
+.flex64 { display: flex; }
+.flex64 > .flex-left { width: 60%; }
+.flex64 > .flex-right { width: 40%; }
+
 
 .sticky {
 	position: sticky;
