@@ -1,12 +1,12 @@
 ---
-title: \[WIP\] Garbage Collection (Sec.4)
+title: Garbage Collection (Sec.4)
 date: yyyy-mm-dd
 tag: GC
 plug:
     graphviz: true
 ---
 
-# \[WIP\] Mark-Sweep Garbage Collection (GC Sec.4)
+# Mark-Sweep Garbage Collection (GC Sec.4)
 Mark-Sweep の使用メモリ量・時間オーバヘッドを改善する手法を見ていく。
 
 ## 流れ
@@ -24,7 +24,7 @@ Mark-Sweep の使用メモリ量・時間オーバヘッドを改善する手法
 
 ## (4.1) Mark-sweep と RC の比較
 改善の前に、Mark-Sweep の立ち位置を確認しておく。<br>
-ここでは、Reference counting と比較する。
+ここでは、Reference count と比較する。
 
 |                                                  | Mark-Sweep<br>(non-incrementa, non-generational) |              Reference Count               |
 | -----------------------------------------------: | :----------------------------------------------: | :----------------------------------------: |
@@ -56,7 +56,7 @@ mark(N) =
 ```
 
 そこで、再帰の代わりにスタックを使うようにする。
-```txt
+```txt {caption="スタックを使う"}
 mark_heap() =
     mark_stack = empty
     for R in Roots
@@ -195,12 +195,14 @@ mark() =
         if children.is_empty()
             continue
 
+        -- 最後の子以外を処理
         for M in children[:-1]
             if mark_bit(*M) == unmarked
                 mark_bit(*M) = marked
                 if not atom(*M)
                     push(*M, mark_stack)
 
+        -- 最後の子を push せずに処理
         M = children[-1]
         if mark_bit(*M) == unmarked
             mark_bit(*M) = marked
@@ -234,13 +236,13 @@ digraph G {
 :::::::::
 ::::::
 :::::: {.flex-right}
-非アトミックな子ノードの多い $C$ を優先した場合。
+非アトミックな子ノードの多い <quiz>$C$</quiz> を優先した場合。
 - \[$\bot$, A\]
 - \[$\bot$, A, B, C\]
 - \[$\bot$, A, B, E, F, G \]
 - ...
 
-非アトミックな子ノードの少ない $B$ を優先した場合。
+非アトミックな子ノードの少ない <quiz>$B$</quiz> を優先した場合。
 - \[$\bot$, A, C, B\]
 - \[$\bot$, A, C, D \]
 - \[$\bot$, A, C\]
@@ -276,6 +278,19 @@ Consリストについては、経験的に次が分かっている :
 ![](img/bdw-mark.dio.svg)
 ::::::
 :::
+
+## 流れ (再掲)
+- <span style="color:gray">Mark-Sweep vs Copy<span style="color:red">
+- Mark の改善
+   - <span style="color:gray">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:red">スタックオーバーフロー対策をする</span>
+   - スタックの利用もやめて、メモリ使用量を定数にする
+- Mark-bit を置く位置の改善
+   - Bitmap の利用
+- Sweep の改善
+   - Lazy に sweep する
+- Mark-Sweep vs Copy
 
 ## (4.2) Mark の改善 | スタックオーバーフロー時の対処
 スタックを浅く保つ工夫をしても、オーバーフローする確率は0にならない。<br>
@@ -346,6 +361,19 @@ Consリストについては、経験的に次が分かっている :
 
 → Kurokawa の手法を用いるのは苦肉の策。
 
+## 流れ (再掲)
+- <span style="color:gray">Mark-Sweep vs Copy<span style="color:red">
+- Mark の改善
+   - <span style="color:gray">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:gray">スタックオーバーフロー対策をする</span>
+   - <span style="color:red">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- Mark-bit を置く位置の改善
+   - Bitmap の利用
+- Sweep の改善
+   - Lazy に sweep する
+- Mark-Sweep vs Copy
+
 ## (4.3) Mark の改善 | スタックを使わない手法
 目的 : Mark の使用メモリ量を定数にすること。<br>
 → 今までスタックが持っていた情報を各ノードに持たせる他ない。<br>
@@ -353,7 +381,7 @@ Consリストについては、経験的に次が分かっている :
 
 ### Pointer-reversal | Deutsch-Schorr-Waite のアルゴリズム (2分木の場合)
 まずは、データ構造が2分木の場合を考える。<br>
-ノードの探索は、①, ②, ③の順に進むものとする。B
+ノードの探索は、①, ②, ③の順に進むものとする。
 
 ![探索の順序](img/naive-traverse.dio.svg)
 
@@ -474,6 +502,19 @@ Pointer-reversal の実行速度は、 スタックを使う場合に比べて�
 こうした欠点から、Schorr, Waite 曰く、この手法は苦肉の策。<br>
 しかし、Miranda言語や組み込みのGCでの利用例がある。
 
+## 流れ (再掲)
+- <span style="color:gray">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:gray">Mark の改善</span>
+   - <span style="color:gray">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:gray">スタックオーバーフロー対策をする</span>
+   - <span style="color:gray">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- <span style="color:red">Mark-bit を置く位置の改善</span>
+   - Bitmap の利用
+- Sweep の改善
+   - Lazy に sweep する
+- Mark-Sweep vs Copy
+
 ## (4.4) Mark-bit の持ち方の工夫
 今までは各ノードに mark-bit を持たせていた。<br>
 しかし、この手法ではメモリ効率が悪くなる場合がある。
@@ -513,6 +554,19 @@ Pointer-reversal の実行速度は、 スタックを使う場合に比べて�
 - 1-word 全てが 0 なら、対応するノードの集団をまとめて開放する。
 
 ことで、高速化が図れる。
+
+## 流れ (再掲)
+- <span style="color:gray">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:gray">Mark の改善</span>
+   - <span style="color:gray">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:gray">スタックオーバーフロー対策をする</span>
+   - <span style="color:gray">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- <span style="color:gray">Mark-bit を置く位置の改善</span>
+   - <span style="color:gray">Bitmap の利用</span>
+- <span style="color:red">Sweep の改善</span>
+   - Lazy に sweep する
+- Mark-Sweep vs Copy
 
 ## (4.5) Sweep の改善 | Lazy sweep
 目的 : ユーザプログラムへの割り込み時間を減らすこと。
@@ -610,6 +664,19 @@ alloc() =
 - (Alloc 時に sweep するため、sweep のコストは alloc のコストに含まれる。)
 - 10 ~ 12 サイクルで済む。
 
+## 流れ (再掲)
+- <span style="color:gray">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:gray">Mark の改善</span>
+   - <span style="color:gray">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:gray">スタックオーバーフロー対策をする</span>
+   - <span style="color:gray">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- <span style="color:gray">Mark-bit を置く位置の改善</span>
+   - <span style="color:gray">Bitmap の利用</span>
+- <span style="color:gray">Sweep の改善</span>
+   - <span style="color:gray">Lazy に sweep する</span>
+- <span style="color:red">Mark-Sweep vs Copy</span>
+
 ## (4.6) Mark-sweep と Copy の比較
 ### Space and locality
 <table>
@@ -672,42 +739,32 @@ alloc() =
 
 オーダーは同じだが、定数・係数は違う。
 
-Lazy-sweep は、Copy collector と同じく、ヒープがほぼ空のときは高速
+例えば、
+- ノード訪問時の処理 :
+  - Mark-sweep は mark をつけるだけ。
+  - Copy は forwarding address の編集とノードのコピーが必要
+  - → (扱うオブジェクトが非常に小さい場合を除き) Mark-sweep が有利
+- Alloc について :
+  - 何も考えず from-space のトップから確保すれば良いので、Copy の方が有利。
 
-例えば
+また、
+- Alloc が頻繁、あるいは、各ノードの寿命が短いなら、copy が有利。
+  - その他はどちらが有利とも言えない。
+- 実装は copy の方が簡単。
 
-|                    | Mark-sweep (bitmap, lazy-sweep) |                                       Copy                                       |
-| -----------------: | :-----------------------------: | :------------------------------------------------------------------------------: |
-| ノード訪問時の処理 |        Mark をつけるだけ        | Forwarding address の編集<br>ノードのCopy (ノードのサイズが大きい場合はコスト大) |
 
+**最終的には、ユーザプログラムのヒープの使い方を解析して、どちらのGCを使うか判断するしか無い。**
 
-ms のallocのコストはinitialising dataが支配的では？ (なんのdata?)
-
-cp の alooc / initialize のコストは O(M - R)
-
-一般に :
-- オブジェクトを mark する vs オブジェクトを copy する
-  - 扱うオブジェクトが非常に小さい場合を**除き**、mark が有利。
-- alloc する
-  - Copy GC が有利。
-
-copy の alloc のコストはmsより良い
-
-最終的には、ユーザプログラムのヒープの使われ方を解析して、どちらのGCを使うか判断するしか無い。
-
-allocが頻繁で、各ノードの寿命が短いなら、copyが有利
-その他はどちらが有利とも言えない。
-しかし、Copy collectorの方が実装は簡単。
 
 
 ### Object mobility
 Mark-sweep の方が適している環境 (Copy GC が使えない環境) もある。<br>
 例 :
-- オブジェクトのアドレスが不変であることを仮定した言語に適用する場合。
+- オブジェクトのアドレスが不変であることを仮定した言語での利用。
 - デバッグをする場合。
 - Conservative GC (コンパイラの助けを借りない GC )を作る場合。
     - あるメモリがポインタか非ポインタか区別がつかない。
-    - → もし非ポインタを誤ってポインタとして処理すると、copy によって<quiz>非ポインタ値が変化してしまう</quiz>。
+    - → 非ポインタをポインタと誤認して処理すると、copy 前後で<quiz>非ポインタ値が変化してしまう</quiz>。
 
 Copy GC を使うとノードのアドレスがGC前後で変化するため、これらの環境には適さない。
 
@@ -748,8 +805,3 @@ Sweep を実装する上での工夫として、④ を見た。
 ---
 ⑤ <quiz>Mark-sweep</quiz><br>
 ⑥ <quiz>同じ</quiz>
-
-### ?
-(Bitmap を使わない場合、) Sweep はヒープを走査する。
-- → Sequential なメモリアクセス。
-- → キャッシュ・ページを有効に使える。
