@@ -75,7 +75,7 @@ Collection (GC Sec.4)</h1>
 の使用メモリ量・時間オーバヘッドを改善する手法を見ていく。</p>
 <h2 id="流れ">流れ</h2>
 <ul>
-<li>Mark-Sweep vs Copy</li>
+<li>Mark-Sweep vs RC</li>
 <li>Mark の改善
 <ul>
 <li>再帰をやめてスタックを使う</li>
@@ -94,8 +94,8 @@ Collection (GC Sec.4)</h1>
 <li>Mark-Sweep vs Copy</li>
 </ul>
 <h2 id="41-mark-sweep-と-rc-の比較">(4.1) Mark-sweep と RC の比較</h2>
-<p>改善の前に、Mark-Sweep の立ち位置を確認しておく。<br>
-ここでは、Reference count と比較する。</p>
+<p>Mark-Sweep の立ち位置を確認しておく。<br> ここでは、Reference Count
+(RC) と比較する。</p>
 <table>
 <thead>
 <tr class="header">
@@ -199,11 +199,11 @@ E)</span>の探索の戦略として、次の2つを考える :</p>
 <dl>
 <dt>[戦略1] 全ノードを訪問 (先程のアルゴリズム)</dt>
 <dd>
-スタックの最大の深さは、最大で <span class="math inline">|V|</span>。
+スタックの最大の深さは <span class="math inline">|V|</span>。
 </dd>
 <dt>[戦略2] 全エッジを訪問</dt>
 <dd>
-スタックの最大の深さは、<span class="math inline">|E|</span>。
+スタックの最大の深さは <span class="math inline">|E|</span>。
 </dd>
 </dl>
 <p><strong>グラフが木の場合 :</strong><br> → <span
@@ -417,12 +417,12 @@ class="math inline">B</span></quiz> を優先した場合。</p>
 </div>
 <h2 id="流れ-再掲">流れ (再掲)</h2>
 <ul>
-<li><span style="color:gray">Mark-Sweep vs
+<li><span style="color:#dfdfdf">Mark-Sweep vs
 Copy<span style="color:red"></li>
 <li>Mark の改善
 <ul>
-<li><span style="color:gray">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
 <li><span style="color:red">スタックオーバーフロー対策をする</span></li>
 <li>スタックの利用もやめて、メモリ使用量を定数にする</li>
 </ul></li>
@@ -460,20 +460,20 @@ style="text-align: center;">スタックの直後に書き込み禁止なペー�
 </tr>
 <tr class="even">
 <td style="text-align: right;">オーバヘッドの発生頻度</td>
-<td
-style="text-align: center;"><code>push</code>ごと。<br>(子ノードの数を数えることで、頻度を各イテレーション毎に減らせる。)</td>
-<td
-style="text-align: center;">オーバーフロー時以外はオーバヘッド無し</td>
+<td style="text-align: center;"><code>push</code>ごと。(*)</td>
+<td style="text-align: center;">オーバーフロー時のみ。</td>
 </tr>
 <tr class="odd">
 <td
 style="text-align: right;">オーバヘッドの大きさ<br>(1チェックあたり)</td>
 <td style="text-align: center;">低オーバヘッド。</td>
-<td style="text-align: center;">境界チェックの数万倍
-(例外処理をするため)。</td>
+<td style="text-align: center;">境界チェックの数万倍。<br>
+(例外処理をするため。)</td>
 </tr>
 </tbody>
 </table>
+<p>(*)
+子ノードの数を数えることで、頻度を各イテレーション毎に減らせる。</p>
 <h3 id="オーバーフローの対処--knuth-の方法">オーバーフローの対処 | Knuth
 の方法</h3>
 <p>スタックの代わりにリングバッファを使う。</p>
@@ -553,13 +553,13 @@ Kurokawa の方法</h3>
 <p>→ Kurokawa の手法を用いるのは苦肉の策。</p>
 <h2 id="流れ-再掲-1">流れ (再掲)</h2>
 <ul>
-<li><span style="color:gray">Mark-Sweep vs
+<li><span style="color:#dfdfdf">Mark-Sweep vs
 Copy<span style="color:red"></li>
 <li>Mark の改善
 <ul>
-<li><span style="color:gray">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:gray">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
 <li><span style="color:red">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
 <li>Mark-bit を置く位置の改善
@@ -697,14 +697,12 @@ Wegbreit による最適化</h3>
 <li>欠点 : 各ノードに追加のフィールドが必要</li>
 </ul>
 <h4 id="メモリ総使用量">メモリ総使用量</h4>
-<ul>
-<li>Pointer-reversal
-はスタックをノード内に移動しただけ、ということが示されている。
+<p>Pointer-reversal
+はスタックをノード内に移動しただけ、ということが示されている。</p>
 <ul>
 <li>= メモリの総使用量はどちらも同じ。</li>
-</ul></li>
-<li>(この事実は program proving techniques
-の例題としてよく使用される。)</li>
+<li>この事実は program proving techniques
+の例題としてよく使用される。</li>
 </ul>
 <h4 id="実行速度">実行速度</h4>
 <p>Pointer-reversal の実行速度は、
@@ -737,14 +735,14 @@ Wegbreit による最適化</h3>
 しかし、Miranda言語や組み込みのGCでの利用例がある。</p>
 <h2 id="流れ-再掲-2">流れ (再掲)</h2>
 <ul>
-<li><span style="color:gray">Mark-Sweep vs
+<li><span style="color:#dfdfdf">Mark-Sweep vs
 Copy<span style="color:red"></li>
-<li><span style="color:gray">Mark の改善</span>
+<li><span style="color:#dfdfdf">Mark の改善</span>
 <ul>
-<li><span style="color:gray">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:gray">スタックオーバーフロー対策をする</span></li>
-<li><span style="color:gray">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
+<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
 <li><span style="color:red">Mark-bit を置く位置の改善</span>
 <ul>
@@ -794,18 +792,18 @@ bitmap を用意</h4>
 <p>ことで、高速化が図れる。</p>
 <h2 id="流れ-再掲-3">流れ (再掲)</h2>
 <ul>
-<li><span style="color:gray">Mark-Sweep vs
+<li><span style="color:#dfdfdf">Mark-Sweep vs
 Copy<span style="color:red"></li>
-<li><span style="color:gray">Mark の改善</span>
+<li><span style="color:#dfdfdf">Mark の改善</span>
 <ul>
-<li><span style="color:gray">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:gray">スタックオーバーフロー対策をする</span></li>
-<li><span style="color:gray">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
+<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
-<li><span style="color:gray">Mark-bit を置く位置の改善</span>
+<li><span style="color:#dfdfdf">Mark-bit を置く位置の改善</span>
 <ul>
-<li><span style="color:gray">Bitmap の利用</span></li>
+<li><span style="color:#dfdfdf">Bitmap の利用</span></li>
 </ul></li>
 <li><span style="color:red">Sweep の改善</span>
 <ul>
@@ -844,7 +842,7 @@ sweep</h2>
 
 <p><strong>しかし、bitmap と相性が悪い。</strong></p>
 <ul>
-<li>bitmap を効率良く扱うには word 単位での sweep が好ましい。</li>
+<li>Bitmap を効率良く扱うには word 単位での sweep が好ましい。</li>
 <li>→「解放したが割り当てに使わなかった」という状況になりうる。</li>
 <li>→ <code>free-list</code> が必要になる。</li>
 </ul>
@@ -884,18 +882,25 @@ sweep</h2>
 <h3 id="boehm-demers-weiser-sweeper">Boehm-Demers-Weiser sweeper</h3>
 <p>2段階で割り当てる。</p>
 <ul>
-<li>Low-level alloc :
-GC失敗時等に、空き領域を確保するためにおこなう。</li>
-<li>High-level alloc :
-ユーザプログラムがメモリを必要とした際におこなう。</li>
+<li><strong>Low-level alloc</strong> :
+GC失敗時等に、空き領域を確保するためにおこなう。
+<ul>
+<li>OSから決まったサイズの Block をもらう。</li>
+<li>Block は、オブジェクトのサイズごとに管理する。</li>
+</ul></li>
+<li><strong>High-level alloc</strong> :
+ユーザプログラムがメモリを必要とした際におこなう。
+<ul>
+<li>Block から必要な分メモリを割り当てるする。</li>
+</ul></li>
 </ul>
 <p><img src="img/bdw-sweep-alloc.dio.svg" /></p>
 <p>各ブロックには、対応するヘッダが別途用意される。<br>
 ヘッダには、ブロック内のメモリについての bitmap がある。</p>
 <ul>
-<li>High-level free : free-list が空になったら、ブロックを順次
-mark-sweep して free-list を伸ばす。</li>
-<li>Low-level free : ヘッダの bitmap が全て 0
+<li><strong>High-level free</strong> : free-list
+が空になったら、ブロックを順次 mark-sweep して free-list を伸ばす。</li>
+<li><strong>Low-level free</strong> : ヘッダの bitmap が全て 0
 なら、そのブロックは不要なので OS に返す。</li>
 </ul>
 <h3 id="zorn-の-lazy-sweeper">Zorn の lazy sweeper</h3>
@@ -929,22 +934,22 @@ mark-sweep して free-list を伸ばす。</li>
 </ul>
 <h2 id="流れ-再掲-4">流れ (再掲)</h2>
 <ul>
-<li><span style="color:gray">Mark-Sweep vs
+<li><span style="color:#dfdfdf">Mark-Sweep vs
 Copy<span style="color:red"></li>
-<li><span style="color:gray">Mark の改善</span>
+<li><span style="color:#dfdfdf">Mark の改善</span>
 <ul>
-<li><span style="color:gray">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:gray">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:gray">スタックオーバーフロー対策をする</span></li>
-<li><span style="color:gray">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
+<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
-<li><span style="color:gray">Mark-bit を置く位置の改善</span>
+<li><span style="color:#dfdfdf">Mark-bit を置く位置の改善</span>
 <ul>
-<li><span style="color:gray">Bitmap の利用</span></li>
+<li><span style="color:#dfdfdf">Bitmap の利用</span></li>
 </ul></li>
-<li><span style="color:gray">Sweep の改善</span>
+<li><span style="color:#dfdfdf">Sweep の改善</span>
 <ul>
-<li><span style="color:gray">Lazy に sweep する</span></li>
+<li><span style="color:#dfdfdf">Lazy に sweep する</span></li>
 </ul></li>
 <li><span style="color:red">Mark-Sweep vs Copy</span></li>
 </ul>
