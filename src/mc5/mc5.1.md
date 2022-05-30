@@ -51,11 +51,14 @@ def set_of_state_which_sat_f(M, f):
     return {s ∈ S | f ∈ label(s)}
 ```
 
-ここで、`CheckXX` は、$f_1$, $f_2$ のラベル付けが終わっている前提で、`XX` についてラベル付けする関数である。
+- `CheckXX` は、`f1`, `f2` のラベル付けが終わっている前提で、`XX` についてラベル付けする関数。
+- `f1`, `f2` は `sub_f` よりネストが浅いので、この時点で処理済み。
 
 以降では、各`CheckXX`について見ていく。
 
 ## 簡単なケース (Not, And, Or, EX)
+::: {.flex55}
+:::::: {.flex-left}
 ```py {caption=CheckNot}
 # O(|S|)
 def CheckNot(f1):
@@ -64,6 +67,15 @@ def CheckNot(f1):
             label(s) += ¬f1
 ```
 
+```py {caption=CheckEX}
+# O(|R|)
+def CheckEX(f):
+    for (parent, child) in R:
+        if f ∈ label(child):
+            parent += EX(f)
+```
+::::::
+:::::: {.flex-right}
 ```py {caption=CheckAnd}
 # O(|S|)
 def CheckAnd(f1, f2):
@@ -79,17 +91,12 @@ def CheckOr(f1, f2):
         if f1 ∈ label(s) or f2 ∈ label(s):
             label(s) += f1 ∨ f2
 ```
-
-```py {caption=CheckEX}
-# O(|R|)
-def CheckEX(f):
-    for (parent, child) in R:
-        if f ∈ label(child):
-            parent += EX(f)
-```
+::::::
+:::
 
 ## EUの処理
-
+::: {.flex64}
+:::::: {.flex-left}
 ```py {caption=CheckEU}
 # O(|S| + |R|)
 def CheckEU(f1, f2):
@@ -104,7 +111,8 @@ def CheckEU(f1, f2):
                 label(t) += E(f1 U f2)
                 T.push(t)
 ```
-
+::::::
+:::::: {.flex-right}
 ### 動作
 色付きはラベルが貼られたことを表す。
 
@@ -143,6 +151,8 @@ digraph G {
     N0 -> N1 -> N2 -> N3
 }
 ```
+::::::
+:::
 
 ### 計算量
 前半部分は $O(|S|)$ で計算できる。
@@ -170,6 +180,8 @@ for (parent, child) in R:
     child.parents() += parent
 ```
 
+よって、全体の計算量は $O(|S| + |R|)$
+
 ## EGの処理
 ### 用語
 SCC (Strongly Connected Component):
@@ -179,7 +191,7 @@ MSCC (Maximal SCC):
 : SCCのうち、他のSCCに包含されないもの。
 
 nontrivial SCC:
-: 頂点が2つ以上のSCC or ある頂点からその頂点への辺があるSCC。
+: 頂点が2つ以上のSCC or 頂点が一つで自己ループがあるSCC。
 
 <br>
 
@@ -212,14 +224,14 @@ digraph G {
         label="GraphD"
         labelloc = "t"
         labeljust = "l"
-        D0 -> D1 -> D0
+        D0
     }
 }
 ```
 
 <details>
 <summary>答え</summary>
-GraphB, GraphD
+GraphB, GraphC
 </details>
 
 ### 記法
@@ -352,12 +364,12 @@ digraph G {
 ```
 
 ### 考察
-$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。
+$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ は「スタートボタンを押したら、いつかは温めが完了する」という性質を表す。
 
 ここで、パス $\pi = 1, 2, 5, 2, 5, \cdots$ に着目する。<br>
 このパスは状態2で $\textit{Start}$ を満たすが、その後 $\textit{Heat}$ な状態には至らない。
 
-よって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) =$ <quiz>$\emptyset$</quiz>である。
+よって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) = \emptyset$ である。
 
 ### ステップ1 : 正規化
 $$

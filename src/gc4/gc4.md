@@ -279,6 +279,61 @@ Consリストについては、経験的に次が分かっている :
 ::::::
 :::
 
+```txt {caption=擬似コード}
+Stack<(void*, void*)> mark_stack;
+
+fn mark():
+  while !mark_stack.is_empty():
+    (obj_begin, obj_end) = mark_stack.pop();
+    if (obj_end - obj_begin > 128-word):
+      for c in (obj_begin, obj_begin+128-word).children():
+          if !c.is_marked():
+            mark(c);
+            if !c.is_atom():
+              mark_stack.push((c.begin, c.end));
+      mark_stack.push((obj_begin+128-word, obj_end));
+    else:
+      ...
+```
+
+#### 工夫4が効く例
+::: {.flex55}
+:::::: {.flex-left}
+```cpp
+struct Node {
+    Node children = Node[1000];
+    Node() { children = {0}; }
+}
+
+void foo(void) {
+    Node *root = new Node;
+    for (i in 0..1000) {
+        root->children[i] = new Node;
+    }
+    // root, children はここでゴミになる.
+}
+```
+::::::
+:::::: {.flex-right}
+工夫2 あり, 工夫4 なしの場合 : 深さ9999
+```txt
+[⊥, root]
+[⊥, c0, ..., c9998]
+...
+```
+
+工夫2 あり, 工夫4 ありの場合 : 深さ128
+```txt
+[⊥, (root.begin, root.end)]
+[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c62.begin, c62.end)]
+...
+```
+::::::
+:::
+
+
+#### 工夫4が効かない例
+
 ## 流れ (再掲)
 - <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
 - Mark の改善

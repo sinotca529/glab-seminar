@@ -135,18 +135,31 @@ def set_of_state_which_sat_f(M, f):
             EG(f1)     =&gt; CheckEG(f1),
 
     return {s ∈ S | f ∈ label(s)}</code></pre></figure>
-<p>ここで、<code>CheckXX</code> は、<span
-class="math inline">f_1</span>, <span class="math inline">f_2</span>
+<ul>
+<li><code>CheckXX</code> は、<code>f1</code>, <code>f2</code>
 のラベル付けが終わっている前提で、<code>XX</code>
-についてラベル付けする関数である。</p>
+についてラベル付けする関数。</li>
+<li><code>f1</code>, <code>f2</code> は <code>sub_f</code>
+よりネストが浅いので、この時点で処理済み。</li>
+</ul>
 <p>以降では、各<code>CheckXX</code>について見ていく。</p>
 <h2 id="簡単なケース-not-and-or-ex">簡単なケース (Not, And, Or, EX)</h2>
+<div class="flex55">
+<div class="flex-left">
 
 <figure><figcaption class="code-caption">CheckNot</figcaption><pre><code class="py"># O(|S|)
 def CheckNot(f1):
     for s in S:
         if f1 ∉ label(s):
             label(s) += ¬f1</code></pre></figure>
+
+<figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
+def CheckEX(f):
+    for (parent, child) in R:
+        if f ∈ label(child):
+            parent += EX(f)</code></pre></figure>
+</div>
+<div class="flex-right">
 
 <figure><figcaption class="code-caption">CheckAnd</figcaption><pre><code class="py"># O(|S|)
 def CheckAnd(f1, f2):
@@ -159,13 +172,11 @@ def CheckOr(f1, f2):
     for s in S:
         if f1 ∈ label(s) or f2 ∈ label(s):
             label(s) += f1 ∨ f2</code></pre></figure>
-
-<figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
-def CheckEX(f):
-    for (parent, child) in R:
-        if f ∈ label(child):
-            parent += EX(f)</code></pre></figure>
+</div>
+</div>
 <h2 id="euの処理">EUの処理</h2>
+<div class="flex64">
+<div class="flex-left">
 
 <figure><figcaption class="code-caption">CheckEU</figcaption><pre><code class="py"># O(|S| + |R|)
 def CheckEU(f1, f2):
@@ -179,7 +190,9 @@ def CheckEU(f1, f2):
             if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
                 label(t) += E(f1 U f2)
                 T.push(t)</code></pre></figure>
-<h3 id="動作">動作</h3>
+</div>
+<section id="動作" class="flex-right">
+<h3>動作</h3>
 <p>色付きはラベルが貼られたことを表す。</p>
 
 <figure><figcaption class="code-caption">ループ直前</figcaption><div class="graphviz">digraph G {
@@ -211,6 +224,8 @@ def CheckEU(f1, f2):
     N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
+</section>
+</div>
 <h3 id="計算量">計算量</h3>
 <p>前半部分は <span class="math inline">O(|S|)</span> で計算できる。</p>
 
@@ -235,6 +250,8 @@ class="math inline">O(|R|)</span> で事前に計算しておける。</p>
 
 <figure><figcaption class="code-caption"><code>s.parents()</code>を求める処理</figcaption><pre><code class="py">for (parent, child) in R:
     child.parents() += parent</code></pre></figure>
+<p>よって、全体の計算量は <span class="math inline">O(|S| +
+|R|)</span></p>
 <h2 id="egの処理">EGの処理</h2>
 <h3 id="用語">用語</h3>
 <dl>
@@ -248,7 +265,7 @@ SCCのうち、他のSCCに包含されないもの。
 </dd>
 <dt>nontrivial SCC:</dt>
 <dd>
-頂点が2つ以上のSCC or ある頂点からその頂点への辺があるSCC。
+頂点が2つ以上のSCC or 頂点が一つで自己ループがあるSCC。
 </dd>
 </dl>
 <br>
@@ -283,12 +300,12 @@ SCCのうち、他のSCCに包含されないもの。
         label=&quot;GraphD&quot;
         labelloc = &quot;t&quot;
         labeljust = &quot;l&quot;
-        D0 -&gt; D1 -&gt; D0
+        D0
     }
 }</div></figure>
 <details>
 <summary>答え</summary>
-GraphB, GraphD
+GraphB, GraphC
 </details>
 
 <h3 id="記法">記法</h3>
@@ -454,14 +471,13 @@ class="math inline">\textbf{AG}(\textit{Start} \rightarrow
 <h3 id="考察">考察</h3>
 <p><span class="math inline">\textbf{AG}(\textit{Start} \rightarrow
 \textbf{AF}\textit{Heat})</span>
-は「スタートボタンを押したら、絶対いつかは温めが完了する」という性質を表す。</p>
+は「スタートボタンを押したら、いつかは温めが完了する」という性質を表す。</p>
 <p>ここで、パス <span class="math inline">\pi = 1, 2, 5, 2, 5,
 \cdots</span> に着目する。<br> このパスは状態2で <span
 class="math inline">\textit{Start}</span> を満たすが、その後 <span
 class="math inline">\textit{Heat}</span> な状態には至らない。</p>
 <p>よって、<span class="math inline">\textbf{AG}(\textit{Start}
-\rightarrow \textit{Heat}) =</span> <quiz><span
-class="math inline">\emptyset</span></quiz>である。</p>
+\rightarrow \textit{Heat}) = \emptyset</span> である。</p>
 <h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
 <p><span class="math display">
 \begin{align*}

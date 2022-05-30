@@ -415,6 +415,52 @@ class="math inline">B</span></quiz> を優先した場合。</p>
 <p><img src="img/bdw-mark.dio.svg" /></p>
 </div>
 </div>
+
+<figure><figcaption class="code-caption">擬似コード</figcaption><pre><code class="txt">Stack&lt;(void*, void*)&gt; mark_stack;
+
+fn mark():
+  while !mark_stack.is_empty():
+    (obj_begin, obj_end) = mark_stack.pop();
+    if (obj_end - obj_begin &gt; 128-word):
+      for c in (obj_begin, obj_begin+128-word).children():
+          if !c.is_marked():
+            mark(c);
+            if !c.is_atom():
+              mark_stack.push((c.begin, c.end));
+      mark_stack.push((obj_begin+128-word, obj_end));
+    else:
+      ...</code></pre></figure>
+<h4 id="工夫4が効く例">工夫4が効く例</h4>
+<div class="flex55">
+<div class="flex-left">
+
+<figure><pre><code class="cpp">struct Node {
+    Node children = Node[1000];
+    Node() { children = {0}; }
+}
+
+void foo(void) {
+    Node *root = new Node;
+    for (i in 0..1000) {
+        root-&gt;children[i] = new Node;
+    }
+    // root, children はここでゴミになる.
+}</code></pre></figure>
+</div>
+<div class="flex-right">
+<p>工夫2 あり, 工夫4 なしの場合 : 深さ9999</p>
+
+<figure><pre><code class="txt">[⊥, root]
+[⊥, c0, ..., c9998]
+...</code></pre></figure>
+<p>工夫2 あり, 工夫4 ありの場合 : 深さ128</p>
+
+<figure><pre><code class="txt">[⊥, (root.begin, root.end)]
+[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c62.begin, c62.end)]
+...</code></pre></figure>
+</div>
+</div>
+<h4 id="工夫4が効かない例">工夫4が効かない例</h4>
 <h2 id="流れ-再掲">流れ (再掲)</h2>
 <ul>
 <li><span style="color:#dfdfdf">Mark-Sweep vs
