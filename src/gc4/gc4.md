@@ -284,19 +284,22 @@ Stack<(void*, void*)> mark_stack;
 
 fn mark():
   while !mark_stack.is_empty():
-    (obj_begin, obj_end) = mark_stack.pop();
-    if (obj_end - obj_begin > 128-word):
-      for c in (obj_begin, obj_begin+128-word).children():
-          if !c.is_marked():
-            mark(c);
-            if !c.is_atom():
-              mark_stack.push((c.begin, c.end));
-      mark_stack.push((obj_begin+128-word, obj_end));
-    else:
-      ...
+    (begin, end) = mark_stack.pop();
+
+    // 頭 128-word のみを処理する。
+    // 残りはスタックに戻す。
+    if (end - begin > 128-word):
+      mark_stack.push((begin + 128-word, end));
+      end = begin + 128-word;
+
+    for c in (begin, end).children():
+      if !c.is_marked():
+        mark(c);
+        if !c.is_atom():
+          mark_stack.push((c.begin, c.end));
 ```
 
-#### 工夫4が効く例
+#### 工夫4が効く例 (全オブジェクトのサイズが 128-word より大きい場合)
 ::: {.flex55}
 :::::: {.flex-left}
 ```cpp
@@ -307,7 +310,7 @@ struct Node {
 
 void foo(void) {
     Node *root = new Node;
-    for (i in 0..1000) {
+    for (int i = 0; i < 1000; ++i) {
         root->children[i] = new Node;
     }
     // root, children はここでゴミになる.
@@ -315,24 +318,61 @@ void foo(void) {
 ```
 ::::::
 :::::: {.flex-right}
-工夫2 あり, 工夫4 なしの場合 : 深さ9999
+**工夫2 なし**, 工夫4 なしの場合 : 深さ9999
 ```txt
 [⊥, root]
-[⊥, c0, ..., c9998]
+[⊥, c0, ..., c9998, c9999]
 ...
 ```
 
-工夫2 あり, 工夫4 ありの場合 : 深さ128
+**工夫2 なし**, 工夫4 ありの場合 : 深さ130
 ```txt
 [⊥, (root.begin, root.end)]
-[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c62.begin, c62.end)]
+[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c63.begin, c63.end)]
 ...
 ```
+
+工夫2を併用した場合も、傾向は同じ。
 ::::::
 :::
 
 
-#### 工夫4が効かない例
+#### 工夫4が効かない例 (全オブジェクトのサイズが 128-word 以下の場合)
+::: {.flex55}
+:::::: {.flex-left}
+```cpp
+struct Node {
+    Node children = Node[3];
+    Node() { children = {0}; }
+}
+
+void foo(void) {
+    Node *root = new Node;
+    for (int i = 0; i < 3; ++i) {
+        root->children[i] = new Node;
+    }
+    // root, children はここでゴミになる.
+}
+```
+::::::
+:::::: {.flex-right}
+**工夫2 なし**, 工夫4 なしの場合 : 深さ3
+```txt
+[⊥, root]
+[⊥, c0, c1, c2]
+...
+```
+
+**工夫2 なし**, 工夫4 ありの場合 : 深さ6
+```txt
+[⊥, (root.begin, root.end)]
+[⊥, (c1, c1+sizeof(Node)), (c2, c2+sizeof(Node)), (c3, c3+sizeof(Node))]
+...
+```
+
+工夫2を併用した場合も、傾向は同じ。
+::::::
+:::
 
 ## 流れ (再掲)
 - <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
@@ -389,7 +429,7 @@ void foo(void) {
 #### スタックが空になった際の処理 (未処理ノードの処理)
 - オーバーフローが起きていない場合は終了。
 - それ以外は次を実行。
-  - スタックのサイズを2倍にする (オーバーフローの頻度を減らすため)。
+  - スタックのサイズを2倍にする (→ オーバーフローの頻度Down)。
   - ヒープを走査して次を満たすノードを探し、スタックに積む。
     - マーク済み。
     - 子ノードにマークが付いていない。
@@ -399,7 +439,7 @@ void foo(void) {
 スタックを使う。
 
 #### オーバーフロー時の処理
-- スタック上のノードのうち、未マークの子を0 or 1個しか持たないものについて処理。
+- スタック上のノードのうち、未マークの子を0 or 1個しか持たないものを処理。
 - 処理後は、スタック上の全ノードが未マークの子を2個以上持つようになる。
 
 未マークの子が0個なノードについて :
@@ -575,16 +615,26 @@ Pointer-reversal の実行速度は、 スタックを使う場合に比べて�
 
 ## (4.4) Mark-bit の持ち方の工夫
 今までは各ノードに mark-bit を持たせていた。<br>
-しかし、この手法ではメモリ効率が悪くなる場合がある。
+しかし、この手法ではメモリ使用量が増える場合がある。
 
-(悪くならない場合 : ポインタ変数から未使用の 1-bit を借りる場合等。)
+(増えない場合 : ポインタ変数から未使用の 1-bit を借りる場合等。)
 
 ### Bitmap による管理
 ノードとは分離された bitmap による mark-bit の管理を考える。
 
-`bitmap` は例えば、bit の配列として実装される。<br>
-ノードの最小サイズが 64-bit で、各ノードが 64-bit 境界にあるとすると、<br>
-アドレス `p` に対応する mark-bit は `bitmap[p>>3]` である。
+#### 実装例
+仮定 :
+- ノードの最小サイズが8-Byte。
+- 各ノードが8-Byte境界に配置される
+
+```c
+// sizeof(bit) == 1-bit
+bit bitmap[HeapSize / 8] = {0};
+
+bit mark_bit(void *addr) {
+    return bitmap[addr / 8];
+}
+```
 
 ### Bitmap の利点と欠点
 #### 利点
@@ -598,11 +648,13 @@ Pointer-reversal の実行速度は、 スタックを使う場合に比べて�
 **・ Sweep 時に生きてるノードを触らなくて良い**<br>
 
 #### 欠点
-**・ ノードに mark-bit を埋める場合に比べ、mark-bit の取得にコストがかかる。**
+**・ ノードに mark-bit を埋める場合に比べ、mark-bit の取得にコストがかかる。**<br>
+- 表を引くコストがある。<br>
+- ノードと mark-bit が近くにないため、キャッシュ・ページ効率が悪い。
 
 ### Bitmap の最適化
 #### オブジェクトの種別ごとに異なる bitmap を用意
-一部のアドレス (オブジェクトの内部等) には mark-bit を用意しなくて良い。<br>
+一部のアドレス (オブジェクトの内部等) には mark-bit を用意しなくて良い。
 → メモリ使用量の削減に繋がる。
 
 #### 解放処理の最適化

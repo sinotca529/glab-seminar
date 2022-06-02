@@ -100,16 +100,16 @@ def CheckOr(f1, f2):
 ```py {caption=CheckEU}
 # O(|S| + |R|)
 def CheckEU(f1, f2):
-    T := {s | f2 ∈ label(s)}
-    for s in T:
-        label(s) += E(f1 U f2)
+  T := {s | f2 ∈ label(s)}
+  for s in T:
+    label(s) += E(f1 U f2)
 
-    while T != ∅:
-        s = T.pop()
-        for t in s.parents():
-            if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
-                label(t) += E(f1 U f2)
-                T.push(t)
+  while T != ∅:
+    s = T.pop()
+    for t in s.parents():
+      if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
+        label(t) += E(f1 U f2)
+        T.push(t)
 ```
 ::::::
 :::::: {.flex-right}

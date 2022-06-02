@@ -180,16 +180,16 @@ def CheckOr(f1, f2):
 
 <figure><figcaption class="code-caption">CheckEU</figcaption><pre><code class="py"># O(|S| + |R|)
 def CheckEU(f1, f2):
-    T := {s | f2 ∈ label(s)}
-    for s in T:
-        label(s) += E(f1 U f2)
+  T := {s | f2 ∈ label(s)}
+  for s in T:
+    label(s) += E(f1 U f2)
 
-    while T != ∅:
-        s = T.pop()
-        for t in s.parents():
-            if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
-                label(t) += E(f1 U f2)
-                T.push(t)</code></pre></figure>
+  while T != ∅:
+    s = T.pop()
+    for t in s.parents():
+      if f1 ∈ label(t) and E(f1 U f2) ∉ label(t) :
+        label(t) += E(f1 U f2)
+        T.push(t)</code></pre></figure>
 </div>
 <section id="動作" class="flex-right">
 <h3>動作</h3>

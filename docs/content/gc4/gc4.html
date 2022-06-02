@@ -420,17 +420,22 @@ class="math inline">B</span></quiz> を優先した場合。</p>
 
 fn mark():
   while !mark_stack.is_empty():
-    (obj_begin, obj_end) = mark_stack.pop();
-    if (obj_end - obj_begin &gt; 128-word):
-      for c in (obj_begin, obj_begin+128-word).children():
-          if !c.is_marked():
-            mark(c);
-            if !c.is_atom():
-              mark_stack.push((c.begin, c.end));
-      mark_stack.push((obj_begin+128-word, obj_end));
-    else:
-      ...</code></pre></figure>
-<h4 id="工夫4が効く例">工夫4が効く例</h4>
+    (begin, end) = mark_stack.pop();
+
+    // 頭 128-word のみを処理する。
+    // 残りはスタックに戻す。
+    if (end - begin &gt; 128-word):
+      mark_stack.push((begin + 128-word, end));
+      end = begin + 128-word;
+
+    for c in (begin, end).children():
+      if !c.is_marked():
+        mark(c);
+        if !c.is_atom():
+          mark_stack.push((c.begin, c.end));</code></pre></figure>
+<h4
+id="工夫4が効く例-全オブジェクトのサイズが-128-word-より大きい場合">工夫4が効く例
+(全オブジェクトのサイズが 128-word より大きい場合)</h4>
 <div class="flex55">
 <div class="flex-left">
 
@@ -441,26 +446,59 @@ fn mark():
 
 void foo(void) {
     Node *root = new Node;
-    for (i in 0..1000) {
+    for (int i = 0; i &lt; 1000; ++i) {
         root-&gt;children[i] = new Node;
     }
     // root, children はここでゴミになる.
 }</code></pre></figure>
 </div>
 <div class="flex-right">
-<p>工夫2 あり, 工夫4 なしの場合 : 深さ9999</p>
+<p><strong>工夫2 なし</strong>, 工夫4 なしの場合 : 深さ9999</p>
 
 <figure><pre><code class="txt">[⊥, root]
-[⊥, c0, ..., c9998]
+[⊥, c0, ..., c9998, c9999]
 ...</code></pre></figure>
-<p>工夫2 あり, 工夫4 ありの場合 : 深さ128</p>
+<p><strong>工夫2 なし</strong>, 工夫4 ありの場合 : 深さ130</p>
 
 <figure><pre><code class="txt">[⊥, (root.begin, root.end)]
-[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c62.begin, c62.end)]
+[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c63.begin, c63.end)]
 ...</code></pre></figure>
+<p>工夫2を併用した場合も、傾向は同じ。</p>
 </div>
 </div>
-<h4 id="工夫4が効かない例">工夫4が効かない例</h4>
+<h4
+id="工夫4が効かない例-全オブジェクトのサイズが-128-word-以下の場合">工夫4が効かない例
+(全オブジェクトのサイズが 128-word 以下の場合)</h4>
+<div class="flex55">
+<div class="flex-left">
+
+<figure><pre><code class="cpp">struct Node {
+    Node children = Node[3];
+    Node() { children = {0}; }
+}
+
+void foo(void) {
+    Node *root = new Node;
+    for (int i = 0; i &lt; 3; ++i) {
+        root-&gt;children[i] = new Node;
+    }
+    // root, children はここでゴミになる.
+}</code></pre></figure>
+</div>
+<div class="flex-right">
+<p><strong>工夫2 なし</strong>, 工夫4 なしの場合 : 深さ3</p>
+
+<figure><pre><code class="txt">[⊥, root]
+[⊥, c0, c1, c2]
+...</code></pre></figure>
+<p><strong>工夫2 なし</strong>, 工夫4 ありの場合 : 深さ6</p>
+
+<figure><pre><code class="txt">[⊥, (root.begin, root.end)]
+[⊥, (c1, c1+sizeof(Node)), (c2, c2+sizeof(Node)), (c3, c3+sizeof(Node))]
+...</code></pre></figure>
+<p>工夫2を併用した場合も、傾向は同じ。</p>
+</div>
+</div>
 <h2 id="流れ-再掲">流れ (再掲)</h2>
 <ul>
 <li><span style="color:#dfdfdf">Mark-Sweep vs
@@ -558,8 +596,7 @@ id="スタックが空になった際の処理-未処理ノードの処理-1">�
 <li>オーバーフローが起きていない場合は終了。</li>
 <li>それ以外は次を実行。
 <ul>
-<li>スタックのサイズを2倍にする
-(オーバーフローの頻度を減らすため)。</li>
+<li>スタックのサイズを2倍にする (→ オーバーフローの頻度Down)。</li>
 <li>ヒープを走査して次を満たすノードを探し、スタックに積む。
 <ul>
 <li>マーク済み。</li>
@@ -574,7 +611,7 @@ Kurokawa の方法</h3>
 <h4 id="オーバーフロー時の処理-2">オーバーフロー時の処理</h4>
 <ul>
 <li>スタック上のノードのうち、未マークの子を0 or
-1個しか持たないものについて処理。</li>
+1個しか持たないものを処理。</li>
 <li>処理後は、スタック上の全ノードが未マークの子を2個以上持つようになる。</li>
 </ul>
 <p>未マークの子が0個なノードについて :</p>
@@ -803,15 +840,23 @@ Copy<span style="color:red"></li>
 </ul>
 <h2 id="44-mark-bit-の持ち方の工夫">(4.4) Mark-bit の持ち方の工夫</h2>
 <p>今までは各ノードに mark-bit を持たせていた。<br>
-しかし、この手法ではメモリ効率が悪くなる場合がある。</p>
-<p>(悪くならない場合 : ポインタ変数から未使用の 1-bit
-を借りる場合等。)</p>
+しかし、この手法ではメモリ使用量が増える場合がある。</p>
+<p>(増えない場合 : ポインタ変数から未使用の 1-bit を借りる場合等。)</p>
 <h3 id="bitmap-による管理">Bitmap による管理</h3>
 <p>ノードとは分離された bitmap による mark-bit の管理を考える。</p>
-<p><code>bitmap</code> は例えば、bit の配列として実装される。<br>
-ノードの最小サイズが 64-bit で、各ノードが 64-bit
-境界にあるとすると、<br> アドレス <code>p</code> に対応する mark-bit は
-<code>bitmap[p&gt;&gt;3]</code> である。</p>
+<h4 id="実装例">実装例</h4>
+<p>仮定 :</p>
+<ul>
+<li>ノードの最小サイズが8-Byte。</li>
+<li>各ノードが8-Byte境界に配置される</li>
+</ul>
+
+<figure><pre><code class="c">// sizeof(bit) == 1-bit
+bit bitmap[HeapSize / 8] = {0};
+
+bit mark_bit(void *addr) {
+    return bitmap[addr / 8];
+}</code></pre></figure>
 <h3 id="bitmap-の利点と欠点">Bitmap の利点と欠点</h3>
 <h4 id="利点">利点</h4>
 <p><strong>・ Bitmap が小さければ RAM に乗る。</strong> <br> →
@@ -822,13 +867,18 @@ Copy<span style="color:red"></li>
 <p><strong>・ Sweep 時に生きてるノードを触らなくて良い</strong><br></p>
 <h4 id="欠点">欠点</h4>
 <p><strong>・ ノードに mark-bit を埋める場合に比べ、mark-bit
-の取得にコストがかかる。</strong></p>
+の取得にコストがかかる。</strong><br></p>
+<ul>
+<li>表を引くコストがある。<br></li>
+<li>ノードと mark-bit
+が近くにないため、キャッシュ・ページ効率が悪い。</li>
+</ul>
 <h3 id="bitmap-の最適化">Bitmap の最適化</h3>
 <h4
 id="オブジェクトの種別ごとに異なる-bitmap-を用意">オブジェクトの種別ごとに異なる
 bitmap を用意</h4>
 <p>一部のアドレス (オブジェクトの内部等) には mark-bit
-を用意しなくて良い。<br> → メモリ使用量の削減に繋がる。</p>
+を用意しなくて良い。 → メモリ使用量の削減に繋がる。</p>
 <h4 id="解放処理の最適化">解放処理の最適化</h4>
 <p>ノードは集団で作られ、集団で不要になる傾向にあることが知られている。<br>
 そこで、</p>
