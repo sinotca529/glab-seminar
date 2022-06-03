@@ -461,7 +461,8 @@ void foo(void) {
 <p><strong>工夫2 なし</strong>, 工夫4 ありの場合 : 深さ130</p>
 
 <figure><pre><code class="txt">[⊥, (root.begin, root.end)]
-[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c63.begin, c63.end)]
+[⊥, (root.begin+128-word, root.end),
+  (c0.begin, c0.end), ..., (c63.begin, c63.end)]
 ...</code></pre></figure>
 <p>工夫2を併用した場合も、傾向は同じ。</p>
 </div>
@@ -494,19 +495,20 @@ void foo(void) {
 <p><strong>工夫2 なし</strong>, 工夫4 ありの場合 : 深さ6</p>
 
 <figure><pre><code class="txt">[⊥, (root.begin, root.end)]
-[⊥, (c1, c1+sizeof(Node)), (c2, c2+sizeof(Node)), (c3, c3+sizeof(Node))]
+[⊥, (c1, c1+sizeof(Node)),
+  (c2, c2+sizeof(Node)), (c3, c3+sizeof(Node))]
 ...</code></pre></figure>
 <p>工夫2を併用した場合も、傾向は同じ。</p>
 </div>
 </div>
 <h2 id="流れ-再掲">流れ (再掲)</h2>
 <ul>
-<li><span style="color:#dfdfdf">Mark-Sweep vs
+<li><span style="color:#b0b0b0">Mark-Sweep vs
 Copy<span style="color:red"></li>
 <li>Mark の改善
 <ul>
-<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red"></li>
 <li><span style="color:red">スタックオーバーフロー対策をする</span></li>
 <li>スタックの利用もやめて、メモリ使用量を定数にする</li>
 </ul></li>
@@ -561,7 +563,8 @@ style="text-align: right;">オーバヘッドの大きさ<br>(1チェックあ�
 <h3 id="オーバーフローの対処--knuth-の方法">オーバーフローの対処 | Knuth
 の方法</h3>
 <p>スタックの代わりにリングバッファを使う。</p>
-<h4 id="オーバーフロー時の処理">オーバーフロー時の処理</h4>
+<h4 id="オーバーフロー時-バッファが1周した際-の処理">オーバーフロー時
+(バッファが1周した際) の処理</h4>
 <ul>
 <li>何もしない。</li>
 <li>未処理のノードが上書きされる。</li>
@@ -579,12 +582,12 @@ id="スタックが空になった際の処理-未処理ノードの処理">ス�
 <li>バッファが空でないなら、処理を再開。</li>
 </ul>
 <p>なお、常にヒープの底から走査する必要はない。<br>
-前回までの処理でマークを付けたノードのアドレスの最小値から走査すれば良い。</p>
+上書きされた未処理ノードのアドレスの最小値を覚えておき、そこから走査すれば良い。</p>
 <h3
 id="オーバーフローの対処--boehm-demers-weiser-の方法">オーバーフローの対処
 | Boehm-Demers-Weiser の方法</h3>
 <p>スタックを使う。</p>
-<h4 id="オーバーフロー時の処理-1">オーバーフロー時の処理</h4>
+<h4 id="オーバーフロー時の処理">オーバーフロー時の処理</h4>
 <ul>
 <li>オーバーフローしたことを覚えておく。</li>
 <li>新たに来たノードは push せず放置。</li>
@@ -608,7 +611,7 @@ id="スタックが空になった際の処理-未処理ノードの処理-1">�
 <h3 id="オーバーフローの対処--kurokawa-の方法">オーバーフローの対処 |
 Kurokawa の方法</h3>
 <p>スタックを使う。</p>
-<h4 id="オーバーフロー時の処理-2">オーバーフロー時の処理</h4>
+<h4 id="オーバーフロー時の処理-1">オーバーフロー時の処理</h4>
 <ul>
 <li>スタック上のノードのうち、未マークの子を0 or
 1個しか持たないものを処理。</li>
@@ -628,21 +631,18 @@ Kurokawa の方法</h3>
 <h4 id="この手法の問題点">この手法の問題点</h4>
 <ul>
 <li>スタック中に、子が 0 or 1 個なノードが無い場合に機能しない。</li>
-<li>そのような状況は多々起きる。
-<ul>
-<li>(経験的に、共有されるノードは少数)</li>
-</ul></li>
+<li>そのような状況が多々起きることが経験的にわかっている。</li>
 </ul>
 <p>→ Kurokawa の手法を用いるのは苦肉の策。</p>
 <h2 id="流れ-再掲-1">流れ (再掲)</h2>
 <ul>
-<li><span style="color:#dfdfdf">Mark-Sweep vs
+<li><span style="color:#b0b0b0">Mark-Sweep vs
 Copy<span style="color:red"></li>
 <li>Mark の改善
 <ul>
-<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックオーバーフロー対策をする</span></li>
 <li><span style="color:red">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
 <li>Mark-bit を置く位置の改善
@@ -687,24 +687,33 @@ id="pointer-reversal--deutsch-schorr-waite-のアルゴリズム-2分木の場�
 <div class="sticky">
 <ol type="1">
 <li>(初期状態)</li>
-<li>左の要素を親への参照で上書きし、左の部分木へ進む
+<li>訪問。自分をマーク。</li>
+<li>左の要素を親への参照で上書きし、左の部分木へ進む。
 <ul>
-<li>1 で親から自身への参照がなかったのはこのため</li>
+<li>2 で親から自身への参照が消えたこのため。</li>
 </ul></li>
-<li>左の子ノードから、自身に参照が貼られる</li>
-<li>(左の部分木を探索)</li>
-<li>左の部分木の探索を終え、右の部分木へ
+<li>左の部分木を探索。
 <ul>
-<li>Flag-bit を立てる</li>
-<li>左の要素をもとに戻し、右の要素を親への参照で上書き</li>
+<li>左の子ノードから、自身に参照が貼られる。</li>
 </ul></li>
-<li>(右の部分木を探索)</li>
-<li>親へ戻る
+<li>左の部分木の探索を終え、右の部分木へ。
 <ul>
-<li>右の要素をもとに戻す</li>
-<li>この直後、親は部分木の探索を終えるため、親から自分への参照が戻る</li>
+<li>Flag-bit を立てる。</li>
+<li>左の要素をもとに戻し、右の要素を親への参照で上書き。</li>
+</ul></li>
+<li>右の部分木を探索。
+<ul>
+<li>右の子ノードから、自身に参照が貼られる。</li>
+</ul></li>
+<li>親へ戻る。
+<ul>
+<li>Flag@-bit を折る。</li>
+<li>右の要素をもとに戻す。</li>
+<li>この直後、親は部分木の探索を終える。</li>
+<li>→ 親から自分への参照が戻る。</li>
 </ul></li>
 </ol>
+<p><img src="img/dsw-traverse-legend.dio.svg" alt="凡例(ノード)" /></p>
 </div>
 </div>
 <div class="flex-right">
@@ -746,9 +755,12 @@ id="pointer-reversal--deutsch-schorr-waite-のアルゴリズム-一般の場合
 <li>→ 現在どの部分木を探索中かを記憶する必要あり。</li>
 <li>→ 各ノードに、<code>flag-bit</code> 的なものを持たせる必要あり。
 <ul>
-<li><code>n-field</code> : ノード内にあるポインタの数</li>
+<li><code>n-field</code> : ノード内にあるポインタの数。</li>
 <li><code>i-field</code> : どの部分木を探索中か (<span
-class="math inline">\geq \log_2 n</span>-bit)</li>
+class="math inline">\geq \log_2 (n+1)</span>-bit)。
+<ul>
+<li>Mark-bit の役割も兼ねる。</li>
+</ul></li>
 </ul></li>
 </ul>
 </div>
@@ -819,14 +831,14 @@ Wegbreit による最適化</h3>
 しかし、Miranda言語や組み込みのGCでの利用例がある。</p>
 <h2 id="流れ-再掲-2">流れ (再掲)</h2>
 <ul>
-<li><span style="color:#dfdfdf">Mark-Sweep vs
+<li><span style="color:#b0b0b0">Mark-Sweep vs
 Copy<span style="color:red"></li>
-<li><span style="color:#dfdfdf">Mark の改善</span>
+<li><span style="color:#b0b0b0">Mark の改善</span>
 <ul>
-<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
-<li><span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
+<li><span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#b0b0b0">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
 <li><span style="color:red">Mark-bit を置く位置の改善</span>
 <ul>
@@ -848,7 +860,7 @@ Copy<span style="color:red"></li>
 <p>仮定 :</p>
 <ul>
 <li>ノードの最小サイズが8-Byte。</li>
-<li>各ノードが8-Byte境界に配置される</li>
+<li>各ノードが8-Byte境界に配置される。</li>
 </ul>
 
 <figure><pre><code class="c">// sizeof(bit) == 1-bit
@@ -883,24 +895,24 @@ bitmap を用意</h4>
 <p>ノードは集団で作られ、集団で不要になる傾向にあることが知られている。<br>
 そこで、</p>
 <ul>
-<li>Bitmap 中の 1-word に対応するノードを1つの集団とみなす。</li>
+<li>Bitmap 中の 1-word に対応するノード群を1つの集団とみなす。</li>
 <li>1-word 全てが 0 なら、対応するノードの集団をまとめて開放する。</li>
 </ul>
 <p>ことで、高速化が図れる。</p>
 <h2 id="流れ-再掲-3">流れ (再掲)</h2>
 <ul>
-<li><span style="color:#dfdfdf">Mark-Sweep vs
+<li><span style="color:#b0b0b0">Mark-Sweep vs
 Copy<span style="color:red"></li>
-<li><span style="color:#dfdfdf">Mark の改善</span>
+<li><span style="color:#b0b0b0">Mark の改善</span>
 <ul>
-<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
-<li><span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
+<li><span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#b0b0b0">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
-<li><span style="color:#dfdfdf">Mark-bit を置く位置の改善</span>
+<li><span style="color:#b0b0b0">Mark-bit を置く位置の改善</span>
 <ul>
-<li><span style="color:#dfdfdf">Bitmap の利用</span></li>
+<li><span style="color:#b0b0b0">Bitmap の利用</span></li>
 </ul></li>
 <li><span style="color:red">Sweep の改善</span>
 <ul>
@@ -928,7 +940,7 @@ sweep</h2>
 <div class="flex64">
 <div class="flex-left">
 <div class="sticky">
-<p><strong>メモリを必要な分だけ、sweep
+<p><strong>メモリを必要な分だけ sweep
 可能なメモリから探す。</strong></p>
 <ul>
 <li>解放済みメモリを管理するリスト (<code>free-list</code>)
@@ -937,10 +949,10 @@ sweep</h2>
 <!-- メモリを確保する際、次回の sweep 開始位置をそのアドレスの後ろに設定する。<br>
 → 新たに割り当てられた(未マークの)メモリがfreeされることはない。 -->
 
-<p><strong>しかし、bitmap と相性が悪い。</strong></p>
+<p><strong>Bitmap と相性が悪い。</strong></p>
 <ul>
-<li>Bitmap を効率良く扱うには word 単位での sweep が好ましい。</li>
-<li>→「解放したが割り当てに使わなかった」という状況になりうる。</li>
+<li>Bitmap は word 単位で sweep した方が効率が良い。</li>
+<li>→ それをすると「解放したが割り当てなかったメモリ」が生じる。</li>
 <li>→ <code>free-list</code> が必要になる。</li>
 </ul>
 </div>
@@ -977,7 +989,7 @@ sweep</h2>
 </div>
 </div>
 <h3 id="boehm-demers-weiser-sweeper">Boehm-Demers-Weiser sweeper</h3>
-<p>2段階で割り当てる。</p>
+<p>メモリの割り当てを2段階でおこなう手法。</p>
 <ul>
 <li><strong>Low-level alloc</strong> :
 GC失敗時等に、空き領域を確保するためにおこなう。
@@ -1031,22 +1043,22 @@ GC失敗時等に、空き領域を確保するためにおこなう。
 </ul>
 <h2 id="流れ-再掲-4">流れ (再掲)</h2>
 <ul>
-<li><span style="color:#dfdfdf">Mark-Sweep vs
+<li><span style="color:#b0b0b0">Mark-Sweep vs
 Copy<span style="color:red"></li>
-<li><span style="color:#dfdfdf">Mark の改善</span>
+<li><span style="color:#b0b0b0">Mark の改善</span>
 <ul>
-<li><span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red"></li>
-<li><span style="color:#dfdfdf">スタックオーバーフロー対策をする</span></li>
-<li><span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
+<li><span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red"></li>
+<li><span style="color:#b0b0b0">スタックオーバーフロー対策をする</span></li>
+<li><span style="color:#b0b0b0">スタックの利用もやめて、メモリ使用量を定数にする</span></li>
 </ul></li>
-<li><span style="color:#dfdfdf">Mark-bit を置く位置の改善</span>
+<li><span style="color:#b0b0b0">Mark-bit を置く位置の改善</span>
 <ul>
-<li><span style="color:#dfdfdf">Bitmap の利用</span></li>
+<li><span style="color:#b0b0b0">Bitmap の利用</span></li>
 </ul></li>
-<li><span style="color:#dfdfdf">Sweep の改善</span>
+<li><span style="color:#b0b0b0">Sweep の改善</span>
 <ul>
-<li><span style="color:#dfdfdf">Lazy に sweep する</span></li>
+<li><span style="color:#b0b0b0">Lazy に sweep する</span></li>
 </ul></li>
 <li><span style="color:red">Mark-Sweep vs Copy</span></li>
 </ul>
@@ -1089,16 +1101,15 @@ Copy<span style="color:red"></li>
     </tbody>
 </table>
 
-<p>ちなみに :</p>
-<ul>
-<li>Mark-sweep は、garbage を <code>free-list</code>
-に戻す必要があるかもしれない。</li>
-<li>その際、キャッシュミス/ページフォルトが起きるかもしれない。</li>
-</ul>
-<p>しかし、これらは問題にならない。なぜなら :</p>
+<h4
+id="q-mark-sweep-はゴミを-free-list-に戻すときにキャッシュミスページフォルトが起きるのでは">Q.
+Mark-sweep はゴミを <code>free-list</code>
+に戻すときにキャッシュミス/ページフォルトが起きるのでは？</h4>
+<p><strong>A. 起きるかもしれないが、問題にはならない。</strong><br>
+なぜなら :</p>
 <ul>
 <li>Lazy sweep する場合、<code>free-list</code>
-に戻したメモリは、直ぐに再利用 (再割当て) する可能性が高い。
+に戻したメモリは、直ぐに再利用 (再割り当て) する可能性が高い。
 <ul>
 <li>→ 再利用の際にキャッシュヒットする可能性が高い。</li>
 <li>(この場合、そのノードについてのキャッシュミス回数は合計1回。)</li>

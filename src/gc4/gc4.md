@@ -328,7 +328,8 @@ void foo(void) {
 **工夫2 なし**, 工夫4 ありの場合 : 深さ130
 ```txt
 [⊥, (root.begin, root.end)]
-[⊥, (root.begin+128-word, root.end), (c0.begin, c0.end), ..., (c63.begin, c63.end)]
+[⊥, (root.begin+128-word, root.end),
+  (c0.begin, c0.end), ..., (c63.begin, c63.end)]
 ...
 ```
 
@@ -366,7 +367,8 @@ void foo(void) {
 **工夫2 なし**, 工夫4 ありの場合 : 深さ6
 ```txt
 [⊥, (root.begin, root.end)]
-[⊥, (c1, c1+sizeof(Node)), (c2, c2+sizeof(Node)), (c3, c3+sizeof(Node))]
+[⊥, (c1, c1+sizeof(Node)),
+  (c2, c2+sizeof(Node)), (c3, c3+sizeof(Node))]
 ...
 ```
 
@@ -375,10 +377,10 @@ void foo(void) {
 :::
 
 ## 流れ (再掲)
-- <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:#b0b0b0">Mark-Sweep vs Copy<span style="color:red">
 - Mark の改善
-   - <span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red">
-   - <span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red">
    - <span style="color:red">スタックオーバーフロー対策をする</span>
    - スタックの利用もやめて、メモリ使用量を定数にする
 - Mark-bit を置く位置の改善
@@ -405,7 +407,7 @@ void foo(void) {
 ### オーバーフローの対処 | Knuth の方法
 スタックの代わりにリングバッファを使う。
 
-#### オーバーフロー時の処理
+#### オーバーフロー時 (バッファが1周した際) の処理
 - 何もしない。
 - 未処理のノードが上書きされる。
 
@@ -417,7 +419,7 @@ void foo(void) {
 - バッファが空でないなら、処理を再開。
 
 なお、常にヒープの底から走査する必要はない。<br>
-前回までの処理でマークを付けたノードのアドレスの最小値から走査すれば良い。
+上書きされた未処理ノードのアドレスの最小値を覚えておき、そこから走査すれば良い。
 
 ### オーバーフローの対処 | Boehm-Demers-Weiser の方法
 スタックを使う。
@@ -453,17 +455,16 @@ void foo(void) {
 
 #### この手法の問題点
 - スタック中に、子が 0 or 1 個なノードが無い場合に機能しない。
-- そのような状況は多々起きる。
-  - (経験的に、共有されるノードは少数)
+- そのような状況が多々起きることが経験的にわかっている。
 
 → Kurokawa の手法を用いるのは苦肉の策。
 
 ## 流れ (再掲)
-- <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:#b0b0b0">Mark-Sweep vs Copy<span style="color:red">
 - Mark の改善
-   - <span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red">
-   - <span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red">
-   - <span style="color:#dfdfdf">スタックオーバーフロー対策をする</span>
+   - <span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:#b0b0b0">スタックオーバーフロー対策をする</span>
    - <span style="color:red">スタックの利用もやめて、メモリ使用量を定数にする</span>
 - Mark-bit を置く位置の改善
    - Bitmap の利用
@@ -500,17 +501,23 @@ void foo(void) {
 :::::: {.flex-left}
 ::::::::: {.sticky}
 1. (初期状態)
-2. 左の要素を親への参照で上書きし、左の部分木へ進む
-   - 1 で親から自身への参照がなかったのはこのため
-3. 左の子ノードから、自身に参照が貼られる
-4. (左の部分木を探索)
-5. 左の部分木の探索を終え、右の部分木へ
-   - Flag-bit を立てる
-   - 左の要素をもとに戻し、右の要素を親への参照で上書き
-6. (右の部分木を探索)
-7. 親へ戻る
-    - 右の要素をもとに戻す
-    - この直後、親は部分木の探索を終えるため、親から自分への参照が戻る
+2. 訪問。自分をマーク。
+3. 左の要素を親への参照で上書きし、左の部分木へ進む。
+   - 2 で親から自身への参照が消えたこのため。
+4. 左の部分木を探索。
+   - 左の子ノードから、自身に参照が貼られる。
+5. 左の部分木の探索を終え、右の部分木へ。
+   - Flag-bit を立てる。
+   - 左の要素をもとに戻し、右の要素を親への参照で上書き。
+6. 右の部分木を探索。
+   - 右の子ノードから、自身に参照が貼られる。
+7. 親へ戻る。
+   - Flag@-bit を折る。
+   - 右の要素をもとに戻す。
+   - この直後、親は部分木の探索を終える。
+   - → 親から自分への参照が戻る。
+
+![凡例(ノード)](img/dsw-traverse-legend.dio.svg)
 :::::::::
 ::::::
 
@@ -554,8 +561,9 @@ mark(R) =
 基本方針 : ポインタを張り替えつつグラフを探索。
 - → 現在どの部分木を探索中かを記憶する必要あり。
 - → 各ノードに、`flag-bit` 的なものを持たせる必要あり。
-  - `n-field` : ノード内にあるポインタの数
-  - `i-field` : どの部分木を探索中か ($\geq \log_2 n$-bit)
+  - `n-field` : ノード内にあるポインタの数。
+  - `i-field` : どの部分木を探索中か ($\geq \log_2 (n+1)$-bit)。
+    - Mark-bit の役割も兼ねる。
 ::::::
 
 :::::: {.flex-right}
@@ -601,12 +609,12 @@ Pointer-reversal の実行速度は、 スタックを使う場合に比べて�
 しかし、Miranda言語や組み込みのGCでの利用例がある。
 
 ## 流れ (再掲)
-- <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
-- <span style="color:#dfdfdf">Mark の改善</span>
-   - <span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red">
-   - <span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red">
-   - <span style="color:#dfdfdf">スタックオーバーフロー対策をする</span>
-   - <span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- <span style="color:#b0b0b0">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:#b0b0b0">Mark の改善</span>
+   - <span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:#b0b0b0">スタックオーバーフロー対策をする</span>
+   - <span style="color:#b0b0b0">スタックの利用もやめて、メモリ使用量を定数にする</span>
 - <span style="color:red">Mark-bit を置く位置の改善</span>
    - Bitmap の利用
 - Sweep の改善
@@ -625,7 +633,7 @@ Pointer-reversal の実行速度は、 スタックを使う場合に比べて�
 #### 実装例
 仮定 :
 - ノードの最小サイズが8-Byte。
-- 各ノードが8-Byte境界に配置される
+- 各ノードが8-Byte境界に配置される。
 
 ```c
 // sizeof(bit) == 1-bit
@@ -660,20 +668,20 @@ bit mark_bit(void *addr) {
 #### 解放処理の最適化
 ノードは集団で作られ、集団で不要になる傾向にあることが知られている。<br>
 そこで、
-- Bitmap 中の 1-word に対応するノードを1つの集団とみなす。
+- Bitmap 中の 1-word に対応するノード群を1つの集団とみなす。
 - 1-word 全てが 0 なら、対応するノードの集団をまとめて開放する。
 
 ことで、高速化が図れる。
 
 ## 流れ (再掲)
-- <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
-- <span style="color:#dfdfdf">Mark の改善</span>
-   - <span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red">
-   - <span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red">
-   - <span style="color:#dfdfdf">スタックオーバーフロー対策をする</span>
-   - <span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span>
-- <span style="color:#dfdfdf">Mark-bit を置く位置の改善</span>
-   - <span style="color:#dfdfdf">Bitmap の利用</span>
+- <span style="color:#b0b0b0">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:#b0b0b0">Mark の改善</span>
+   - <span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:#b0b0b0">スタックオーバーフロー対策をする</span>
+   - <span style="color:#b0b0b0">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- <span style="color:#b0b0b0">Mark-bit を置く位置の改善</span>
+   - <span style="color:#b0b0b0">Bitmap の利用</span>
 - <span style="color:red">Sweep の改善</span>
    - Lazy に sweep する
 - Mark-Sweep vs Copy
@@ -697,15 +705,15 @@ bit mark_bit(void *addr) {
 ::: {.flex64}
 :::::: {.flex-left}
 ::::::::: {.sticky}
-**メモリを必要な分だけ、sweep 可能なメモリから探す。**
+**メモリを必要な分だけ sweep 可能なメモリから探す。**
 - 解放済みメモリを管理するリスト (`free-list`) が不要。
 
 <!-- メモリを確保する際、次回の sweep 開始位置をそのアドレスの後ろに設定する。<br>
 → 新たに割り当てられた(未マークの)メモリがfreeされることはない。 -->
 
-**しかし、bitmap と相性が悪い。**
-- Bitmap を効率良く扱うには word 単位での sweep が好ましい。
-- →「解放したが割り当てに使わなかった」という状況になりうる。
+**Bitmap と相性が悪い。**
+- Bitmap は word 単位で sweep した方が効率が良い。
+- → それをすると「解放したが割り当てなかったメモリ」が生じる。
 - → `free-list` が必要になる。
 :::::::::
 ::::::
@@ -743,7 +751,7 @@ alloc() =
 :::
 
 ### Boehm-Demers-Weiser sweeper
-2段階で割り当てる。
+メモリの割り当てを2段階でおこなう手法。
 
 - **Low-level alloc** : GC失敗時等に、空き領域を確保するためにおこなう。
   - OSから決まったサイズの Block をもらう。
@@ -778,16 +786,16 @@ alloc() =
 - 10 ~ 12 サイクルで済む。
 
 ## 流れ (再掲)
-- <span style="color:#dfdfdf">Mark-Sweep vs Copy<span style="color:red">
-- <span style="color:#dfdfdf">Mark の改善</span>
-   - <span style="color:#dfdfdf">再帰をやめてスタックを使う<span style="color:red">
-   - <span style="color:#dfdfdf">スタックが浅くなるよう工夫する<span style="color:red">
-   - <span style="color:#dfdfdf">スタックオーバーフロー対策をする</span>
-   - <span style="color:#dfdfdf">スタックの利用もやめて、メモリ使用量を定数にする</span>
-- <span style="color:#dfdfdf">Mark-bit を置く位置の改善</span>
-   - <span style="color:#dfdfdf">Bitmap の利用</span>
-- <span style="color:#dfdfdf">Sweep の改善</span>
-   - <span style="color:#dfdfdf">Lazy に sweep する</span>
+- <span style="color:#b0b0b0">Mark-Sweep vs Copy<span style="color:red">
+- <span style="color:#b0b0b0">Mark の改善</span>
+   - <span style="color:#b0b0b0">再帰をやめてスタックを使う<span style="color:red">
+   - <span style="color:#b0b0b0">スタックが浅くなるよう工夫する<span style="color:red">
+   - <span style="color:#b0b0b0">スタックオーバーフロー対策をする</span>
+   - <span style="color:#b0b0b0">スタックの利用もやめて、メモリ使用量を定数にする</span>
+- <span style="color:#b0b0b0">Mark-bit を置く位置の改善</span>
+   - <span style="color:#b0b0b0">Bitmap の利用</span>
+- <span style="color:#b0b0b0">Sweep の改善</span>
+   - <span style="color:#b0b0b0">Lazy に sweep する</span>
 - <span style="color:red">Mark-Sweep vs Copy</span>
 
 ## (4.6) Mark-sweep と Copy の比較
@@ -828,12 +836,10 @@ alloc() =
     </tbody>
 </table>
 
-ちなみに :
-- Mark-sweep は、garbage を `free-list` に戻す必要があるかもしれない。
-- その際、キャッシュミス/ページフォルトが起きるかもしれない。
-
-しかし、これらは問題にならない。なぜなら :
-- Lazy sweep する場合、`free-list` に戻したメモリは、直ぐに再利用 (再割当て) する可能性が高い。
+#### Q. Mark-sweep はゴミを `free-list` に戻すときにキャッシュミス/ページフォルトが起きるのでは？
+**A. 起きるかもしれないが、問題にはならない。**<br>
+なぜなら :
+- Lazy sweep する場合、`free-list` に戻したメモリは、直ぐに再利用 (再割り当て) する可能性が高い。
   - → 再利用の際にキャッシュヒットする可能性が高い。
   - (この場合、そのノードについてのキャッシュミス回数は合計1回。)
 - 手法を問わず、ノードへの最初のアクセスはキャッシュミスする。
