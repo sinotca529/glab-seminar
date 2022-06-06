@@ -27,21 +27,21 @@ CTL式は、¬, ∧, ∨, EX, EU, EG だけの形に変形(正規化)できる�
 1. $\textit{label}(s)$に、状態 $s$ が満たすCTL式を加えていく。
 2. 最終的に $f \in \textit{label}(s)$ であれば、$s \in \llbracket f \rrbracket_M$ である。
 
-## アルゴリズム全体
-$f$ の部分式について、ネストの浅い (構造が単純な) ものから順に、それを満たす全状態にラベルを貼っていく。
+### 疑似コード
+$f$ の部分式について、ネストの浅いものから順に、それを満たす全状態にラベルを貼っていく。
 
-ネストの例 ($f, g, u \in \textbf{AP}$):
+ここでは「ネスト = ASTの深さ」とする。<br>
+例えば、$f, g, u \in \textbf{AP}$ のとき:
 - $f$ のネストは0
 - $f \land g$ のネストは1
 - $(f \land g) \lor u$ のネストは2
 
 ```py {caption="<span class='math inline'>{\llbracket f \rrbracket}_M</span> を得るアルゴリズム"}
-# f は正規化しておく
 def set_of_state_which_sat_f(M, f):
-    # ネストの浅い (構造が単純な) 部分式から処理する
+    f.normalize() # f を正規化
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            atom       => # Do nothing.
+            atom       => ,# Do nothing.
             ¬f1       => CheckNot(f1),
             (f1 ∧ f2) => CheckAnd(f1, f2),
             (f1 ∨ f2) => CheckOr(f1, f2),
@@ -81,7 +81,7 @@ def CheckEX(f):
 def CheckAnd(f1, f2):
     for s in S:
         if f1 ∈ label(s) and f2 ∈ label(s)
-            label(s) += f1 ∧ f2
+            label(s) += (f1 ∧ f2)
 ```
 
 ```py {caption=CheckOr}
@@ -89,7 +89,7 @@ def CheckAnd(f1, f2):
 def CheckOr(f1, f2):
     for s in S:
         if f1 ∈ label(s) or f2 ∈ label(s):
-            label(s) += f1 ∨ f2
+            label(s) += (f1 ∨ f2)
 ```
 ::::::
 :::
@@ -120,10 +120,10 @@ def CheckEU(f1, f2):
 digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
-    N0 [label="¬f1"]
-    N1 [label="f1"]
-    N2 [label="f1"]
-    N3 [label="f2", fillcolor="burlywood"]
+    N0 [label="¬f1, *"]
+    N1 [label="f1, *"]
+    N2 [label="f1, *"]
+    N3 [label="*, f2", fillcolor="burlywood"]
     N0 -> N1 -> N2 -> N3
 }
 ```
@@ -132,22 +132,22 @@ digraph G {
 digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
-    N0 [label="¬f1"]
-    N1 [label="f1"]
-    N2 [label="f1", fillcolor="burlywood"]
-    N3 [label="f2", fillcolor="burlywood"]
+    N0 [label="¬f1, *"]
+    N1 [label="f1, *"]
+    N2 [label="f1, *", fillcolor="burlywood"]
+    N3 [label="*, f2", fillcolor="burlywood"]
     N0 -> N1 -> N2 -> N3
 }
 ```
 
-```graphviz {caption="ループ2順後"}
+```graphviz {caption="ループ2順後以降"}
 digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor="white", fixedsize="true"]
-    N0 [label="¬f1"]
-    N1 [label="f1", fillcolor="burlywood"]
-    N2 [label="f1", fillcolor="burlywood"]
-    N3 [label="f2", fillcolor="burlywood"]
+    N0 [label="¬f1, *"]
+    N1 [label="f1, *", fillcolor="burlywood"]
+    N2 [label="f1, *", fillcolor="burlywood"]
+    N3 [label="*, f2", fillcolor="burlywood"]
     N0 -> N1 -> N2 -> N3
 }
 ```
@@ -193,9 +193,8 @@ MSCC (Maximal SCC):
 nontrivial SCC:
 : 頂点が2つ以上のSCC or 頂点が一つで自己ループがあるSCC。
 
-<br>
 
-**Q. 以下よりグラフ全体が nontrivial SSC なものを選べ**<br>
+#### Q. 以下よりグラフ全体が nontrivial SSC なものを選べ
 ```graphviz
 digraph G {
     graph [rankdir=TB]
@@ -229,10 +228,7 @@ digraph G {
 }
 ```
 
-<details>
-<summary>答え</summary>
-GraphB, GraphC
-</details>
+答え : <quiz>GraphB, GraphC</quiz>
 
 ### 記法
 クリプキ構造$M$のうち、$f_1$を満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
@@ -255,16 +251,16 @@ $M,s \vDash \text{EG}f_1$ は、次の2条件の両立と同値である。
 
 **($\Longrightarrow$)**<br>
 ::: {.indent}
-$M,s \vDash \text{EG}f_1$ を仮定する。<br>
+状態 $s$ について、$M,s \vDash \text{EG}f_1$ を仮定する。<br>
 $s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に着目する。<br>
 このとき、$\pi$ の要素は全て $f_1$ を満たすので、次が言える。
 - $s \in S'$
 - $\pi$ は $S'$上のパス
 
-また、$\pi$は次を満たす$\pi_1$を用いて、$\pi = \pi_0\pi_1$と書ける。
+また、$|S|$ は有限なので、$\pi$は次を満たす$\pi_1$を用いて、$\pi = \pi_0\pi_1$と書ける。
 - $\pi_1$上の任意の要素は、$\pi_1$上に無限にしばしば(infinitely often)現れる。
 
-$\pi$上に現れる状態の集合を$C$とおく。<br>
+$\pi_1$上に現れる状態の集合を$C$とおく。<br>
 このとき、$\pi_1$ から適当な(有限長の)部分パスを取ってくれば、 $C$ 上の任意の2状態を結ぶことができる。<br>
 よって、$C$ は SCC であり、したがって何らかの MSCC $C'$ に内包される。<br>
 よって、条件1, 2ともに満たされる。
@@ -290,35 +286,38 @@ $\square$
 Lemma 5.1 をもとに、EGを処理するアルゴリズムを作る。
 ```py {caption="CheckEG"}
 def CheckEG(f1):
-    S’ = { s ∈ S | f1 ∈ label(s) }
-    MSCCs = get_all_mscc(S’)
+    S’= { s ∈ S | f1 ∈ label(s) }
+    R’= { (p, c) ∈ S | p, c ∈ S’}
+    MSCCs = get_all_mscc(S’, R’)
     T = ∪MSCCs
 
     while T != ∅:
         s = T.pop()
         for t in s.parents():
-            if (t ∈ S’) and (EG f1 ∉ label(t))
+            if (f1 ∈ label(t)) and (EG f1 ∉ label(t))
                 label(t) += EG f1
                 T += t
 ```
 
 ### 計算量
-MSCCは $O(|S| + |R|)$ で[求まる](https://manabitimes.jp/math/1250)。<br>
-また、`for` 文は合計 $|R|$ 回回る。<br>
-よって、`CheckEG` の計算量は $O(|S| + |R|)$ である。
+- $S'$, $R'$ は、$O(|S| + |R|)$ で求まる。
+- MSCCは $O(|S| + |R|)$ で[求まる](https://manabitimes.jp/math/1250)。<br>
+- `for` 文は合計 $|R|$ 回回る。<br>
+
+→ `CheckEG` の計算量は $O(|S| + |R|)$ である。
 
 ## アルゴリズム全体の計算量
-- `CheckXX`はすべて $O(|S|+|R|)$
-- 処理する部分式の数は高々 $|f|$ 個
+- `CheckXX`はすべて $O(|S|+|R|)$ 。
+- 処理する部分式の数は高々 $|f|$ 個。
+- $f$ の正規化前後において、部分式の数の増加は線形。
 
 よって、全体の計算量は$O(|f|\cdot(|S|+|R|))$である。
-```py {caption=${\llbracket f \rrbracket}_M$を得るアルゴリズム(再掲)}
-# f は正規化しておく
+```py {caption="<span class='math inline'>\llbracket f \rrbracket_M</span>を得るアルゴリズム(再掲)"}
 def set_of_state_which_sat_f(M, f):
-    # ネストの浅い (構造が単純な) 部分式から処理する
+    f.normalize() # f を正規化
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            atom       => # Do nothing.
+            atom       => ,# Do nothing.
             ¬f1       => CheckNot(f1),
             (f1 ∧ f2) => CheckAnd(f1, f2),
             (f1 ∨ f2) => CheckOr(f1, f2),

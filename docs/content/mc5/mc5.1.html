@@ -110,24 +110,22 @@ class="math inline">s</span> が満たすCTL式を加えていく。</li>
 であれば、<span class="math inline">s \in \llbracket f
 \rrbracket_M</span> である。</li>
 </ol>
-<h2 id="アルゴリズム全体">アルゴリズム全体</h2>
-<p><span class="math inline">f</span> の部分式について、ネストの浅い
-(構造が単純な)
-ものから順に、それを満たす全状態にラベルを貼っていく。</p>
-<p>ネストの例 (<span class="math inline">f, g, u \in
-\textbf{AP}</span>):</p>
+<h3 id="疑似コード">疑似コード</h3>
+<p><span class="math inline">f</span>
+の部分式について、ネストの浅いものから順に、それを満たす全状態にラベルを貼っていく。</p>
+<p>ここでは「ネスト = ASTの深さ」とする。<br> 例えば、<span
+class="math inline">f, g, u \in \textbf{AP}</span> のとき:</p>
 <ul>
 <li><span class="math inline">f</span> のネストは0</li>
 <li><span class="math inline">f \land g</span> のネストは1</li>
 <li><span class="math inline">(f \land g) \lor u</span> のネストは2</li>
 </ul>
 
-<figure><figcaption class="code-caption"><span class='math inline'>{\llbracket f \rrbracket}_M</span> を得るアルゴリズム</figcaption><pre><code class="py"># f は正規化しておく
-def set_of_state_which_sat_f(M, f):
-    # ネストの浅い (構造が単純な) 部分式から処理する
+<figure><figcaption class="code-caption"><span class='math inline'>{\llbracket f \rrbracket}_M</span> を得るアルゴリズム</figcaption><pre><code class="py">def set_of_state_which_sat_f(M, f):
+    f.normalize() # f を正規化
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            atom       =&gt; # Do nothing.
+            atom       =&gt; ,# Do nothing.
             ¬f1       =&gt; CheckNot(f1),
             (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
             (f1 ∨ f2) =&gt; CheckOr(f1, f2),
@@ -165,13 +163,13 @@ def CheckEX(f):
 def CheckAnd(f1, f2):
     for s in S:
         if f1 ∈ label(s) and f2 ∈ label(s)
-            label(s) += f1 ∧ f2</code></pre></figure>
+            label(s) += (f1 ∧ f2)</code></pre></figure>
 
 <figure><figcaption class="code-caption">CheckOr</figcaption><pre><code class="py"># O(|S|)
 def CheckOr(f1, f2):
     for s in S:
         if f1 ∈ label(s) or f2 ∈ label(s):
-            label(s) += f1 ∨ f2</code></pre></figure>
+            label(s) += (f1 ∨ f2)</code></pre></figure>
 </div>
 </div>
 <h2 id="euの処理">EUの処理</h2>
@@ -198,30 +196,30 @@ def CheckEU(f1, f2):
 <figure><figcaption class="code-caption">ループ直前</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
-    N0 [label=&quot;¬f1&quot;]
-    N1 [label=&quot;f1&quot;]
-    N2 [label=&quot;f1&quot;]
-    N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
+    N0 [label=&quot;¬f1, *&quot;]
+    N1 [label=&quot;f1, *&quot;]
+    N2 [label=&quot;f1, *&quot;]
+    N3 [label=&quot;*, f2&quot;, fillcolor=&quot;burlywood&quot;]
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
 
 <figure><figcaption class="code-caption">ループ1順後</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
-    N0 [label=&quot;¬f1&quot;]
-    N1 [label=&quot;f1&quot;]
-    N2 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
-    N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
+    N0 [label=&quot;¬f1, *&quot;]
+    N1 [label=&quot;f1, *&quot;]
+    N2 [label=&quot;f1, *&quot;, fillcolor=&quot;burlywood&quot;]
+    N3 [label=&quot;*, f2&quot;, fillcolor=&quot;burlywood&quot;]
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
 
-<figure><figcaption class="code-caption">ループ2順後</figcaption><div class="graphviz">digraph G {
+<figure><figcaption class="code-caption">ループ2順後以降</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
     node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=&quot;true&quot;]
-    N0 [label=&quot;¬f1&quot;]
-    N1 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
-    N2 [label=&quot;f1&quot;, fillcolor=&quot;burlywood&quot;]
-    N3 [label=&quot;f2&quot;, fillcolor=&quot;burlywood&quot;]
+    N0 [label=&quot;¬f1, *&quot;]
+    N1 [label=&quot;f1, *&quot;, fillcolor=&quot;burlywood&quot;]
+    N2 [label=&quot;f1, *&quot;, fillcolor=&quot;burlywood&quot;]
+    N3 [label=&quot;*, f2&quot;, fillcolor=&quot;burlywood&quot;]
     N0 -&gt; N1 -&gt; N2 -&gt; N3
 }</div></figure>
 </section>
@@ -268,10 +266,8 @@ SCCのうち、他のSCCに包含されないもの。
 頂点が2つ以上のSCC or 頂点が一つで自己ループがあるSCC。
 </dd>
 </dl>
-<br>
-
-<p><strong>Q. 以下よりグラフ全体が nontrivial SSC
-なものを選べ</strong><br></p>
+<h4 id="q-以下よりグラフ全体が-nontrivial-ssc-なものを選べ">Q.
+以下よりグラフ全体が nontrivial SSC なものを選べ</h4>
 
 <figure><div class="graphviz">digraph G {
     graph [rankdir=TB]
@@ -303,11 +299,7 @@ SCCのうち、他のSCCに包含されないもの。
         D0
     }
 }</div></figure>
-<details>
-<summary>答え</summary>
-GraphB, GraphC
-</details>
-
+<p>答え : <quiz>GraphB, GraphC</quiz></p>
 <h3 id="記法">記法</h3>
 <p>クリプキ構造<span class="math inline">M</span>のうち、<span
 class="math inline">f_1</span>を満たすノードのみを残したクリプキ構造を、<span
@@ -335,8 +327,9 @@ class="math inline">(S&#39;, R&#39;)</span> の nontrivial MSCC上のノード
 <p><strong>(<span
 class="math inline">\Longrightarrow</span>)</strong><br></p>
 <div class="indent">
-<p><span class="math inline">M,s \vDash \text{EG}f_1</span>
-を仮定する。<br> <span class="math inline">s</span> で始まり、<span
+<p>状態 <span class="math inline">s</span> について、<span
+class="math inline">M,s \vDash \text{EG}f_1</span> を仮定する。<br>
+<span class="math inline">s</span> で始まり、<span
 class="math inline">\text{EG}f_1</span> を満たす<span
 class="math inline">M</span>上の無限長パス <span
 class="math inline">\pi</span> に着目する。<br> このとき、<span
@@ -347,7 +340,8 @@ class="math inline">f_1</span> を満たすので、次が言える。</p>
 <li><span class="math inline">\pi</span> は <span
 class="math inline">S&#39;</span>上のパス</li>
 </ul>
-<p>また、<span class="math inline">\pi</span>は次を満たす<span
+<p>また、<span class="math inline">|S|</span> は有限なので、<span
+class="math inline">\pi</span>は次を満たす<span
 class="math inline">\pi_1</span>を用いて、<span class="math inline">\pi
 = \pi_0\pi_1</span>と書ける。</p>
 <ul>
@@ -355,7 +349,7 @@ class="math inline">\pi_1</span>を用いて、<span class="math inline">\pi
 class="math inline">\pi_1</span>上に無限にしばしば(infinitely
 often)現れる。</li>
 </ul>
-<p><span class="math inline">\pi</span>上に現れる状態の集合を<span
+<p><span class="math inline">\pi_1</span>上に現れる状態の集合を<span
 class="math inline">C</span>とおく。<br> このとき、<span
 class="math inline">\pi_1</span>
 から適当な(有限長の)部分パスを取ってくれば、 <span
@@ -395,38 +389,46 @@ class="math inline">\square</span></p>
 <p>Lemma 5.1 をもとに、EGを処理するアルゴリズムを作る。</p>
 
 <figure><figcaption class="code-caption">CheckEG</figcaption><pre><code class="py">def CheckEG(f1):
-    S’ = { s ∈ S | f1 ∈ label(s) }
-    MSCCs = get_all_mscc(S’)
+    S’= { s ∈ S | f1 ∈ label(s) }
+    R’= { (p, c) ∈ S | p, c ∈ S’}
+    MSCCs = get_all_mscc(S’, R’)
     T = ∪MSCCs
 
     while T != ∅:
         s = T.pop()
         for t in s.parents():
-            if (t ∈ S’) and (EG f1 ∉ label(t))
+            if (f1 ∈ label(t)) and (EG f1 ∉ label(t))
                 label(t) += EG f1
                 T += t</code></pre></figure>
 <h3 id="計算量-1">計算量</h3>
-<p>MSCCは <span class="math inline">O(|S| + |R|)</span> で<a
-href="https://manabitimes.jp/math/1250">求まる</a>。<br>
-また、<code>for</code> 文は合計 <span class="math inline">|R|</span>
-回回る。<br> よって、<code>CheckEG</code> の計算量は <span
-class="math inline">O(|S| + |R|)</span> である。</p>
+<ul>
+<li><span class="math inline">S&#39;</span>, <span
+class="math inline">R&#39;</span> は、<span class="math inline">O(|S| +
+|R|)</span> で求まる。</li>
+<li>MSCCは <span class="math inline">O(|S| + |R|)</span> で<a
+href="https://manabitimes.jp/math/1250">求まる</a>。<br></li>
+<li><code>for</code> 文は合計 <span class="math inline">|R|</span>
+回回る。<br></li>
+</ul>
+<p>→ <code>CheckEG</code> の計算量は <span class="math inline">O(|S| +
+|R|)</span> である。</p>
 <h2 id="アルゴリズム全体の計算量">アルゴリズム全体の計算量</h2>
 <ul>
 <li><code>CheckXX</code>はすべて <span
-class="math inline">O(|S|+|R|)</span></li>
+class="math inline">O(|S|+|R|)</span> 。</li>
 <li>処理する部分式の数は高々 <span class="math inline">|f|</span>
-個</li>
+個。</li>
+<li><span class="math inline">f</span>
+の正規化前後において、部分式の数の増加は線形。</li>
 </ul>
 <p>よって、全体の計算量は<span
 class="math inline">O(|f|\cdot(|S|+|R|))</span>である。</p>
 
-<figure><pre><code class="py"># f は正規化しておく
-def set_of_state_which_sat_f(M, f):
-    # ネストの浅い (構造が単純な) 部分式から処理する
+<figure><figcaption class="code-caption"><span class='math inline'>\llbracket f \rrbracket_M</span>を得るアルゴリズム(再掲)</figcaption><pre><code class="py">def set_of_state_which_sat_f(M, f):
+    f.normalize() # f を正規化
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            atom       =&gt; # Do nothing.
+            atom       =&gt; ,# Do nothing.
             ¬f1       =&gt; CheckNot(f1),
             (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
             (f1 ∨ f2) =&gt; CheckOr(f1, f2),
