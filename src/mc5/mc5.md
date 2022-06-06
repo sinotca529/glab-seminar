@@ -5,7 +5,7 @@ date: yyyy-mm-dd(0)
 ---
 # Model Checking (Sec.5)
 この章の目的 :
-: クリプキ構造 $M$, 式 $f$ について、$M \vDash f$ の成立を調べること。
+: クリプキ構造 $M$, CTL式 $f$ について、$M \vDash f$ の成立を調べること。
 
 その手順 :
 1. ${\llbracket f \rrbracket}_M \ (= \{s \in S\ | \ M,s \vDash f\})$ を求める。
