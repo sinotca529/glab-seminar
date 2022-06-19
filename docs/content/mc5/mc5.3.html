@@ -111,7 +111,6 @@ Checking via Fixpoint Computation</h1>
 <li>不動点の定義</li>
 <li>単調, <span class="math inline">\cup</span>-連続, <span
 class="math inline">\cap</span>-連続 の定義</li>
-<li>用語定義</li>
 </ul></li>
 <li>不動点に関する定理・補題について</li>
 <li>不動点を用いて<span class="math inline">M \vDash
@@ -166,9 +165,9 @@ S&#39;</span> となる条件式 ( <em>predicate</em> )</li>
 </ul>
 <p>つまり、</p>
 <ul>
-<li><span class="math inline">\textit{true} =</span> <quiz><span
+<li><span class="math inline">\textit{true} =</span> 集合<quiz><span
 class="math inline">S</span></quiz></li>
-<li><span class="math inline">\textit{false} =</span> <quiz><span
+<li><span class="math inline">\textit{false} =</span> 集合<quiz><span
 class="math inline">\emptyset</span></quiz></li>
 </ul>
 <p>である。</p>
@@ -180,7 +179,7 @@ class="math inline">\cap</span>-連続 の定義</h3>
 <p>
 
 <dl>
-<dt>関数<span class="math inline">\tau</span>が単調 (monotonic)
+<dt>関数 <span class="math inline">\tau</span> が単調 (monotonic)
 とは:</dt>
 <dd>
 <span class="math inline">P \subseteq Q \implies \tau(P) \subseteq
@@ -190,7 +189,7 @@ class="math inline">\cap</span>-連続 の定義</h3>
 </p><p>
 
 <dl>
-<dt>関数<span class="math inline">\tau</span>が<span
+<dt>関数 <span class="math inline">\tau</span> が <span
 class="math inline">\cup</span>-連続 (<span
 class="math inline">\cup</span>-continuous) とは:</dt>
 <dd>
@@ -201,12 +200,12 @@ class="math inline">\cup</span>-continuous) とは:</dt>
 </p><p>
 
 <dl>
-<dt>関数<span class="math inline">\tau</span>が<span
+<dt>関数 <span class="math inline">\tau</span> が <span
 class="math inline">\cap</span>-連続 (<span
 class="math inline">\cap</span>-continuous) とは:</dt>
 <dd>
 <span class="math inline">P_1 \supseteq P_2 \supseteq \cdots \implies
-\tau(\cup_i P_i) = \cup_i \tau(P_i)</span>
+\tau(\cap_i P_i) = \cap_i \tau(P_i)</span>
 </dd>
 </dl>
 </p>
@@ -214,7 +213,7 @@ class="math inline">\cap</span>-continuous) とは:</dt>
 <h2 id="不動点に関する定理補題">不動点に関する定理・補題</h2>
 <p>説明の都合上、MC本とは順序・証明を一部変えている。</p>
 <h3 id="lemma-57">Lemma 5.7</h3>
-<p><span class="math inline">\tau</span>が単調ならば、任意の <span
+<p><span class="math inline">\tau</span> が単調ならば、任意の <span
 class="math inline">i</span> について次が成立。</p>
 <ul>
 <li><span class="math inline">\tau^i(\textit{false}) \subseteq
@@ -224,10 +223,10 @@ class="math inline">i</span> について次が成立。</p>
 </ul>
 <p>証明 : 数学的帰納法を使う。</p>
 <h3 id="lemma-58">Lemma 5.8</h3>
-<p><span class="math inline">\tau</span>が単調で<span
-class="math inline">S</span>が有限なら、次を満たす<span
-class="math inline">i</span>, <span
-class="math inline">j</span>が存在する。</p>
+<p><span class="math inline">\tau</span> が単調で <span
+class="math inline">S</span> が有限なら、次を満たす <span
+class="math inline">i</span>, <span class="math inline">j</span>
+が存在する。</p>
 <ul>
 <li><span class="math inline">\forall k \geq i,\ \tau^k(\textit{false})
 = \tau^i(\textit{false})</span></li>
@@ -240,14 +239,17 @@ class="math inline">j</span>が存在する。</p>
 <p>示したい式は、次のように変形できる。 <span class="math display">
 \exist i, \forall k, (k \geq i) \Rightarrow \tau^k(\textit{false}) =
 \tau^i(\textit{false})</span></p>
-<p>背理法を用いて証明する。示すべき式の否定は次式である。 <span
+<p>これは、次と同値である。 <span class="math display"> \exist i,
+\forall k, \neg (k \geq i) \land \tau^k(\textit{false}) =
+\tau^i(\textit{false})</span></p>
+<p>背理法を用いて証明する。上の式の否定は次式である。 <span
 class="math display"> \forall i, \exist k, (k \geq i)
 \land  \tau^k(\textit{false}) \neq \tau^i(\textit{false})</span></p>
 <p>Lemma 5.7 より、列 <span
 class="math inline">\{\tau^j(\textit{false})_j\}</span>
-は単調増加列なので、次が成り立つ。 <span class="math display"> \forall
-i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \supset
-\tau^i(\textit{false})</span></p>
+は単調増加列なので、上の式は次式と同値である。 <span
+class="math display"> \forall i, \exist k, (k \geq i)
+\land  \tau^k(\textit{false}) \supset \tau^i(\textit{false})</span></p>
 <p>この式より、<span class="math inline">i = 0</span> について次を満たす
 <span class="math inline">l_1</span> の存在が言える。 <span
 class="math display"> \tau^{l_1} \supset \tau^0(\textit{false})
@@ -256,12 +258,11 @@ class="math display"> \tau^{l_1} \supset \tau^0(\textit{false})
 について次を満たす <span class="math inline">l_2</span> の存在が言える。
 <span class="math display"> \tau^{l_2} \supset
 \tau^{l_1}(\textit{false}) </span></p>
-<p>これを繰り返すことで、狭義単調な無限列 <span class="math inline">\{
-\tau^{l_j}(\textit{false}) \}_j</span> を得る (<span
-class="math inline">l_0 = 0</span> とした)。 このとき、<span
-class="math inline">|\tau^{l_j}| \geq j</span> であり、<span
-class="math inline">j = |S| + 1</span> のときそのサイズは <span
-class="math inline">|S| + 1</span> 以上となるが、これはドメインが <span
+<p>これを繰り返すことで、狭義単調増加する無限列 <span
+class="math inline">\{ \tau^{l_j}(\textit{false}) \}_j</span> を得る
+(<span class="math inline">l_0 = 0</span> とした)。</p>
+<p>狭義単調なので <span class="math inline">|\tau^{l_{|S|}}| \geq
+|S|</span> であるが、これはドメインが <span
 class="math inline">\mathcal{P}(S)</span> であることに矛盾。</p>
 <p>よって仮定は誤りであり、示したい式の成立が示された。<br> <span
 class="math inline">\square</span></p>
@@ -269,8 +270,8 @@ class="math inline">\square</span></p>
 
 <h3 id="theorem-55-tarski-knaster">Theorem 5.5 (Tarski-Knaster)</h3>
 <h4 id="主張1">主張1</h4>
-<p><span class="math inline">\tau</span>が単調ならば、次で定義する{最大,
-最小}不動点が存在。</p>
+<p><span class="math inline">\tau</span>
+が単調ならば、次で定義する{最大, 最小}不動点が存在。</p>
 <ul>
 <li>最大不動点 : <span class="math inline">\nu Z.\tau(Z) = \bigcup\{ Z \
 |\ Z \subseteq \tau(Z)\}</span></li>
@@ -280,14 +281,14 @@ class="math inline">\square</span></p>
 <details class="filled-box">
 <summary>証明 (最大不動点について)</summary>
 
-<p><span class="math inline">\Gamma = \{ z \ |\ z \subseteq
+<p><span class="math inline">\Gamma = \{ Z \ |\ Z \subseteq
 \tau(Z)\}</span>, <span class="math inline">P = \cup\Gamma</span>
 とおく。</p>
-<p><span
-class="math inline">\Gamma</span>は、すべての不動点を内包している。<br>
-よって、もし <span class="math inline">P</span> が不動点なら、<span
-class="math inline">p</span> は最大不動点である。<br></p>
-<p>よって、<span class="math inline">P</span>
+<p><span class="math inline">\Gamma</span>
+は、すべての不動点を内包している。<br> よって、もし <span
+class="math inline">P</span> が不動点なら <span
+class="math inline">P</span> は最大不動点である。<br></p>
+<p>したがって、<span class="math inline">P</span>
 が不動点であること、つまり次の両立を示せば良い。</p>
 <ul>
 <li>(1) <span class="math inline">P \subseteq \tau(P)</span></li>
@@ -308,10 +309,9 @@ class="math inline">\tau</span>を適用して、 <span class="math display">
 \tau(Z) \subseteq \tau(P) </span></p>
 <p>これと(a)より、 <span class="math display"> Z \subseteq \tau(P)
 </span></p>
-<p><span class="math inline">\Gamma</span>
-の全要素について、この式を考え、両辺の和をとると、 <span
-class="math display"> \bigcup_{Z \in \Gamma} Z \ \subseteq\  \bigcup_{Z
-\in \Gamma} \tau(P) </span></p>
+<p><span class="math inline">\Gamma</span> の全要素について
+この式を考え、両辺の和をとると、 <span class="math display"> \bigcup_{Z
+\in \Gamma} Z \ \subseteq\  \bigcup_{Z \in \Gamma} \tau(P) </span></p>
 <p>これを整理して、 <span class="math display"> P \subseteq \tau(P)
 </span></p>
 </div>
@@ -327,15 +327,17 @@ class="math inline">P</span> は <span class="math inline">\Gamma</span>
 の任意の要素より大きいので、 <span class="math display"> P \supseteq
 \tau(P) </span></p>
 </div>
+<p>以上より <span class="math inline">P</span> は不動点であるから、<span
+class="math inline">P</span> は最大不動点である。</p>
 </details>
 
 <h4 id="主張2">主張2</h4>
 <ul>
-<li><span class="math inline">\tau</span>が単調で<span
+<li><span class="math inline">\tau</span> が単調で<span
 class="math inline">\cap</span>-連続ならば、<span
 class="math inline">\nu Z.\tau(Z) =
 \cap\tau^i(\textit{true})</span></li>
-<li><span class="math inline">\tau</span>が単調で<span
+<li><span class="math inline">\tau</span> が単調で<span
 class="math inline">\cup</span>-連続ならば、<span
 class="math inline">\mu Z.\tau(Z) =
 \cup\tau^i(\textit{false})</span></li>
@@ -358,7 +360,7 @@ class="math inline">\mu Z.\tau(Z) =
 <p>このとき、<span class="math inline">\tau^j(S)</span>
 は不動点である。<br> また、<span
 class="math inline">\{\tau^j(S)_j\}</span>
-は単調減少する列なので次が成り立つ。 <span class="math display"> \cup_i
+は単調減少する列なので次が成り立つ。 <span class="math display"> \cap_i
 \tau^i(S) = \tau^j(S) </span> したがって、<span
 class="math inline">\cup_i \tau^i(S)</span> は不動点である。<br>
 いま、<span class="math inline">P</span>は最大不動点なので、 <span
@@ -373,7 +375,7 @@ class="math inline">\mathcal{P}(S)</span>の最大元なので、 <span
 class="math display"> P \subseteq S </span></p>
 <p><span class="math inline">\tau</span>は単調なので、両辺に<span
 class="math inline">\tau</span>を<span
-class="math inline">\infty</span>回適用しても大小は変わらず、 <span
+class="math inline">\infty</span>回適用しても大小関係は変わらず、 <span
 class="math display"> \tau^\infty(P) \subseteq \tau^\infty(S)
 </span></p>
 <p><span class="math inline">P</span>は不動点なので左辺は<span
@@ -389,10 +391,10 @@ class="math inline">\square</span></p>
 </details>
 
 <h3 id="lemma-56">Lemma 5.6</h3>
-<p><span class="math inline">S</span>が有限で<span
-class="math inline">\tau</span>が単調ならば、<span
-class="math inline">\tau</span>は<span
-class="math inline">\cup</span>-連続であり<span
+<p><span class="math inline">S</span> が有限で <span
+class="math inline">\tau</span> が単調ならば、<span
+class="math inline">\tau</span> は <span
+class="math inline">\cup</span>-連続であり <span
 class="math inline">\cap</span>-連続である。</p>
 <ul>
 <li><span class="math inline">\cup</span>-連続 : <span
@@ -405,8 +407,8 @@ class="math inline">P_1 \supseteq P_2 \supseteq \cdots \implies
 <details class="filled-box">
 <summary>証明 (<span class="math inline">\cup</span>-連続について)</summary>
 
-<p>列 <span class="math inline">\{P_i\}_i</span>
-は単調増加するので、Lemma 5.8の証明と同様にして、次を満たす <span
+<p>列 <span class="math inline">\{P_i\}_i</span> は単調増加し、<span
+class="math inline">S</span>は有限なので、次を満たす <span
 class="math inline">j</span> の存在が示せる。<br> <span
 class="math display"> \cup_i P_i = P_j </span></p>
 <p>よって、 <span class="math display"> \tau\left(\cup_i P_i\right) =
@@ -480,17 +482,17 @@ Reachability Analysis</h2>
 <dl>
 <dt>Reachability Analysis:</dt>
 <dd>
-クリプキ構造<span
-class="math inline">M</span>について、初期状態から到達可能な状態の集合を求める解析。
+クリプキ構造 <span class="math inline">M</span>
+について、初期状態から到達可能な状態の集合を求める解析。
 </dd>
 </dl>
-<p>不動点を用いて、reachability analysisをおこなう。<br>
-まず、状態集合<span
-class="math inline">Q</span>について、そこから1手で到達できる状態の集合<span
-class="math inline">\textit{post-image}(Q)</span>を定義する : <span
+<p>不動点を用いて、reachability analysis をおこなう。<br> まず、状態集合
+<span class="math inline">Q</span>
+について、そこから1手で到達できる状態の集合 <span
+class="math inline">\textit{post-image}(Q)</span> を定義する : <span
 class="math display"> \textit{post-image}(Q) = \{s&#39; \ |\ \exist s
 \in Q\ \text{ s.t. }\ R(s, s&#39;)\} </span> これを用いて、<span
-class="math inline">\tau</span>を定義する : <span class="math display">
+class="math inline">\tau</span> を定義する : <span class="math display">
 \tau(Q) = S_0 \cup \textit{post-image}(Q) </span> このとき、最小不動点
 <span class="math inline">\mu Q.\tau(Q)</span>
 は、初期状態から到達可能な状態の集合である。</p>
@@ -593,7 +595,7 @@ class="math display"> \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i
 を満たすパス <span class="math inline">\pi</span> の prefix
 の長さに関する帰納法を使う。<br> ここで prefix は、パス<span
 class="math inline">\pi</span>の始点から、初めて<span
-class="math inline">f_2</span>を満たす状態までの部分パスを指す。<br></p>
+class="math inline">f_2</span>を満たす状態<strong>まで</strong>の部分パスを指す。<br></p>
 
 <figure><figcaption class="code-caption">prefix の長さが j のパス</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
@@ -605,7 +607,7 @@ class="math inline">f_2</span>を満たす状態までの部分パスを指す�
     N4 [xlabel=&quot;j&quot; label=&quot;f2&quot;]
     N0 -&gt; N1 -&gt; N2 -&gt; N3 -&gt; N4
 }</div></figure>
-<p>prefixの長さが <span class="math inline">j</span>
+<p>prefix の長さが <span class="math inline">j</span>
 なパスの始点の集合を <span class="math inline">S_j</span>
 と置き、次を帰納法で示す。 <span class="math display"> \forall j,\ S_j
 \subseteq \tau^j(\textit{false}) </span></p>
@@ -751,11 +753,11 @@ class="math inline">\textbf{E}_f\textbf{U}</span>
 を不動点を用いて処理する方法を考える。</p>
 <h3 id="textbfe_ftextbfg-について"><span
 class="math inline">\textbf{E}_f\textbf{G}</span> について</h3>
-<p><span
-class="math inline">\textbf{E}_f\textbf{G}</span>を満たす状態集合<span
+<p><span class="math inline">\textbf{E}_f\textbf{G} f</span>
+を満たす状態集合<span
 class="math inline">Z</span>は、次を満たす状態集合のなかで最大のものである。</p>
 <ol type="1">
-<li><span class="math inline">Z</span>の要素は <span
+<li><span class="math inline">Z</span> の全要素は <span
 class="math inline">f</span> を満たす。</li>
 <li>任意の公平性条件 <span class="math inline">P_k \in F</span>
 と任意の状態 <span class="math inline">s \in Z</span>
@@ -765,14 +767,14 @@ class="math inline">f</span> を満たす。</li>
 <li><span class="math inline">P_k</span> を満たす <span
 class="math inline">Z</span> 内の状態で終わる。</li>
 <li>長さ1以上。</li>
-<li>パス上の状態すべてが<span
-class="math inline">f</span>を満たす。</li>
+<li>パス上の状態すべてが <span class="math inline">f</span>
+を満たす。</li>
 </ul></li>
 </ol>
 <p><span class="math inline">\textbf{E}_f\textbf{G} f</span>
 は不動点を使うと次のように書ける。 <span class="math display">
 \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n
-\textbf{EXE}(f \textbf{U} (Z \land P_k))) </span></p>
+\textbf{EXE}(g \textbf{U} (Z \land P_k))) </span></p>
 <h4 id="lemma-515">Lemma 5.15</h4>
 <p><span class="math inline">\textbf{E}_f\textbf{G} f</span> は <span
 class="math inline">f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U}

@@ -195,23 +195,16 @@ dt {
 
 details {
     padding-left: 2ch;
+    padding-right: 2ch;
 }
 
 .katex {
     font-size: 1.1em !important;
 }
 
-.flex {
-	display: flex;
-}
-
-.flex-left {
-	margin-right: 15px;
-}
-
-.flex-right {
-	margin-left: 15px
-}
+.flex { display: flex; }
+.flex-left { margin-right: 8px; }
+.flex-right { margin-left: 8px; }
 
 .flex46 { display: flex; }
 .flex46 > .flex-left { width: 40%; }
@@ -224,6 +217,10 @@ details {
 .flex64 { display: flex; }
 .flex64 > .flex-left { width: 60%; }
 .flex64 > .flex-right { width: 40%; }
+
+.flex73 { display: flex; }
+.flex73 > .flex-left { width: 70%; }
+.flex73 > .flex-right { width: 30%; }
 
 
 .sticky {

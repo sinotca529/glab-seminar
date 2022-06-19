@@ -151,25 +151,25 @@ def CheckNot(f1):
         if f1 ∉ label(s):
             label(s) += ¬f1</code></pre></figure>
 
-<figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
-def CheckEX(f):
-    for (parent, child) in R:
-        if f ∈ label(child):
-            parent += EX(f)</code></pre></figure>
-</div>
-<div class="flex-right">
-
 <figure><figcaption class="code-caption">CheckAnd</figcaption><pre><code class="py"># O(|S|)
 def CheckAnd(f1, f2):
     for s in S:
         if f1 ∈ label(s) and f2 ∈ label(s)
             label(s) += (f1 ∧ f2)</code></pre></figure>
+</div>
+<div class="flex-right">
 
 <figure><figcaption class="code-caption">CheckOr</figcaption><pre><code class="py"># O(|S|)
 def CheckOr(f1, f2):
     for s in S:
         if f1 ∈ label(s) or f2 ∈ label(s):
             label(s) += (f1 ∨ f2)</code></pre></figure>
+
+<figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
+def CheckEX(f):
+    for (parent, child) in R:
+        if f ∈ label(child):
+            parent += EX(f)</code></pre></figure>
 </div>
 </div>
 <h2 id="euの処理">EUの処理</h2>
@@ -178,10 +178,13 @@ def CheckOr(f1, f2):
 
 <figure><figcaption class="code-caption">CheckEU</figcaption><pre><code class="py"># O(|S| + |R|)
 def CheckEU(f1, f2):
+  # f2 を満たすなら、 E(f1 U f2) を満たす。
   T := {s | f2 ∈ label(s)}
   for s in T:
     label(s) += E(f1 U f2)
 
+  # E(f1 U f2) を満たすノードの親が f1 を満たすなら、
+  # その(親)ノードも E(f1 U f2) を満たす。
   while T != ∅:
     s = T.pop()
     for t in s.parents():
@@ -232,10 +235,13 @@ for s in T:
     label(s) += E(f1 U f2)</code></pre></figure>
 <br>
 
-<p>後半部分は <span class="math inline">O(|R|)</span> で計算できる。<br>
-(<code>s.parents()</code> の総和は <span class="math inline">|R|</span>
-なので、<code>for</code> は合計 <span class="math inline">|R|</span>
-回まわる。)</p>
+<p>後半部分は <span class="math inline">O(|R|)</span> で計算できる。</p>
+<ul>
+<li><code>s.parents()</code> の総和は <span
+class="math inline">|R|</span>。</li>
+<li>→ <code>for</code> は合計 <span class="math inline">|R|</span>
+回まわる。</li>
+</ul>
 
 <figure><figcaption class="code-caption">後半部分</figcaption><pre><code class="py">while T != ∅:
     s = T.pop()
@@ -327,37 +333,44 @@ class="math inline">(S&#39;, R&#39;)</span> の nontrivial MSCC上のノード
 <p><strong>(<span
 class="math inline">\Longrightarrow</span>)</strong><br></p>
 <div class="indent">
-<p>状態 <span class="math inline">s</span> について、<span
-class="math inline">M,s \vDash \text{EG}f_1</span> を仮定する。<br>
-<span class="math inline">s</span> で始まり、<span
+<p>仮定 <span class="math inline">M,s \vDash \text{EG}f_1</span>
+より、次が言える。</p>
+<ul>
+<li><span class="math inline">s \in S&#39;</span> である。</li>
+<li><span class="math inline">s</span> で始まり、<span
 class="math inline">\text{EG}f_1</span> を満たす<span
 class="math inline">M</span>上の無限長パス <span
-class="math inline">\pi</span> に着目する。<br> このとき、<span
-class="math inline">\pi</span> の要素は全て <span
-class="math inline">f_1</span> を満たすので、次が言える。</p>
-<ul>
-<li><span class="math inline">s \in S&#39;</span></li>
-<li><span class="math inline">\pi</span> は <span
-class="math inline">S&#39;</span>上のパス</li>
+class="math inline">\pi</span> が存在。</li>
 </ul>
-<p>また、<span class="math inline">|S|</span> は有限なので、<span
-class="math inline">\pi</span>は次を満たす<span
-class="math inline">\pi_1</span>を用いて、<span class="math inline">\pi
-= \pi_0\pi_1</span>と書ける。</p>
+<p>パス <span class="math inline">\pi</span> について、次が言える。</p>
 <ul>
-<li><span class="math inline">\pi_1</span>上の任意の要素は、<span
-class="math inline">\pi_1</span>上に無限にしばしば(infinitely
-often)現れる。</li>
+<li><span class="math inline">\pi</span> の要素は全て <span
+class="math inline">f_1</span> を満たす。</li>
+<li>→ <span class="math inline">\pi</span> は <span
+class="math inline">S&#39;</span> 上のパスである。</li>
 </ul>
-<p><span class="math inline">\pi_1</span>上に現れる状態の集合を<span
-class="math inline">C</span>とおく。<br> このとき、<span
-class="math inline">\pi_1</span>
-から適当な(有限長の)部分パスを取ってくれば、 <span
-class="math inline">C</span> 上の任意の2状態を結ぶことができる。<br>
-よって、<span class="math inline">C</span> は SCC
-であり、したがって何らかの MSCC <span class="math inline">C&#39;</span>
-に内包される。<br> よって、条件1, 2ともに満たされる。</p>
+<p><span class="math inline">|S|</span> は有限なので、<span
+class="math inline">\pi</span> は次を満たす <span
+class="math inline">\pi_1</span> を用いて、<span class="math inline">\pi
+= \pi_0\pi_1</span> と書ける。</p>
+<ul>
+<li><span class="math inline">\pi_1</span> 上の任意の状態は、<span
+class="math inline">\pi_1</span> 上に無限にしばしば現れる。</li>
+</ul>
+<p>ここで、<span class="math inline">\pi_1</span> 上に現れる状態の集合を
+<span class="math inline">C</span> とおく。<br> このとき、<span
+class="math inline">\pi_1</span> から適当な(有限長の)部分パスを取れば、
+<span class="math inline">C</span> 上の任意の2状態を結べる。</p>
+<p>よって、</p>
+<ul>
+<li><span class="math inline">C</span> は SCC である。</li>
+<li>→ <span class="math inline">C</span> を内包する MSCC <span
+class="math inline">C&#39;</span> が存在。<br></li>
+</ul>
+<p>以上より、条件1, 2ともに満たされる。</p>
 </div>
+<hr>
+
 <p><strong>(<span
 class="math inline">\Longleftarrow</span>)</strong><br></p>
 <div class="indent">
@@ -369,14 +382,17 @@ class="math inline">s</span> から グラフ<span
 class="math inline">(S&#39;, R&#39;)</span>の nontrivial MSCC上のノード
 <span class="math inline">t</span> までのパスが存在</li>
 </ol>
-<p><span class="math inline">s</span> から <span
-class="math inline">t</span> へのパスを <span
-class="math inline">\pi_0</span> とおく。<br> またnontrivial
-MSCC上にある、<span class="math inline">t</span> から <span
-class="math inline">t</span> への長さ1以上のパスを取り、<span
-class="math inline">\pi_1</span> とおく。<br> このとき、 パス <span
-class="math inline">\pi_0\pi_1</span> 上の全状態は <span
-class="math inline">f_1</span> を満たすので、<span
+<p>仮定より、次が言える。</p>
+<ul>
+<li><span class="math inline">s</span> から <span
+class="math inline">t</span> へのパス <span
+class="math inline">\pi_0</span> が存在。</li>
+<li><span class="math inline">t</span> から <span
+class="math inline">t</span> への長さ1以上のパス <span
+class="math inline">\pi_1</span> が nontrivial MSCC 上に存在。</li>
+</ul>
+<p>このとき、 パス <span class="math inline">\pi_0(\pi_1)^\infty</span>
+上の全状態は <span class="math inline">f_1</span> を満たすので、<span
 class="math inline">M,s \vDash \text{EG}f_1</span> が成立する。</p>
 </div>
 <p>以上より、<span class="math inline">\Rightarrow</span>, <span
@@ -389,11 +405,13 @@ class="math inline">\square</span></p>
 <p>Lemma 5.1 をもとに、EGを処理するアルゴリズムを作る。</p>
 
 <figure><figcaption class="code-caption">CheckEG</figcaption><pre><code class="py">def CheckEG(f1):
+    # M' 上の MSCC に含まれる状態の集合 T を得る。
     S’= { s ∈ S | f1 ∈ label(s) }
     R’= { (p, c) ∈ S | p, c ∈ S’}
     MSCCs = get_all_mscc(S’, R’)
     T = ∪MSCCs
 
+    # 常に f1 を満たしながら T 内の状態へ到達できる状態を探す。
     while T != ∅:
         s = T.pop()
         for t in s.parents():
@@ -412,7 +430,9 @@ href="https://manabitimes.jp/math/1250">求まる</a>。<br></li>
 </ul>
 <p>→ <code>CheckEG</code> の計算量は <span class="math inline">O(|S| +
 |R|)</span> である。</p>
-<h2 id="アルゴリズム全体の計算量">アルゴリズム全体の計算量</h2>
+<h2 id="llbracket-f-rrbracket_m-を求めるアルゴリズム全体の計算量"><span
+class="math inline">{\llbracket f \rrbracket}_M</span>
+を求めるアルゴリズム全体の計算量</h2>
 <ul>
 <li><code>CheckXX</code>はすべて <span
 class="math inline">O(|S|+|R|)</span> 。</li>
@@ -421,8 +441,8 @@ class="math inline">O(|S|+|R|)</span> 。</li>
 <li><span class="math inline">f</span>
 の正規化前後において、部分式の数の増加は線形。</li>
 </ul>
-<p>よって、全体の計算量は<span
-class="math inline">O(|f|\cdot(|S|+|R|))</span>である。</p>
+<p>よって、全体の計算量は <span
+class="math inline">O(|f|\cdot(|S|+|R|))</span> である。</p>
 
 <figure><figcaption class="code-caption"><span class='math inline'>\llbracket f \rrbracket_M</span>を得るアルゴリズム(再掲)</figcaption><pre><code class="py">def set_of_state_which_sat_f(M, f):
     f.normalize() # f を正規化
@@ -437,47 +457,20 @@ class="math inline">O(|f|\cdot(|S|+|R|))</span>である。</p>
 
     return {s ∈ S | f ∈ label(s)}</code></pre></figure>
 <h2 id="具体例">具体例</h2>
-<p>次のクリプキ構造について、<span
+<div class="flex64">
+<div class="flex-left">
+<p>右のクリプキ構造について、<span
 class="math inline">\textbf{AG}(\textit{Start} \rightarrow
 \textbf{AF}\textit{Heat})</span> を調べる。</p>
-
-<figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
-    splines = false
-    N1 [xlabel=&quot;1&quot;, label = &quot;¬Start\n¬Close\n¬Heat\n¬Error&quot;, shape = circle]
-    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n¬Close\n¬Heat\nError&quot;, shape = circle]
-    N3 [xlabel=&quot;3&quot;, label = &quot;¬Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
-    N4 [xlabel=&quot;4&quot;, label = &quot;¬Start\nClose\nHeat\n¬Error&quot;, shape = circle]
-    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n¬Heat\nError&quot;, shape = circle]
-    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
-    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n¬Error&quot;, shape = circle]
-
-    N1 -&gt; N2
-    N1 -&gt; N3
-    N2 -&gt; N5
-    N3 -&gt; N1
-    N3 -&gt; N6
-    N4 -&gt; N1
-    N4 -&gt; N3
-    N4 -&gt; N4
-    N5 -&gt; N2
-    N5 -&gt; N3
-    N6 -&gt; N7
-    N7 -&gt; N4
-
-    {rank = same; N2, N3, N4;}
-    {rank = same; N5, N6, N7;}
-
-    N2 -&gt; N3 -&gt; N4 [color=transparent]
-    N5 -&gt; N6 -&gt; N7 [color=transparent]
-}</div></figure>
 <h3 id="考察">考察</h3>
 <p><span class="math inline">\textbf{AG}(\textit{Start} \rightarrow
-\textbf{AF}\textit{Heat})</span>
-は「スタートボタンを押したら、いつかは温めが完了する」という性質を表す。</p>
-<p>ここで、パス <span class="math inline">\pi = 1, 2, 5, 2, 5,
-\cdots</span> に着目する。<br> このパスは状態2で <span
-class="math inline">\textit{Start}</span> を満たすが、その後 <span
-class="math inline">\textit{Heat}</span> な状態には至らない。</p>
+\textbf{AF}\textit{Heat})</span> は<br>
+<span class=indent>「スタートしたら、いつかは温め終わる」<br></span>
+という性質を表す。</p>
+<p>ここで、パス <span class="math inline">\pi = 1, (2, 5)^\infty</span>
+に着目する。<br> このパスは状態2で <span
+class="math inline">\textit{Start}</span> になるが、その後 <span
+class="math inline">\textit{Heat}</span> になることは無い。</p>
 <p>よって、<span class="math inline">\textbf{AG}(\textit{Start}
 \rightarrow \textit{Heat}) = \emptyset</span> である。</p>
 <h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
@@ -552,19 +545,16 @@ class="math inline">\llbracket\textbf{E}(\textit{true} \textbf{U}
 について</h4>
 <ol type="1">
 <li><span class="math inline">T = \llbracket\textit{Start} \land
-\textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}</span> と置く</li>
-<li><span class="math inline">T</span>内の状態の親のうち、<span
-class="math inline">\textit{true}</span>を満たすものを<span
-class="math inline">T</span>に加えていく</li>
-<li><span
-class="math inline">T</span>の要素がこれ以上増えなくなったとき、<span
-class="math inline">T = \llbracket\textbf{E}(\textit{true} \textbf{U}
-(\textit{Start} \land
-\textbf{EG}\neg\textit{Heat}))\rrbracket</span>である</li>
+\textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}</span> と置く。</li>
+<li><span class="math inline">T</span> 内の状態の親のうち、<span
+class="math inline">\textit{true}</span> を満たすものを <span
+class="math inline">T</span> に加えていく。</li>
+<li><span class="math inline">T</span>
+の要素がこれ以上増えなくなるまで続ける。</li>
 </ol>
 <ul>
-<li><span class="math inline">\{2,
-5\}</span>から親を辿っていくと全ての状態に到達できる</li>
+<li><span class="math inline">\{2, 5\}</span>
+の先祖をたどると、全状態に到達できる。</li>
 <li>よって、<span class="math inline">\llbracket\textbf{E}(\textit{true}
 \textbf{U} (\textit{Start} \land
 \textbf{EG}\neg\textit{Heat}))\rrbracket = \{1, 2, 3, 4, 5, 6,
@@ -585,6 +575,42 @@ class="math inline">\llbracket\neg\textbf{E}(\textit{true} \textbf{U}
 (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket =
 \emptyset</span></li>
 </ul>
+</div>
+<div class="flex-right">
+<div class="sticky" style="transform: scale(0.65, 0.65);">
+
+<figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
+    splines = false
+    N1 [xlabel=&quot;1&quot;, label = &quot;¬Start\n¬Close\n¬Heat\n¬Error&quot;, shape = circle]
+    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n¬Close\n¬Heat\nError&quot;, shape = circle]
+    N3 [xlabel=&quot;3&quot;, label = &quot;¬Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N4 [xlabel=&quot;4&quot;, label = &quot;¬Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n¬Heat\nError&quot;, shape = circle]
+    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+
+    N1 -&gt; N2
+    N1 -&gt; N3
+    N2 -&gt; N5
+    N3 -&gt; N1
+    N3 -&gt; N6
+    N4 -&gt; N1
+    N4 -&gt; N3
+    N4 -&gt; N4
+    N5 -&gt; N2
+    N5 -&gt; N3
+    N6 -&gt; N7
+    N7 -&gt; N4
+
+    {rank = same; N2, N3, N4;}
+    {rank = same; N5, N6, N7;}
+
+    N2 -&gt; N3 -&gt; N4 [color=transparent]
+    N5 -&gt; N6 -&gt; N7 [color=transparent]
+}</div></figure>
+</div>
+</div>
+</div>
 <h2 id="まとめ">まとめ</h2>
 <h3 id="theorem-52">Theorem 5.2</h3>
 <p>クリプキ構造<span class="math inline">M</span>, CTL式 <span

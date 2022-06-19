@@ -103,11 +103,13 @@ class="math inline">\textbf{E}_f\textbf{U}</span> について考える。</p>
 <h2 id="textbfe_ftextbfg-の処理"><span
 class="math inline">\textbf{E}_f\textbf{G}</span> の処理</h2>
 <h2 id="用語--公平なscc">用語 : 公平なSCC</h2>
-<p>クリプキ構造<span class="math inline">M</span>上のSCC <span
+<p>クリプキ構造 <span class="math inline">M</span> 上の SCC <span
 class="math inline">C</span> が次を満たすとき、 <span
 class="math inline">C</span> は <span class="math inline">F</span>
 について公平である。 <span class="math display"> \forall P_i \in F,\
 \exist t_i \in (C \cup P_i) </span></p>
+<p>Q. 有向グラフが SCC である条件とは何であったか。<br> A.
+<quiz>任意の2頂点について、それを結ぶパスがあること。</quiz></p>
 <h2 id="記法">記法</h2>
 <p>クリプキ構造<span class="math inline">M</span>のうち、<span
 class="math inline">f_1</span>を公平に満たすノードのみを残したクリプキ構造を、<span
@@ -125,10 +127,10 @@ M&#39; = &amp;(S&#39;, R&#39;, L&#39;, F&#39;) \ \ \text{ where}\\
 f_1</span>と、次の2条件を両方満たすことは同値</p>
 <ol type="1">
 <li><span class="math inline">s \in S&#39;</span></li>
-<li><span class="math inline">M&#39;</span>上に、<span
-class="math inline">s</span>からグラフ<span class="math inline">(S&#39;,
-R&#39;)</span>の公平なMSCC上のノード<span
-class="math inline">t</span>までのパスが存在</li>
+<li><span class="math inline">M&#39;</span> 上に、<span
+class="math inline">s</span> からグラフ <span
+class="math inline">(S&#39;, R&#39;)</span> の公平なMSCC上のノード <span
+class="math inline">t</span> までのパスが存在</li>
 </ol>
 <p>(証明は Lemma 5.1 と同様のため省略。)</p>
 <h2 id="アルゴリズム">アルゴリズム</h2>
@@ -148,12 +150,12 @@ class="math inline">t</span>までのパスが存在</li>
                 label(t) += EG f1
                 T += t</code></pre></figure>
 <h2 id="計算量">計算量</h2>
-<p>Fair MSCCを求める部分は、例えば次のように <span
-class="math inline">O(|F|\cdot|S| + |R|)</span> で実装できる。<br>
+<p>Fair MSCCを求める部分は、<span class="math inline">O(|F|\cdot|S| +
+|R|)</span> で実装できる。<br>
 よって、<code>CheckFairEG</code>の計算量は(少し多めに見積もって) <span
 class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
 
-<figure><pre><code class="py">def get_all_fair_mscc(S):
+<figure><figcaption class="code-caption">Fair MSCC を求める例</figcaption><pre><code class="py">def get_all_fair_mscc(S):
     FairMSCCs = ∅
     # O(|S| + |R|)
     MSCCs = get_all_mscc(S)
@@ -165,19 +167,19 @@ class="math inline">O((|S| + |R|)\cdot|F|)</span>。</p>
     # O(|F||S|)
     for P in Fair {
         for s in P {
-            d[s] ∪= P # 実際にはベクタへのpush O(1) で良い
+            d[s] += P
         }
     }
 
     # 2つのMSCCが共通部分を持つことは無いため、
     # 内側のforは、合計|S|回である。
-    # よって、O(|S|)
-    for m in MSCCs {
+    # よって、O(|F||S|)
+    for mscc in MSCCs {
         local = ∅
-        for s in m:
-            local ∪= map[s] # 実際にはベクタへのpush O(1) で良い
+        for s in mscc:
+            local ∪= d[s] # 高々 O(|F|)
         if local.len() == |F|:
-            FairMSCCs ∪= m  # 実際にはベクタへのpush O(1) で良い
+            FairMSCCs += m
     }
     return FairMSCCs</code></pre></figure>
 <p>Q. 2つの MSCC が共通部分を持つことがないのはなぜか？</p>
@@ -237,41 +239,13 @@ f_2)</span>を検査するには、 <span class="math inline">M,s \vDash
 <span class="math inline">O(|f|\cdot(|S| + |R|)\cdot|F|)</span>
 である。</p>
 <h2 id="具体例">具体例</h2>
+<div class="flex64">
+<div class="flex-left">
 <p><span class="math inline">F = \{\{ s \ |\  s \vDash \textit{Start}
 \land \textit{Close} \land \neg\textit{Error}\}\}</span>とおく。</p>
 <p>5.1節の具体例と同じクリプキ構造について、次の式を調べる。 <span
 class="math display"> \textbf{A}_f\textbf{G}(\textit{Start} \rightarrow
-\textbf{A}_f\textbf{F}\textit{Heat}) </span>を調べる。</p>
-
-<figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
-    splines = false
-    N1 [xlabel=&quot;1&quot;, label = &quot;¬Start\n¬Close\n¬Heat\n¬Error&quot;, shape = circle]
-    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n¬Close\n¬Heat\nError&quot;, shape = circle]
-    N3 [xlabel=&quot;3&quot;, label = &quot;¬Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
-    N4 [xlabel=&quot;4&quot;, label = &quot;¬Start\nClose\nHeat\n¬Error&quot;, shape = circle]
-    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n¬Heat\nError&quot;, shape = circle]
-    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
-    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n¬Error&quot;, shape = circle]
-
-    N1 -&gt; N2
-    N1 -&gt; N3
-    N2 -&gt; N5
-    N3 -&gt; N1
-    N3 -&gt; N6
-    N4 -&gt; N1
-    N4 -&gt; N3
-    N4 -&gt; N4
-    N5 -&gt; N2
-    N5 -&gt; N3
-    N6 -&gt; N7
-    N7 -&gt; N4
-
-    {rank = same; N2, N3, N4;}
-    {rank = same; N5, N6, N7;}
-
-    N2 -&gt; N3 -&gt; N4 [color=transparent]
-    N5 -&gt; N6 -&gt; N7 [color=transparent]
-}</div></figure>
+\textbf{A}_f\textbf{F}\textit{Heat}) </span></p>
 <h3 id="ステップ1--正規化">ステップ1 : 正規化</h3>
 <p><span class="math display"> \textbf{A}_f\textbf{G}(\textit{Start}
 \rightarrow \textbf{A}_f\textbf{F}\textit{Heat}) = \neg
@@ -341,6 +315,42 @@ class="math inline">\llbracket\neg\textbf{E}_f(\textit{true} \textbf{U}
 \textbf{U} (\textit{Start} \land
 \textbf{E}_f\textbf{G}\neg\textit{Heat}))\rrbracket = S </span>
 である。</p>
+</div>
+<div class="flex-right">
+<div class="sticky" style="transform: scale(0.65, 0.65);">
+
+<figure><figcaption class="code-caption">クリプキ構造</figcaption><div class="graphviz">digraph G {
+    splines = false
+    N1 [xlabel=&quot;1&quot;, label = &quot;¬Start\n¬Close\n¬Heat\n¬Error&quot;, shape = circle]
+    N2 [xlabel=&quot;2&quot;, label = &quot;Start\n¬Close\n¬Heat\nError&quot;, shape = circle]
+    N3 [xlabel=&quot;3&quot;, label = &quot;¬Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N4 [xlabel=&quot;4&quot;, label = &quot;¬Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+    N5 [xlabel=&quot;5&quot;, label = &quot;Start\nClose\n¬Heat\nError&quot;, shape = circle]
+    N6 [xlabel=&quot;6&quot;, label = &quot;Start\nClose\n¬Heat\n¬Error&quot;, shape = circle]
+    N7 [xlabel=&quot;7&quot;, label = &quot;Start\nClose\nHeat\n¬Error&quot;, shape = circle]
+
+    N1 -&gt; N2
+    N1 -&gt; N3
+    N2 -&gt; N5
+    N3 -&gt; N1
+    N3 -&gt; N6
+    N4 -&gt; N1
+    N4 -&gt; N3
+    N4 -&gt; N4
+    N5 -&gt; N2
+    N5 -&gt; N3
+    N6 -&gt; N7
+    N7 -&gt; N4
+
+    {rank = same; N2, N3, N4;}
+    {rank = same; N5, N6, N7;}
+
+    N2 -&gt; N3 -&gt; N4 [color=transparent]
+    N5 -&gt; N6 -&gt; N7 [color=transparent]
+}</div></figure>
+</div>
+</div>
+</div>
 <h2 id="まとめ">まとめ</h2>
 <h3 id="theorem-54">Theorem 5.4</h3>
 <p>クリプキ構造<span class="math inline">M = (S, R, L,

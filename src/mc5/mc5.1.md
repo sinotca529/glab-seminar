@@ -67,15 +67,6 @@ def CheckNot(f1):
             label(s) += ¬f1
 ```
 
-```py {caption=CheckEX}
-# O(|R|)
-def CheckEX(f):
-    for (parent, child) in R:
-        if f ∈ label(child):
-            parent += EX(f)
-```
-::::::
-:::::: {.flex-right}
 ```py {caption=CheckAnd}
 # O(|S|)
 def CheckAnd(f1, f2):
@@ -83,13 +74,23 @@ def CheckAnd(f1, f2):
         if f1 ∈ label(s) and f2 ∈ label(s)
             label(s) += (f1 ∧ f2)
 ```
-
+::::::
+:::::: {.flex-right}
 ```py {caption=CheckOr}
 # O(|S|)
 def CheckOr(f1, f2):
     for s in S:
         if f1 ∈ label(s) or f2 ∈ label(s):
             label(s) += (f1 ∨ f2)
+```
+
+
+```py {caption=CheckEX}
+# O(|R|)
+def CheckEX(f):
+    for (parent, child) in R:
+        if f ∈ label(child):
+            parent += EX(f)
 ```
 ::::::
 :::
@@ -100,10 +101,13 @@ def CheckOr(f1, f2):
 ```py {caption=CheckEU}
 # O(|S| + |R|)
 def CheckEU(f1, f2):
+  # f2 を満たすなら、 E(f1 U f2) を満たす。
   T := {s | f2 ∈ label(s)}
   for s in T:
     label(s) += E(f1 U f2)
 
+  # E(f1 U f2) を満たすノードの親が f1 を満たすなら、
+  # その(親)ノードも E(f1 U f2) を満たす。
   while T != ∅:
     s = T.pop()
     for t in s.parents():
@@ -163,8 +167,10 @@ for s in T:
 ```
 <br>
 
-後半部分は $O(|R|)$ で計算できる。<br>
-(`s.parents()` の総和は $|R|$ なので、`for` は合計 $|R|$ 回まわる。)
+後半部分は $O(|R|)$ で計算できる。
+- `s.parents()` の総和は $|R|$。
+- → `for` は合計 $|R|$ 回まわる。
+
 ```py {caption=後半部分}
 while T != ∅:
     s = T.pop()
@@ -251,20 +257,28 @@ $M,s \vDash \text{EG}f_1$ は、次の2条件の両立と同値である。
 
 **($\Longrightarrow$)**<br>
 ::: {.indent}
-状態 $s$ について、$M,s \vDash \text{EG}f_1$ を仮定する。<br>
-$s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ に着目する。<br>
-このとき、$\pi$ の要素は全て $f_1$ を満たすので、次が言える。
-- $s \in S'$
-- $\pi$ は $S'$上のパス
+仮定 $M,s \vDash \text{EG}f_1$ より、次が言える。
+- $s \in S'$ である。
+- $s$ で始まり、$\text{EG}f_1$ を満たす$M$上の無限長パス $\pi$ が存在。
 
-また、$|S|$ は有限なので、$\pi$は次を満たす$\pi_1$を用いて、$\pi = \pi_0\pi_1$と書ける。
-- $\pi_1$上の任意の要素は、$\pi_1$上に無限にしばしば(infinitely often)現れる。
+パス $\pi$ について、次が言える。
+- $\pi$ の要素は全て $f_1$ を満たす。
+- → $\pi$ は $S'$ 上のパスである。
 
-$\pi_1$上に現れる状態の集合を$C$とおく。<br>
-このとき、$\pi_1$ から適当な(有限長の)部分パスを取ってくれば、 $C$ 上の任意の2状態を結ぶことができる。<br>
-よって、$C$ は SCC であり、したがって何らかの MSCC $C'$ に内包される。<br>
-よって、条件1, 2ともに満たされる。
+$|S|$ は有限なので、$\pi$ は次を満たす $\pi_1$ を用いて、$\pi = \pi_0\pi_1$ と書ける。
+- $\pi_1$ 上の任意の状態は、$\pi_1$ 上に無限にしばしば現れる。
+
+ここで、$\pi_1$ 上に現れる状態の集合を $C$ とおく。<br>
+このとき、$\pi_1$ から適当な(有限長の)部分パスを取れば、 $C$ 上の任意の2状態を結べる。
+
+よって、
+- $C$ は SCC である。
+- → $C$ を内包する MSCC $C'$ が存在。<br>
+
+以上より、条件1, 2ともに満たされる。
 :::
+
+<hr>
 
 **($\Longleftarrow$)**<br>
 ::: {.indent}
@@ -272,9 +286,11 @@ $\pi_1$上に現れる状態の集合を$C$とおく。<br>
 1. $s \in S'$
 2. $M'$上に、$s$ から グラフ$(S', R')$の nontrivial MSCC上のノード $t$ までのパスが存在
 
-$s$ から $t$ へのパスを $\pi_0$ とおく。<br>
-またnontrivial MSCC上にある、$t$ から $t$ への長さ1以上のパスを取り、$\pi_1$ とおく。<br>
-このとき、 パス $\pi_0\pi_1$ 上の全状態は $f_1$ を満たすので、$M,s \vDash \text{EG}f_1$ が成立する。
+仮定より、次が言える。
+- $s$ から $t$ へのパス $\pi_0$ が存在。
+- $t$ から $t$ への長さ1以上のパス $\pi_1$ が nontrivial MSCC 上に存在。
+
+このとき、 パス $\pi_0(\pi_1)^\infty$ 上の全状態は $f_1$ を満たすので、$M,s \vDash \text{EG}f_1$ が成立する。
 :::
 
 以上より、$\Rightarrow$, $\Leftarrow$ の両方が示されたので、これらは同値である。<br>
@@ -286,11 +302,13 @@ $\square$
 Lemma 5.1 をもとに、EGを処理するアルゴリズムを作る。
 ```py {caption="CheckEG"}
 def CheckEG(f1):
+    # M' 上の MSCC に含まれる状態の集合 T を得る。
     S’= { s ∈ S | f1 ∈ label(s) }
     R’= { (p, c) ∈ S | p, c ∈ S’}
     MSCCs = get_all_mscc(S’, R’)
     T = ∪MSCCs
 
+    # 常に f1 を満たしながら T 内の状態へ到達できる状態を探す。
     while T != ∅:
         s = T.pop()
         for t in s.parents():
@@ -306,12 +324,12 @@ def CheckEG(f1):
 
 → `CheckEG` の計算量は $O(|S| + |R|)$ である。
 
-## アルゴリズム全体の計算量
+## ${\llbracket f \rrbracket}_M$ を求めるアルゴリズム全体の計算量
 - `CheckXX`はすべて $O(|S|+|R|)$ 。
 - 処理する部分式の数は高々 $|f|$ 個。
 - $f$ の正規化前後において、部分式の数の増加は線形。
 
-よって、全体の計算量は$O(|f|\cdot(|S|+|R|))$である。
+よって、全体の計算量は $O(|f|\cdot(|S|+|R|))$ である。
 ```py {caption="<span class='math inline'>\llbracket f \rrbracket_M</span>を得るアルゴリズム(再掲)"}
 def set_of_state_which_sat_f(M, f):
     f.normalize() # f を正規化
@@ -328,45 +346,17 @@ def set_of_state_which_sat_f(M, f):
 ```
 
 ## 具体例
-次のクリプキ構造について、$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ を調べる。
-
-```graphviz {caption=クリプキ構造}
-digraph G {
-    splines = false
-    N1 [xlabel="1", label = "¬Start\n¬Close\n¬Heat\n¬Error", shape = circle]
-    N2 [xlabel="2", label = "Start\n¬Close\n¬Heat\nError", shape = circle]
-    N3 [xlabel="3", label = "¬Start\nClose\n¬Heat\n¬Error", shape = circle]
-    N4 [xlabel="4", label = "¬Start\nClose\nHeat\n¬Error", shape = circle]
-    N5 [xlabel="5", label = "Start\nClose\n¬Heat\nError", shape = circle]
-    N6 [xlabel="6", label = "Start\nClose\n¬Heat\n¬Error", shape = circle]
-    N7 [xlabel="7", label = "Start\nClose\nHeat\n¬Error", shape = circle]
-
-    N1 -> N2
-    N1 -> N3
-    N2 -> N5
-    N3 -> N1
-    N3 -> N6
-    N4 -> N1
-    N4 -> N3
-    N4 -> N4
-    N5 -> N2
-    N5 -> N3
-    N6 -> N7
-    N7 -> N4
-
-    {rank = same; N2, N3, N4;}
-    {rank = same; N5, N6, N7;}
-
-    N2 -> N3 -> N4 [color=transparent]
-    N5 -> N6 -> N7 [color=transparent]
-}
-```
+::: {.flex64}
+:::::: {.flex-left}
+右のクリプキ構造について、$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ を調べる。
 
 ### 考察
-$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ は「スタートボタンを押したら、いつかは温めが完了する」という性質を表す。
+$\textbf{AG}(\textit{Start} \rightarrow \textbf{AF}\textit{Heat})$ は<br>
+<span class=indent>「スタートしたら、いつかは温め終わる」<br></span>
+という性質を表す。
 
-ここで、パス $\pi = 1, 2, 5, 2, 5, \cdots$ に着目する。<br>
-このパスは状態2で $\textit{Start}$ を満たすが、その後 $\textit{Heat}$ な状態には至らない。
+ここで、パス $\pi = 1, (2, 5)^\infty$ に着目する。<br>
+このパスは状態2で $\textit{Start}$ になるが、その後 $\textit{Heat}$ になることは無い。
 
 よって、$\textbf{AG}(\textit{Start} \rightarrow \textit{Heat}) = \emptyset$ である。
 
@@ -409,11 +399,11 @@ $\llbracket\textit{Start}\rrbracket = \{2, 5, 6, 7\}$, $\llbracket\textbf{EG}\ne
 よって、$\llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}$
 
 ####  $\llbracket\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket$ について
-1. $T = \llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}$ と置く
-2. $T$内の状態の親のうち、$\textit{true}$を満たすものを$T$に加えていく
-3. $T$の要素がこれ以上増えなくなったとき、$T = \llbracket\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket$である
+1. $T = \llbracket\textit{Start} \land \textbf{EG}\neg\textit{Heat}\rrbracket = \{2, 5\}$ と置く。
+2. $T$ 内の状態の親のうち、$\textit{true}$ を満たすものを $T$ に加えていく。
+3. $T$ の要素がこれ以上増えなくなるまで続ける。
 
-- $\{2, 5\}$から親を辿っていくと全ての状態に到達できる
+- $\{2, 5\}$ の先祖をたどると、全状態に到達できる。
 - よって、$\llbracket\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket = \{1, 2, 3, 4, 5, 6, 7\}$
 
 
@@ -421,6 +411,47 @@ $\llbracket\textit{Start}\rrbracket = \{2, 5, 6, 7\}$, $\llbracket\textbf{EG}\ne
 #### $\llbracket\neg\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket$ について
 - $\llbracket\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket = \{1, 2, 3, 4, 5, 6, 7\}$である
 - よって、$\llbracket\neg\textbf{E}(\textit{true} \textbf{U} (\textit{Start} \land \textbf{EG}\neg\textit{Heat}))\rrbracket = \emptyset$
+
+::::::
+:::::: {.flex-right}
+::::::::: {.sticky style="transform: scale(0.65, 0.65);"}
+```graphviz {caption=クリプキ構造}
+digraph G {
+    splines = false
+    N1 [xlabel="1", label = "¬Start\n¬Close\n¬Heat\n¬Error", shape = circle]
+    N2 [xlabel="2", label = "Start\n¬Close\n¬Heat\nError", shape = circle]
+    N3 [xlabel="3", label = "¬Start\nClose\n¬Heat\n¬Error", shape = circle]
+    N4 [xlabel="4", label = "¬Start\nClose\nHeat\n¬Error", shape = circle]
+    N5 [xlabel="5", label = "Start\nClose\n¬Heat\nError", shape = circle]
+    N6 [xlabel="6", label = "Start\nClose\n¬Heat\n¬Error", shape = circle]
+    N7 [xlabel="7", label = "Start\nClose\nHeat\n¬Error", shape = circle]
+
+    N1 -> N2
+    N1 -> N3
+    N2 -> N5
+    N3 -> N1
+    N3 -> N6
+    N4 -> N1
+    N4 -> N3
+    N4 -> N4
+    N5 -> N2
+    N5 -> N3
+    N6 -> N7
+    N7 -> N4
+
+    {rank = same; N2, N3, N4;}
+    {rank = same; N5, N6, N7;}
+
+    N2 -> N3 -> N4 [color=transparent]
+    N5 -> N6 -> N7 [color=transparent]
+}
+```
+:::::::::
+::::::
+:::
+
+
+
 
 ## まとめ
 ### Theorem 5.2

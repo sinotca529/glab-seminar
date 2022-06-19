@@ -20,7 +20,6 @@ plug:
 1. 前準備
    - 不動点の定義
    - 単調, $\cup$-連続, $\cap$-連続 の定義
-   - 用語定義
 2. 不動点に関する定理・補題について
 3. 不動点を用いて$M \vDash f$を調べる方法の説明
 4. さらに公平性を考慮した場合の説明
@@ -57,8 +56,8 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 -  $\llbracket \cdot \rrbracket = S'$ となる条件式 ( *predicate* )
 
 つまり、
-- $\textit{true} =$ <quiz>$S$</quiz>
-- $\textit{false} =$ <quiz>$\emptyset$</quiz>
+- $\textit{true} =$ 集合<quiz>$S$</quiz>
+- $\textit{false} =$ 集合<quiz>$\emptyset$</quiz>
 
 である。
 
@@ -67,18 +66,18 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 ### 単調, $\cup$-連続, $\cap$-連続 の定義
 <p>
 
-関数$\tau$が単調 (monotonic) とは:
+関数 $\tau$ が単調 (monotonic) とは:
 : $P \subseteq Q \implies \tau(P) \subseteq \tau(Q)$
 
 </p><p>
 
-関数$\tau$が$\cup$-連続 ($\cup$-continuous) とは:
+関数 $\tau$ が $\cup$-連続 ($\cup$-continuous) とは:
 : $P_1 \subseteq P_2 \subseteq \cdots \implies \tau(\cup_i P_i) = \cup_i \tau(P_i)$
 
 </p><p>
 
-関数$\tau$が$\cap$-連続 ($\cap$-continuous) とは:
-: $P_1 \supseteq P_2 \supseteq \cdots \implies \tau(\cup_i P_i) = \cup_i \tau(P_i)$
+関数 $\tau$ が $\cap$-連続 ($\cap$-continuous) とは:
+: $P_1 \supseteq P_2 \supseteq \cdots \implies \tau(\cap_i P_i) = \cap_i \tau(P_i)$
 
 </p>
 
@@ -86,14 +85,14 @@ $\mathcal{P}(S)$ は完備半順序を持つ。<br>
 説明の都合上、MC本とは順序・証明を一部変えている。
 
 ### Lemma 5.7
-$\tau$が単調ならば、任意の $i$ について次が成立。
+$\tau$ が単調ならば、任意の $i$ について次が成立。
 - $\tau^i(\textit{false}) \subseteq \tau^{i+1}(\textit{false})$
 - $\tau^i(\textit{true}) \supseteq \tau^{i+1}(\textit{true})$
 
 証明 : 数学的帰納法を使う。
 
 ### Lemma 5.8
-$\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
+$\tau$ が単調で $S$ が有限なら、次を満たす $i$, $j$ が存在する。
 - $\forall k \geq i,\ \tau^k(\textit{false}) = \tau^i(\textit{false})$
 - $\forall k \geq j,\ \tau^k(\textit{true}) = \tau^j(\textit{true})$
 
@@ -103,10 +102,13 @@ $\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
 示したい式は、次のように変形できる。
 $$ \exist i, \forall k, (k \geq i) \Rightarrow \tau^k(\textit{false}) = \tau^i(\textit{false})$$
 
-背理法を用いて証明する。示すべき式の否定は次式である。
+これは、次と同値である。
+$$ \exist i, \forall k, \neg (k \geq i) \land \tau^k(\textit{false}) = \tau^i(\textit{false})$$
+
+背理法を用いて証明する。上の式の否定は次式である。
 $$ \forall i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \neq \tau^i(\textit{false})$$
 
-Lemma 5.7 より、列 $\{\tau^j(\textit{false})_j\}$ は単調増加列なので、次が成り立つ。
+Lemma 5.7 より、列 $\{\tau^j(\textit{false})_j\}$ は単調増加列なので、上の式は次式と同値である。
 $$ \forall i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \supset \tau^i(\textit{false})$$
 
 この式より、$i = 0$ について次を満たす $l_1$ の存在が言える。
@@ -115,8 +117,9 @@ $$ \tau^{l_1} \supset \tau^0(\textit{false}) $$
 また、同様に $i = l_1$ について次を満たす $l_2$ の存在が言える。
 $$ \tau^{l_2} \supset \tau^{l_1}(\textit{false}) $$
 
-これを繰り返すことで、狭義単調な無限列 $\{ \tau^{l_j}(\textit{false}) \}_j$ を得る ($l_0 = 0$ とした)。
-このとき、$|\tau^{l_j}| \geq j$ であり、$j = |S| + 1$ のときそのサイズは $|S| + 1$ 以上となるが、これはドメインが $\mathcal{P}(S)$ であることに矛盾。
+これを繰り返すことで、狭義単調増加する無限列 $\{ \tau^{l_j}(\textit{false}) \}_j$ を得る ($l_0 = 0$ とした)。
+
+狭義単調なので $|\tau^{l_{|S|}}| \geq |S|$ であるが、これはドメインが $\mathcal{P}(S)$ であることに矛盾。
 
 よって仮定は誤りであり、示したい式の成立が示された。<br>
 $\square$
@@ -124,19 +127,19 @@ $\square$
 
 ### Theorem 5.5 (Tarski-Knaster)
 #### 主張1
-$\tau$が単調ならば、次で定義する{最大, 最小}不動点が存在。
+$\tau$ が単調ならば、次で定義する{最大, 最小}不動点が存在。
 - 最大不動点 : $\nu Z.\tau(Z) = \bigcup\{ Z \ |\ Z \subseteq \tau(Z)\}$
 - 最小不動点 : $\mu Z.\tau(Z) = \bigcap\{ Z \ |\ Z \supseteq \tau(Z)\}$
 
 <details class="filled-box">
 <summary>証明 (最大不動点について)</summary>
 
-$\Gamma = \{ z \ |\ z \subseteq \tau(Z)\}$, $P = \cup\Gamma$ とおく。
+$\Gamma = \{ Z \ |\ Z \subseteq \tau(Z)\}$, $P = \cup\Gamma$ とおく。
 
-$\Gamma$は、すべての不動点を内包している。<br>
-よって、もし $P$ が不動点なら、$p$ は最大不動点である。<br>
+$\Gamma$ は、すべての不動点を内包している。<br>
+よって、もし $P$ が不動点なら $P$ は最大不動点である。<br>
 
-よって、$P$ が不動点であること、つまり次の両立を示せば良い。
+したがって、$P$ が不動点であること、つまり次の両立を示せば良い。
 - (1) $P \subseteq \tau(P)$
 - (2) $P \supseteq \tau(P)$
 
@@ -156,7 +159,7 @@ $$ \tau(Z) \subseteq \tau(P) $$
 これと(a)より、
 $$ Z \subseteq \tau(P) $$
 
-$\Gamma$ の全要素について、この式を考え、両辺の和をとると、
+$\Gamma$ の全要素について この式を考え、両辺の和をとると、
 $$ \bigcup_{Z \in \Gamma} Z \ \subseteq\  \bigcup_{Z \in \Gamma} \tau(P) $$
 
 これを整理して、
@@ -174,12 +177,13 @@ $$ \tau(P) \in \Gamma $$
 $P$ の定義より、$P$ は $\Gamma$ の任意の要素より大きいので、
 $$ P \supseteq \tau(P) $$
 :::
+以上より $P$ は不動点であるから、$P$ は最大不動点である。
 
 </details>
 
 #### 主張2
-- $\tau$が単調で$\cap$-連続ならば、$\nu Z.\tau(Z) = \cap\tau^i(\textit{true})$
-- $\tau$が単調で$\cup$-連続ならば、$\mu Z.\tau(Z) = \cup\tau^i(\textit{false})$
+- $\tau$ が単調で$\cap$-連続ならば、$\nu Z.\tau(Z) = \cap\tau^i(\textit{true})$
+- $\tau$ が単調で$\cup$-連続ならば、$\mu Z.\tau(Z) = \cup\tau^i(\textit{false})$
 
 <details class="filled-box">
 <summary>証明 (最大不動点について)</summary>
@@ -195,7 +199,7 @@ $$ \forall k \geq j,\ \tau^k(S) = \tau^j(S) $$
 
 このとき、$\tau^j(S)$ は不動点である。<br>
 また、$\{\tau^j(S)_j\}$ は単調減少する列なので次が成り立つ。
-$$ \cup_i \tau^i(S) = \tau^j(S) $$
+$$ \cap_i \tau^i(S) = \tau^j(S) $$
 したがって、$\cup_i \tau^i(S)$ は不動点である。<br>
 いま、$P$は最大不動点なので、
 $$ P \supseteq \cap \tau^i(S) $$
@@ -207,7 +211,7 @@ $$ P \supseteq \cap \tau^i(S) $$
 $S$は$\mathcal{P}(S)$の最大元なので、
 $$ P \subseteq S $$
 
-$\tau$は単調なので、両辺に$\tau$を$\infty$回適用しても大小は変わらず、
+$\tau$は単調なので、両辺に$\tau$を$\infty$回適用しても大小関係は変わらず、
 $$ \tau^\infty(P) \subseteq \tau^\infty(S) $$
 
 $P$は不動点なので左辺は$P$であり、また右辺は$\cap\tau^i(S)$に等しいので、
@@ -219,7 +223,7 @@ $\square$
 </details>
 
 ### Lemma 5.6
-$S$が有限で$\tau$が単調ならば、$\tau$は$\cup$-連続であり$\cap$-連続である。
+$S$ が有限で $\tau$ が単調ならば、$\tau$ は $\cup$-連続であり $\cap$-連続である。
 
 - $\cup$-連続 : $P_1 \subseteq P_2 \subseteq \cdots \implies \tau(\cup_i P_i) = \cup_i \tau(P_i)$
 - $\cap$-連続 : $P_1 \supseteq P_2 \supseteq \cdots \implies \tau(\cup_i P_i) = \cup_i \tau(P_i)$
@@ -227,7 +231,7 @@ $S$が有限で$\tau$が単調ならば、$\tau$は$\cup$-連続であり$\cap$-
 <details class="filled-box">
 <summary>証明 (<span class="math inline">\cup</span>-連続について)</summary>
 
-列 $\{P_i\}_i$ は単調増加するので、Lemma 5.8の証明と同様にして、次を満たす $j$ の存在が示せる。<br>
+列 $\{P_i\}_i$ は単調増加し、$S$は有限なので、次を満たす $j$ の存在が示せる。<br>
 $$ \cup_i P_i = P_j $$
 
 よって、
@@ -287,12 +291,12 @@ Lemma 5.8の証明 より、ループは たかだか $|S|$ 回で終わる。<b
 
 ## Fixpoint-Based Reachability Analysis
 Reachability Analysis:
-: クリプキ構造$M$について、初期状態から到達可能な状態の集合を求める解析。
+: クリプキ構造 $M$ について、初期状態から到達可能な状態の集合を求める解析。
 
-不動点を用いて、reachability analysisをおこなう。<br>
-まず、状態集合$Q$について、そこから1手で到達できる状態の集合$\textit{post-image}(Q)$を定義する :
+不動点を用いて、reachability analysis をおこなう。<br>
+まず、状態集合 $Q$ について、そこから1手で到達できる状態の集合 $\textit{post-image}(Q)$ を定義する :
 $$ \textit{post-image}(Q) = \{s' \ |\ \exist s \in Q\ \text{ s.t. }\ R(s, s')\} $$
-これを用いて、$\tau$を定義する :
+これを用いて、$\tau$ を定義する :
 $$ \tau(Q) = S_0 \cup \textit{post-image}(Q) $$
 このとき、最小不動点 $\mu Q.\tau(Q)$ は、初期状態から到達可能な状態の集合である。
 
@@ -362,7 +366,7 @@ $$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false}) $$
 **($\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ について)**<br>
 ::: {.indent}
 $\textbf{E}(f_1 \textbf{U} f_2)$ を満たすパス $\pi$ の prefix の長さに関する帰納法を使う。<br>
-ここで prefix は、パス$\pi$の始点から、初めて$f_2$を満たす状態までの部分パスを指す。<br>
+ここで prefix は、パス$\pi$の始点から、初めて$f_2$を満たす状態**まで**の部分パスを指す。<br>
 
 ```graphviz {caption="prefix の長さが j のパス"}
 digraph G {
@@ -377,7 +381,7 @@ digraph G {
 }
 ```
 
-prefixの長さが $j$ なパスの始点の集合を $S_j$ と置き、次を帰納法で示す。
+prefix の長さが $j$ なパスの始点の集合を $S_j$ と置き、次を帰納法で示す。
 $$ \forall j,\ S_j \subseteq \tau^j(\textit{false}) $$
 
 **\[$j = 1$のとき\]**<br>
@@ -479,17 +483,16 @@ $\square$
 $\textbf{E}_f\textbf{G}$, $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ を不動点を用いて処理する方法を考える。
 
 ### $\textbf{E}_f\textbf{G}$ について
-$\textbf{E}_f\textbf{G}$を満たす状態集合$Z$は、次を満たす状態集合のなかで最大のものである。
-1. $Z$の要素は $f$ を満たす。
+$\textbf{E}_f\textbf{G} f$ を満たす状態集合$Z$は、次を満たす状態集合のなかで最大のものである。
+1. $Z$ の全要素は $f$ を満たす。
 2. 任意の公平性条件 $P_k \in F$ と任意の状態 $s \in Z$ について、次をすべて満たすパスが存在する。
    - $s$ で始まる。
    - $P_k$ を満たす $Z$ 内の状態で終わる。
    - 長さ1以上。
-   - パス上の状態すべてが$f$を満たす。
-
+   - パス上の状態すべてが $f$ を満たす。
 
 $\textbf{E}_f\textbf{G} f$ は不動点を使うと次のように書ける。
-$$ \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U} (Z \land P_k))) $$
+$$ \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n \textbf{EXE}(g \textbf{U} (Z \land P_k))) $$
 
 #### Lemma 5.15
 $\textbf{E}_f\textbf{G} f$ は $f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U} (Z \land P_k))$ の不動点である。
