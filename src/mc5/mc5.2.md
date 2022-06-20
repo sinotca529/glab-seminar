@@ -23,7 +23,7 @@ plug:
 ## $\textbf{E}_f\textbf{G}$ の処理
 ## 用語 : 公平なSCC
 クリプキ構造 $M$ 上の SCC $C$ が次を満たすとき、 $C$ は $F$ について公平である。
-$$ \forall P_i \in F,\ \exist t_i \in (C \cup P_i) $$
+$$ \forall P_i \in F,\ \exist t_i \in (C \cap P_i) $$
 
 Q. 有向グラフが SCC である条件とは何であったか。<br>
 A. <quiz>任意の2頂点について、それを結ぶパスがあること。</quiz>
