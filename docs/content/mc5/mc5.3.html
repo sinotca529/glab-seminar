@@ -745,6 +745,41 @@ class="math inline">\tau(Z) = f_1 \land \textbf{EX}(Z)</span>
 の最大不動点である。<br> <span class="math inline">\square</span></p>
 </details>
 
+<h3 id="計算量について">計算量について</h3>
+<ul>
+<li><span class="math inline">\llbracket \textbf{AF}f_1 \rrbracket_M =
+\mu Z.(f_1 \lor \textbf{AX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{EF}f_1 \rrbracket_M =
+\mu Z.(f_1 \lor \textbf{EX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{AG}f_1 \rrbracket_M =
+\nu Z.(f_1 \land \textbf{AX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{EG}f_1 \rrbracket_M =
+\nu Z.(f_1 \land \textbf{EX}Z)</span></li>
+<li><span class="math inline">\llbracket \textbf{A}(f_1 \textbf{U} f_2)
+\rrbracket_M = \mu Z.(f_2 \lor (f_1 \land \textbf{AX}Z))</span></li>
+<li><span class="math inline">\llbracket \textbf{E}(f_1 \textbf{U} f_2)
+\rrbracket_M = \mu Z.(f_2 \lor (f_1 \land \textbf{EX}Z))</span></li>
+<li><span class="math inline">\llbracket \textbf{A}(f_1 \textbf{R} f_2)
+\rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{AX}Z))</span></li>
+<li><span class="math inline">\llbracket \textbf{E}(f_1 \textbf{R} f_2)
+\rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{EX}Z))</span></li>
+</ul>
+<p>各 <span class="math inline">\tau</span> を計算するためには、<span
+class="math inline">\textbf{AX}</span>, <span
+class="math inline">\textbf{EX}</span>, <span
+class="math inline">\lor</span>, <span class="math inline">\land</span>
+を求める必要がある。</p>
+<ul>
+<li><span class="math inline">\textbf{AX}</span>, <span
+class="math inline">\textbf{EX}</span> は <span
+class="math inline">|R|</span> で求まる。</li>
+<li><span class="math inline">\lor</span>, <span
+class="math inline">\land</span> は <span class="math inline">|S|</span>
+で求まる。</li>
+</ul>
+<p><span class="math inline">\tau</span> は最大で <span
+class="math inline">|S|</span> 回適用する必要があるので、計算量は <span
+class="math inline">|S|^2</span> に依存する。</p>
 <h2 id="characterizing-fairness-with-fixpoints">Characterizing Fairness
 with Fixpoints</h2>
 <p><span class="math inline">\textbf{E}_f\textbf{G}</span>, <span

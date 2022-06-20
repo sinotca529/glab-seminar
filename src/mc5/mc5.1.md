@@ -62,35 +62,35 @@ def set_of_state_which_sat_f(M, f):
 ```py {caption=CheckNot}
 # O(|S|)
 def CheckNot(f1):
-    for s in S:
-        if f1 ∉ label(s):
-            label(s) += ¬f1
+  for s in S:
+    if f1 ∉ label(s):
+      label(s) += ¬f1
 ```
 
 ```py {caption=CheckAnd}
 # O(|S|)
 def CheckAnd(f1, f2):
-    for s in S:
-        if f1 ∈ label(s) and f2 ∈ label(s)
-            label(s) += (f1 ∧ f2)
+  for s in S:
+    if f1 ∈ label(s) and f2 ∈ label(s)
+      label(s) += (f1 ∧ f2)
 ```
 ::::::
 :::::: {.flex-right}
 ```py {caption=CheckOr}
 # O(|S|)
 def CheckOr(f1, f2):
-    for s in S:
-        if f1 ∈ label(s) or f2 ∈ label(s):
-            label(s) += (f1 ∨ f2)
+  for s in S:
+    if f1 ∈ label(s) or f2 ∈ label(s):
+      label(s) += (f1 ∨ f2)
 ```
 
 
 ```py {caption=CheckEX}
 # O(|R|)
 def CheckEX(f):
-    for (parent, child) in R:
-        if f ∈ label(child):
-            parent += EX(f)
+  for (parent, child) in R:
+    if f ∈ label(child):
+      parent += EX(f)
 ```
 ::::::
 :::

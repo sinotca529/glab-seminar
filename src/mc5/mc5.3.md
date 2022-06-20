@@ -479,6 +479,23 @@ Lemma 5.12 より、$s$ から始まり常に$f_1$を満たすパスが存在す
 $\square$
 </details>
 
+### 計算量について
+- $\llbracket \textbf{AF}f_1 \rrbracket_M = \mu Z.(f_1 \lor \textbf{AX}Z)$
+- $\llbracket \textbf{EF}f_1 \rrbracket_M = \mu Z.(f_1 \lor \textbf{EX}Z)$
+- $\llbracket \textbf{AG}f_1 \rrbracket_M = \nu Z.(f_1 \land \textbf{AX}Z)$
+- $\llbracket \textbf{EG}f_1 \rrbracket_M = \nu Z.(f_1 \land \textbf{EX}Z)$
+- $\llbracket \textbf{A}(f_1 \textbf{U} f_2) \rrbracket_M = \mu Z.(f_2 \lor (f_1 \land \textbf{AX}Z))$
+- $\llbracket \textbf{E}(f_1 \textbf{U} f_2) \rrbracket_M = \mu Z.(f_2 \lor (f_1 \land \textbf{EX}Z))$
+- $\llbracket \textbf{A}(f_1 \textbf{R} f_2) \rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{AX}Z))$
+- $\llbracket \textbf{E}(f_1 \textbf{R} f_2) \rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{EX}Z))$
+
+各 $\tau$ を計算するためには、$\textbf{AX}$, $\textbf{EX}$, $\lor$, $\land$ を求める必要がある。
+- $\textbf{AX}$, $\textbf{EX}$ は $|R|$ で求まる。
+- $\lor$, $\land$ は $|S|$ で求まる。
+
+$\tau$ は最大で $|S|$ 回適用する必要があるので、計算量は $|S|^2$ に依存する。
+
+
 ## Characterizing Fairness with Fixpoints
 $\textbf{E}_f\textbf{G}$, $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ を不動点を用いて処理する方法を考える。
 

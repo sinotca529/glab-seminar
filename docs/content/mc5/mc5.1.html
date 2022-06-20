@@ -147,29 +147,29 @@ class="math inline">f, g, u \in \textbf{AP}</span> のとき:</p>
 
 <figure><figcaption class="code-caption">CheckNot</figcaption><pre><code class="py"># O(|S|)
 def CheckNot(f1):
-    for s in S:
-        if f1 ∉ label(s):
-            label(s) += ¬f1</code></pre></figure>
+  for s in S:
+    if f1 ∉ label(s):
+      label(s) += ¬f1</code></pre></figure>
 
 <figure><figcaption class="code-caption">CheckAnd</figcaption><pre><code class="py"># O(|S|)
 def CheckAnd(f1, f2):
-    for s in S:
-        if f1 ∈ label(s) and f2 ∈ label(s)
-            label(s) += (f1 ∧ f2)</code></pre></figure>
+  for s in S:
+    if f1 ∈ label(s) and f2 ∈ label(s)
+      label(s) += (f1 ∧ f2)</code></pre></figure>
 </div>
 <div class="flex-right">
 
 <figure><figcaption class="code-caption">CheckOr</figcaption><pre><code class="py"># O(|S|)
 def CheckOr(f1, f2):
-    for s in S:
-        if f1 ∈ label(s) or f2 ∈ label(s):
-            label(s) += (f1 ∨ f2)</code></pre></figure>
+  for s in S:
+    if f1 ∈ label(s) or f2 ∈ label(s):
+      label(s) += (f1 ∨ f2)</code></pre></figure>
 
 <figure><figcaption class="code-caption">CheckEX</figcaption><pre><code class="py"># O(|R|)
 def CheckEX(f):
-    for (parent, child) in R:
-        if f ∈ label(child):
-            parent += EX(f)</code></pre></figure>
+  for (parent, child) in R:
+    if f ∈ label(child):
+      parent += EX(f)</code></pre></figure>
 </div>
 </div>
 <h2 id="euの処理">EUの処理</h2>
