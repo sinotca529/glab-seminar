@@ -36,7 +36,7 @@
 
   <title>Model Checking (Sec.5.3)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd(3)"/>
+  <meta name="date" content="2022-06-20(3)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -65,7 +65,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd(3)</date>
+  <date>2022-06-20(3)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -246,23 +246,24 @@ class="math inline">i</span>, <span class="math inline">j</span>
 class="math display"> \forall i, \exist k, (k \geq i)
 \land  \tau^k(\textit{false}) \neq \tau^i(\textit{false})</span></p>
 <p>Lemma 5.7 より、列 <span
-class="math inline">\{\tau^j(\textit{false})_j\}</span>
+class="math inline">\{\tau^j(\textit{false})\}_j</span>
 は単調増加列なので、上の式は次式と同値である。 <span
 class="math display"> \forall i, \exist k, (k \geq i)
 \land  \tau^k(\textit{false}) \supset \tau^i(\textit{false})</span></p>
 <p>この式より、<span class="math inline">i = 0</span> について次を満たす
 <span class="math inline">l_1</span> の存在が言える。 <span
-class="math display"> \tau^{l_1} \supset \tau^0(\textit{false})
-</span></p>
+class="math display"> \tau^{l_1}(\textit{false}) \supset
+\tau^0(\textit{false}) </span></p>
 <p>また、同様に <span class="math inline">i = l_1</span>
 について次を満たす <span class="math inline">l_2</span> の存在が言える。
-<span class="math display"> \tau^{l_2} \supset
+<span class="math display"> \tau^{l_2}(\textit{false}) \supset
 \tau^{l_1}(\textit{false}) </span></p>
 <p>これを繰り返すことで、狭義単調増加する無限列 <span
 class="math inline">\{ \tau^{l_j}(\textit{false}) \}_j</span> を得る
 (<span class="math inline">l_0 = 0</span> とした)。</p>
-<p>狭義単調なので <span class="math inline">|\tau^{l_{|S|}}| \geq
-|S|</span> であるが、これはドメインが <span
+<p>狭義単調なので <span
+class="math inline">|\tau^{l_{|S|}}(\textit{false})| \geq |S|</span>
+であるが、これはドメインが <span
 class="math inline">\mathcal{P}(S)</span> であることに矛盾。</p>
 <p>よって仮定は誤りであり、示したい式の成立が示された。<br> <span
 class="math inline">\square</span></p>
@@ -362,7 +363,7 @@ class="math inline">\mu Z.\tau(Z) =
 class="math inline">\{\tau^j(S)_j\}</span>
 は単調減少する列なので次が成り立つ。 <span class="math display"> \cap_i
 \tau^i(S) = \tau^j(S) </span> したがって、<span
-class="math inline">\cup_i \tau^i(S)</span> は不動点である。<br>
+class="math inline">\cap_i \tau^i(S)</span> は不動点である。<br>
 いま、<span class="math inline">P</span>は最大不動点なので、 <span
 class="math display"> P \supseteq \cap \tau^i(S) </span>
 が成り立つ。</p>
@@ -413,7 +414,8 @@ class="math inline">j</span> の存在が示せる。<br> <span
 class="math display"> \cup_i P_i = P_j </span></p>
 <p>よって、 <span class="math display"> \tau\left(\cup_i P_i\right) =
 \tau(P_j) </span></p>
-<p>また、<span class="math inline">\tau</span>は単調なので、<span
+<p>また、<span class="math inline">\tau</span>は単調なので、列 <span
+class="math inline">\{\tau(P_i)\}_i</span> も単調増加列であり、<span
 class="math inline">j</span>について次も成り立つ。 <span
 class="math display"> \cup_i \tau(P_i) = \tau(P_j) </span></p>
 <p>以上より、次が成立。 <span class="math display"> \tau\left(\cup_i
@@ -422,8 +424,8 @@ class="math inline">\square</span></p>
 </details>
 
 <h3 id="lemma-59">Lemma 5.9</h3>
-<p><span class="math inline">\tau</span>が単調で<span
-class="math inline">S</span>が有限なら、次を満たす<span
+<p><span class="math inline">S</span>が有限で<span
+class="math inline">\tau</span>が単調なら、次を満たす<span
 class="math inline">i</span>, <span
 class="math inline">j</span>が存在する。</p>
 <ul>
@@ -448,6 +450,12 @@ class="math inline">\cup</span>-連続。
 class="math inline">\cup</span>-連続ならば、<span
 class="math inline">\mu Z.\tau(Z) = \cup\tau^i(\textit{false})</span>
 </dd>
+<dt>(Lemma 5.7)</dt>
+<dd>
+<span class="math inline">\tau</span> が単調ならば、<span
+class="math inline">\forall i,\ \tau^i(\textit{false}) \subseteq
+\tau^{i+1}(\textit{false})</span>
+</dd>
 <dt>(Lemma 5.8)</dt>
 <dd>
 <span class="math inline">\tau</span>が単調で<span
@@ -459,14 +467,14 @@ i,\ \forall k \geq i,\ \tau^k(\textit{false}) =
 <h2 id="不動点を計算するアルゴリズム">不動点を計算するアルゴリズム</h2>
 <p>上で見てきた定理・補題より、不動点は次のようにして求められる。</p>
 
-<figure><figcaption class="code-caption">最小不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Lfp(tau: PredicateTransformer) -&gt; Predicate:
+<figure><figcaption class="code-caption">最小不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Lfp(tau) -&gt; Predicate:
     (prevQ, Q) = (∅, tau(∅))
     Q = tau(prevQ)
     while prevQ != Q:
         (prevQ, Q) = (Q, tau(prevQ))
     return Q</code></pre></figure>
 
-<figure><figcaption class="code-caption">最大不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Mfp(tau: PredicateTransformer) -&gt; Predicate:
+<figure><figcaption class="code-caption">最大不動点を求めるアルゴリズム</figcaption><pre><code class="py">def Mfp(tau) -&gt; Predicate:
     (prevQ, Q) = (S, tau(S))
     Q = tau(prevQ)
     while prevQ != Q:
@@ -500,9 +508,9 @@ class="math inline">\tau</span> を定義する : <span class="math display">
 id="reachability-analysis-の-m-vdash-textbfagp-の検査への応用">Reachability
 analysis の <span class="math inline">M \vDash \textbf{AG}p</span>
 の検査への応用</h3>
-<p>到達可能な状態すべてが<span
-class="math inline">p</span>を満たすか調べることで、<span
-class="math inline">M \vDash \textbf{AG}p</span> を検査できる。</p>
+<p>到達可能な状態すべてが <span class="math inline">p</span>
+を満たすか調べることで、<span class="math inline">M \vDash
+\textbf{AG}p</span> を検査できる。</p>
 
 <figure><pre><code class="py">def tau(Q):
     return S0 ∪ post_image(Q)
@@ -539,6 +547,16 @@ Model-Checking Algorithm for CTL</h2>
 <li><span class="math inline">\llbracket \textbf{E}(f_1 \textbf{R} f_2)
 \rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{EX}Z))</span></li>
 </ul>
+<p>直感的な傾向 :</p>
+<ul>
+<li>最小不動点は eventuality (<span
+class="math inline">\textbf{F}</span>, <span
+class="math inline">\textbf{U}</span>) に対応</li>
+<li>最大不動点は foreverness (<span
+class="math inline">\textbf{G}</span>, <span
+class="math inline">\textbf{R}</span>) に対応</li>
+</ul>
+<hr />
 <p>EG, EU についてのみ証明する。</p>
 <h3 id="eu-について">EU について</h3>
 <h4 id="lemma-510">Lemma 5.10</h4>
@@ -558,7 +576,7 @@ class="math inline">\supseteq</span> を調べることで、<span
 class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span> は <span
 class="math inline">\tau</span> の不動点とわかる。<br></p>
 <p>あとは、<span class="math inline">\textbf{E}(f_1 \textbf{U}
-f_2)</span>が最小不動点であること、つまり次を示せば良い。 <span
+f_2)</span> が最小不動点であること、つまり次を示せば良い。 <span
 class="math display"> \textbf{E}(f_1 \textbf{U} f_2) = \cup_i
 \tau^i(\textit{false}) </span></p>
 <p>これは次の両立と同値である。</p>
@@ -593,9 +611,10 @@ class="math display"> \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i
 <div class="indent">
 <p><span class="math inline">\textbf{E}(f_1 \textbf{U} f_2)</span>
 を満たすパス <span class="math inline">\pi</span> の prefix
-の長さに関する帰納法を使う。<br> ここで prefix は、パス<span
-class="math inline">\pi</span>の始点から、初めて<span
-class="math inline">f_2</span>を満たす状態<strong>まで</strong>の部分パスを指す。<br></p>
+の長さに関する帰納法を使う。<br> ここで prefix は、パス <span
+class="math inline">\pi</span> の始点から、初めて <span
+class="math inline">f_2</span>
+を満たす状態<strong>まで</strong>の部分パスを指す。<br></p>
 
 <figure><figcaption class="code-caption">prefix の長さが j のパス</figcaption><div class="graphviz">digraph G {
     graph [rankdir=LR]
@@ -633,7 +652,7 @@ class="math inline">s_2 \in \tau^k(false)</span> である。<br>
 においても成り立つ。</p>
 </div>
 <p>したがって、数学的帰納法によって <span class="math inline">\forall
-j,\ S_j \subseteq \tau^j(\textit{false})</span> が成り立つので、よって
+j,\ S_j \subseteq \tau^j(\textit{false})</span> が成り立つ。<br> よって
 <span class="math inline">\textbf{E}(f_1 \textbf{U} f_2) \subseteq
 \cup_i \tau^i(\textit{false})</span> が成立。</p>
 </div>
@@ -772,7 +791,8 @@ class="math inline">\lor</span>, <span class="math inline">\land</span>
 <ul>
 <li><span class="math inline">\textbf{AX}</span>, <span
 class="math inline">\textbf{EX}</span> は <span
-class="math inline">|R|</span> で求まる。</li>
+class="math inline">|R|</span> で求まる (<span
+class="math inline">|S|</span> には依存しない)。</li>
 <li><span class="math inline">\lor</span>, <span
 class="math inline">\land</span> は <span class="math inline">|S|</span>
 で求まる。</li>

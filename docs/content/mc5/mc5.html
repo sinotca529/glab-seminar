@@ -28,7 +28,7 @@
 
   <title>Model Checking (Sec.5)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd(0)"/>
+  <meta name="date" content="2022-06-20(0)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -57,7 +57,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd(0)</date>
+  <date>2022-06-20(0)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -88,11 +88,19 @@ representation を検査するのアルゴリズムを示す。</li>
 不動点を用いたアルゴリズムを示す。</li>
 </ul>
 <h2 id="bibliographic-notes">Bibliographic Notes</h2>
-<p>4章で考えた safety と liveness のモデル検査による処理を考える。<br>
-Safety は、reachability analysis を使って簡単に検査できる。<br> 一方、
-liveness の検査には普通、より賢い手法を使う。<br> Biere らは、 safety
-の判定を liveness の判定に効率よく変換でき、かつ fairness
-も扱える手法を提唱した。<br> 彼らの手法を使えば、liveness
+<p>4章で考えた safety と liveness
+のモデル検査による処理を考える。<br></p>
+<ul>
+<li>Safety : 悪いことが起こらない (<span
+class="math inline">\textbf{AG}p</span>)。</li>
+<li>Liveness : いつかは良いことが起こる (<span
+class="math inline">\textbf{AF}p</span>, <span
+class="math inline">\textbf{A}(p\textbf{U}q)</span>)。</li>
+</ul>
+<p>Safety は、reachability analysis を使って簡単に検査できる。<br>
+一方、 liveness の検査には、より賢い手法が使われる。</p>
+<p>Biere らは、 safety の判定を liveness の判定に効率よく変換でき、かつ
+fairness も扱える手法を提唱した。<br> 彼らの手法を使えば、liveness
 について、より単純で統一的なモデル検査が可能である。<br> 加えて、既存の
 liveness しか扱えない手法を safety
 も扱えるよう拡張することも可能である。<br></p>

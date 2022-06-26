@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5)
 tag: MC
-date: yyyy-mm-dd(0)
+date: 2022-06-20(0)
 ---
 # Model Checking (Sec.5)
 この章の目的 :
@@ -20,8 +20,12 @@ date: yyyy-mm-dd(0)
 
 ## Bibliographic Notes
 4章で考えた safety と liveness のモデル検査による処理を考える。<br>
+- Safety : 悪いことが起こらない ($\textbf{AG}p$)。
+- Liveness : いつかは良いことが起こる ($\textbf{AF}p$, $\textbf{A}(p\textbf{U}q)$)。
+
 Safety は、reachability analysis を使って簡単に検査できる。<br>
-一方、 liveness の検査には普通、より賢い手法を使う。<br>
+一方、 liveness の検査には、より賢い手法が使われる。
+
 Biere らは、 safety の判定を liveness の判定に効率よく変換でき、かつ fairness も扱える手法を提唱した。<br>
 彼らの手法を使えば、liveness について、より単純で統一的なモデル検査が可能である。<br>
 加えて、既存の liveness しか扱えない手法を  safety も扱えるよう拡張することも可能である。<br>

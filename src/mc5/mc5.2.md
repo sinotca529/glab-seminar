@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5.2)
 tag: MC
-date: yyyy-mm-dd(2)
+date: 2022-06-20(2)
 plug:
     graphviz: true
     pseudocode: true
@@ -26,7 +26,7 @@ plug:
 $$ \forall P_i \in F,\ \exist t_i \in (C \cap P_i) $$
 
 Q. 有向グラフが SCC である条件とは何であったか。<br>
-A. <quiz>任意の2頂点について、それを結ぶパスがあること。</quiz>
+A. <quiz>任意の2頂点について、それを結ぶパスが(双方向に)あること。</quiz>
 
 ## 記法
 クリプキ構造$M$のうち、$f_1$を公平に満たすノードのみを残したクリプキ構造を、$M'$と呼ぶ。
@@ -109,7 +109,9 @@ $s \in A \cap B$ を仮定する。<br>
 - $A$ は SCC なので、$a$ から $s$ へのパスが存在する。
 - $B$ は SCC なので、$s$ から $b$ へのパスが存在する。
 
-したがって、$a$ から $b$ へのパスが存在するため、$A \cup B$ は SCC である。<br>
+したがって、$a$ から $b$ へのパスが存在する。<br>
+また、同様にして $b$ から $a$ へのパスの存在も示せる。<br>
+よって、$A \cup B$ は SCC である。<br>
 このとき、$A \subset (A \cup B)$ であるが、これは $A$ が MSCC であることに矛盾する。<br>
 よって仮定は誤りであり、$A \cap B = \emptyset$ の成立が示された。<br>
 $\square$

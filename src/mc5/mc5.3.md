@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5.3)
 tag: MC
-date: yyyy-mm-dd(3)
+date: 2022-06-20(3)
 plug:
     graphviz: true
 ---
@@ -108,18 +108,18 @@ $$ \exist i, \forall k, \neg (k \geq i) \land \tau^k(\textit{false}) = \tau^i(\t
 背理法を用いて証明する。上の式の否定は次式である。
 $$ \forall i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \neq \tau^i(\textit{false})$$
 
-Lemma 5.7 より、列 $\{\tau^j(\textit{false})_j\}$ は単調増加列なので、上の式は次式と同値である。
+Lemma 5.7 より、列 $\{\tau^j(\textit{false})\}_j$ は単調増加列なので、上の式は次式と同値である。
 $$ \forall i, \exist k, (k \geq i) \land  \tau^k(\textit{false}) \supset \tau^i(\textit{false})$$
 
 この式より、$i = 0$ について次を満たす $l_1$ の存在が言える。
-$$ \tau^{l_1} \supset \tau^0(\textit{false}) $$
+$$ \tau^{l_1}(\textit{false}) \supset \tau^0(\textit{false}) $$
 
 また、同様に $i = l_1$ について次を満たす $l_2$ の存在が言える。
-$$ \tau^{l_2} \supset \tau^{l_1}(\textit{false}) $$
+$$ \tau^{l_2}(\textit{false}) \supset \tau^{l_1}(\textit{false}) $$
 
 これを繰り返すことで、狭義単調増加する無限列 $\{ \tau^{l_j}(\textit{false}) \}_j$ を得る ($l_0 = 0$ とした)。
 
-狭義単調なので $|\tau^{l_{|S|}}| \geq |S|$ であるが、これはドメインが $\mathcal{P}(S)$ であることに矛盾。
+狭義単調なので $|\tau^{l_{|S|}}(\textit{false})| \geq |S|$ であるが、これはドメインが $\mathcal{P}(S)$ であることに矛盾。
 
 よって仮定は誤りであり、示したい式の成立が示された。<br>
 $\square$
@@ -200,7 +200,7 @@ $$ \forall k \geq j,\ \tau^k(S) = \tau^j(S) $$
 このとき、$\tau^j(S)$ は不動点である。<br>
 また、$\{\tau^j(S)_j\}$ は単調減少する列なので次が成り立つ。
 $$ \cap_i \tau^i(S) = \tau^j(S) $$
-したがって、$\cup_i \tau^i(S)$ は不動点である。<br>
+したがって、$\cap_i \tau^i(S)$ は不動点である。<br>
 いま、$P$は最大不動点なので、
 $$ P \supseteq \cap \tau^i(S) $$
 が成り立つ。
@@ -237,7 +237,7 @@ $$ \cup_i P_i = P_j $$
 よって、
 $$ \tau\left(\cup_i P_i\right) = \tau(P_j) $$
 
-また、$\tau$は単調なので、$j$について次も成り立つ。
+また、$\tau$は単調なので、列 $\{\tau(P_i)\}_i$ も単調増加列であり、$j$について次も成り立つ。
 $$ \cup_i \tau(P_i) = \tau(P_j) $$
 
 以上より、次が成立。
@@ -247,7 +247,7 @@ $\square$
 </details>
 
 ### Lemma 5.9
-$\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
+$S$が有限で$\tau$が単調なら、次を満たす$i$, $j$が存在する。
 - $\mu Z.\tau(Z) = \tau^i(\textit{false})$
 - $\nu Z.\tau(Z) = \tau^j(\textit{true})$
 
@@ -260,6 +260,8 @@ $\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
 (Theorem 5.5)
 : $\tau$が単調で$\cup$-連続ならば、$\mu Z.\tau(Z) = \cup\tau^i(\textit{false})$
 
+(Lemma 5.7)
+: $\tau$ が単調ならば、$\forall i,\ \tau^i(\textit{false}) \subseteq \tau^{i+1}(\textit{false})$
 
 (Lemma 5.8)
 : $\tau$が単調で$S$が有限なら、$\exist i,\ \forall k \geq i,\ \tau^k(\textit{false}) = \tau^i(\textit{false})$
@@ -268,7 +270,7 @@ $\tau$が単調で$S$が有限なら、次を満たす$i$, $j$が存在する。
 上で見てきた定理・補題より、不動点は次のようにして求められる。
 
 ```py {caption=最小不動点を求めるアルゴリズム}
-def Lfp(tau: PredicateTransformer) -> Predicate:
+def Lfp(tau) -> Predicate:
     (prevQ, Q) = (∅, tau(∅))
     Q = tau(prevQ)
     while prevQ != Q:
@@ -277,7 +279,7 @@ def Lfp(tau: PredicateTransformer) -> Predicate:
 ```
 
 ```py {caption=最大不動点を求めるアルゴリズム}
-def Mfp(tau: PredicateTransformer) -> Predicate:
+def Mfp(tau) -> Predicate:
     (prevQ, Q) = (S, tau(S))
     Q = tau(prevQ)
     while prevQ != Q:
@@ -301,7 +303,7 @@ $$ \tau(Q) = S_0 \cup \textit{post-image}(Q) $$
 このとき、最小不動点 $\mu Q.\tau(Q)$ は、初期状態から到達可能な状態の集合である。
 
 ### Reachability analysis の $M \vDash \textbf{AG}p$ の検査への応用
-到達可能な状態すべてが$p$を満たすか調べることで、$M \vDash \textbf{AG}p$ を検査できる。
+到達可能な状態すべてが $p$ を満たすか調べることで、$M \vDash \textbf{AG}p$ を検査できる。
 
 ```py {caption=$M \vDash \textbf{AG}p$の検査}
 def tau(Q):
@@ -331,6 +333,12 @@ def on_the_fly_Reach(M, p):
 - $\llbracket \textbf{A}(f_1 \textbf{R} f_2) \rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{AX}Z))$
 - $\llbracket \textbf{E}(f_1 \textbf{R} f_2) \rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{EX}Z))$
 
+直感的な傾向 :
+- 最小不動点は eventuality ($\textbf{F}$, $\textbf{U}$) に対応
+- 最大不動点は foreverness ($\textbf{G}$, $\textbf{R}$) に対応
+
+---
+
 EG, EU についてのみ証明する。
 
 ### EU について
@@ -344,7 +352,7 @@ $$ \tau(Z) = f_2 \lor (f_1 \land \textbf{EX}Z) $$
 この $\tau$ は単調なので、Lemma 5.6より $\cup$-連続である。<br>
 また、$\textbf{E}(f_1 \textbf{U} f_2)$, $\tau(\textbf{E}(f_1 \textbf{U} f_2))$ について $\subseteq$, $\supseteq$ を調べることで、$\textbf{E}(f_1 \textbf{U} f_2)$ は $\tau$ の不動点とわかる。<br>
 
-あとは、$\textbf{E}(f_1 \textbf{U} f_2)$が最小不動点であること、つまり次を示せば良い。
+あとは、$\textbf{E}(f_1 \textbf{U} f_2)$ が最小不動点であること、つまり次を示せば良い。
 $$ \textbf{E}(f_1 \textbf{U} f_2) = \cup_i \tau^i(\textit{false}) $$
 
 これは次の両立と同値である。
@@ -366,7 +374,7 @@ $$ \textbf{E}(f_1 \textbf{U} f_2) \supseteq \cup_i \tau^i(\textit{false}) $$
 **($\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ について)**<br>
 ::: {.indent}
 $\textbf{E}(f_1 \textbf{U} f_2)$ を満たすパス $\pi$ の prefix の長さに関する帰納法を使う。<br>
-ここで prefix は、パス$\pi$の始点から、初めて$f_2$を満たす状態**まで**の部分パスを指す。<br>
+ここで prefix は、パス $\pi$ の始点から、初めて $f_2$ を満たす状態**まで**の部分パスを指す。<br>
 
 ```graphviz {caption="prefix の長さが j のパス"}
 digraph G {
@@ -399,7 +407,8 @@ $s_2$ は prefix の長さが $k$ なパスの始点なので、仮定より $s_
 $$ s_1 \in (f_2 \lor (f_1 \land \textbf{EX}(\tau^k(\textit{false})))) = \tau^{k+1}(\textit{false}) $$
 であるから、$j = k+1$ においても成り立つ。
 ::::::
-したがって、数学的帰納法によって $\forall j,\ S_j \subseteq \tau^j(\textit{false})$ が成り立つので、よって $\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ が成立。
+したがって、数学的帰納法によって $\forall j,\ S_j \subseteq \tau^j(\textit{false})$ が成り立つ。<br>
+よって $\textbf{E}(f_1 \textbf{U} f_2) \subseteq \cup_i \tau^i(\textit{false})$ が成立。
 :::
 
 以上より、$\subseteq$, $\supseteq$ が示せたので、$\textbf{E}(f_1 \textbf{U} f_2)$ は $\tau$ の最小不動点である。<br>
@@ -490,7 +499,7 @@ $\square$
 - $\llbracket \textbf{E}(f_1 \textbf{R} f_2) \rrbracket_M = \mu Z.(f_2 \land (f_1 \lor \textbf{EX}Z))$
 
 各 $\tau$ を計算するためには、$\textbf{AX}$, $\textbf{EX}$, $\lor$, $\land$ を求める必要がある。
-- $\textbf{AX}$, $\textbf{EX}$ は $|R|$ で求まる。
+- $\textbf{AX}$, $\textbf{EX}$ は $|R|$ で求まる ($|S|$ には依存しない)。
 - $\lor$, $\land$ は $|S|$ で求まる。
 
 $\tau$ は最大で $|S|$ 回適用する必要があるので、計算量は $|S|^2$ に依存する。

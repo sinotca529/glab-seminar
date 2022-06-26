@@ -45,7 +45,7 @@
 
   <title>Model Checking (Sec.5.1)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd(1)"/>
+  <meta name="date" content="2022-06-20(1)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -74,7 +74,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd(1)</date>
+  <date>2022-06-20(1)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -261,7 +261,11 @@ class="math inline">O(|R|)</span> で事前に計算しておける。</p>
 <dl>
 <dt>SCC (Strongly Connected Component):</dt>
 <dd>
-任意の2頂点について、それを結ぶパスがある有向グラフ。
+任意の2頂点 <span class="math inline">a</span>, <span
+class="math inline">b</span> について、<span
+class="math inline">a</span> から <span class="math inline">b</span>
+への、また <span class="math inline">b</span> から <span
+class="math inline">a</span> へのパスがある有効グラフ。
 </dd>
 <dt>MSCC (Maximal SCC):</dt>
 <dd>
@@ -448,7 +452,7 @@ class="math inline">O(|f|\cdot(|S|+|R|))</span> である。</p>
     f.normalize() # f を正規化
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            atom       =&gt; ,# Do nothing.
+            atom       =&gt; CheckAtom(f1),
             ¬f1       =&gt; CheckNot(f1),
             (f1 ∧ f2) =&gt; CheckAnd(f1, f2),
             (f1 ∨ f2) =&gt; CheckOr(f1, f2),
@@ -456,6 +460,28 @@ class="math inline">O(|f|\cdot(|S|+|R|))</span> である。</p>
             EG(f1)     =&gt; CheckEG(f1),
 
     return {s ∈ S | f ∈ label(s)}</code></pre></figure>
+<h3
+id="部分式の数の増加は線形なのか">部分式の数の増加は線形なのか？</h3>
+<p><span class="math display">
+\begin{align*} \\
+\bm{AX} f &amp;\equiv \lnot \bm{EX} (\lnot f) \\
+\bm{EF} f &amp;\equiv \bm{E} (true \bm{U} f) \\
+\bm{AG} f &amp;\equiv \lnot \bm{EF} (\lnot f) \\
+\bm{AF} f &amp;\equiv \lnot \bm{EG} (\lnot f) \\
+\bm{A} (f \bm{U} g) &amp;\equiv \lnot \bm{E} (\lnot g \bm{U} (\lnot f
+\land \lnot g)) \land \lnot \bm{EG} \lnot g \\
+\bm{A} (f \bm{R} g) &amp;\equiv \lnot \bm{E} (\lnot f \bm{U} \lnot g) \\
+\bm{E} (f \bm{R} g) &amp;\equiv \lnot \bm{A} (\lnot f \bm{U} \lnot g)
+\end{align*}
+</span></p>
+<p><span class="math inline">\bm{AU}</span>
+以外の部分式の数は、変形前後で線形である。<br> <span
+class="math inline">\bm{AU}</span> について。<br> 例えば、<span
+class="math inline">\bm{AU}</span>
+が入れ子になった式を正規化すると、部分式の数は指数関数的に増加しそう。<br>
+しかし、重複を除くと線形な増加になる。</p>
+<p><a
+href="https://play.rust-lang.org/?version=stable&amp;mode=release&amp;edition=2021&amp;gist=fc582c2653c0cbdcb14b5c12638eafea">AUについての実験</a></p>
 <h2 id="具体例">具体例</h2>
 <div class="flex64">
 <div class="flex-left">

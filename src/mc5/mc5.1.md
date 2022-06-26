@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.5.1)
 tag: MC
-date: yyyy-mm-dd(1)
+date: 2022-06-20(1)
 plug:
     graphviz: true
     pseudocode: true
@@ -191,7 +191,7 @@ for (parent, child) in R:
 ## EGの処理
 ### 用語
 SCC (Strongly Connected Component):
-: 任意の2頂点について、それを結ぶパスがある有向グラフ。
+: 任意の2頂点 $a$, $b$ について、$a$ から $b$ への、また $b$ から $a$ へのパスがある有効グラフ。
 
 MSCC (Maximal SCC):
 : SCCのうち、他のSCCに包含されないもの。
@@ -335,7 +335,7 @@ def set_of_state_which_sat_f(M, f):
     f.normalize() # f を正規化
     for sub_f in f.sub_formulas().sort_asc_by_nest_depth():
         switch sub_f:
-            atom       => ,# Do nothing.
+            atom       => CheckAtom(f1),
             ¬f1       => CheckNot(f1),
             (f1 ∧ f2) => CheckAnd(f1, f2),
             (f1 ∨ f2) => CheckOr(f1, f2),
@@ -344,6 +344,26 @@ def set_of_state_which_sat_f(M, f):
 
     return {s ∈ S | f ∈ label(s)}
 ```
+
+### 部分式の数の増加は線形なのか？
+$$
+\begin{align*} \\
+    \bm{AX} f &\equiv \lnot \bm{EX} (\lnot f) \\
+    \bm{EF} f &\equiv \bm{E} (true \bm{U} f) \\
+    \bm{AG} f &\equiv \lnot \bm{EF} (\lnot f) \\
+    \bm{AF} f &\equiv \lnot \bm{EG} (\lnot f) \\
+    \bm{A} (f \bm{U} g) &\equiv \lnot \bm{E} (\lnot g \bm{U} (\lnot f \land \lnot g)) \land \lnot \bm{EG} \lnot g \\
+    \bm{A} (f \bm{R} g) &\equiv \lnot \bm{E} (\lnot f \bm{U} \lnot g) \\
+    \bm{E} (f \bm{R} g) &\equiv \lnot \bm{A} (\lnot f \bm{U} \lnot g)
+\end{align*}
+$$
+
+$\bm{AU}$ 以外の部分式の数は、変形前後で線形である。<br>
+$\bm{AU}$ について。<br>
+例えば、$\bm{AU}$ が入れ子になった式を正規化すると、部分式の数は指数関数的に増加しそう。<br>
+しかし、重複を除くと線形な増加になる。
+
+[AUについての実験](https://play.rust-lang.org/?version=stable&mode=release&edition=2021&gist=fc582c2653c0cbdcb14b5c12638eafea)
 
 ## 具体例
 ::: {.flex64}

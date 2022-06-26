@@ -45,7 +45,7 @@
 
   <title>Model Checking (Sec.5.2)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="yyyy-mm-dd(2)"/>
+  <meta name="date" content="2022-06-20(2)"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -74,7 +74,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>yyyy-mm-dd(2)</date>
+  <date>2022-06-20(2)</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -109,7 +109,7 @@ class="math inline">C</span> は <span class="math inline">F</span>
 について公平である。 <span class="math display"> \forall P_i \in F,\
 \exist t_i \in (C \cap P_i) </span></p>
 <p>Q. 有向グラフが SCC である条件とは何であったか。<br> A.
-<quiz>任意の2頂点について、それを結ぶパスがあること。</quiz></p>
+<quiz>任意の2頂点について、それを結ぶパスが(双方向に)あること。</quiz></p>
 <h2 id="記法">記法</h2>
 <p>クリプキ構造<span class="math inline">M</span>のうち、<span
 class="math inline">f_1</span>を公平に満たすノードのみを残したクリプキ構造を、<span
@@ -201,7 +201,9 @@ class="math inline">s</span> から <span class="math inline">b</span>
 へのパスが存在する。</li>
 </ul>
 <p>したがって、<span class="math inline">a</span> から <span
-class="math inline">b</span> へのパスが存在するため、<span
+class="math inline">b</span> へのパスが存在する。<br> また、同様にして
+<span class="math inline">b</span> から <span
+class="math inline">a</span> へのパスの存在も示せる。<br> よって、<span
 class="math inline">A \cup B</span> は SCC である。<br> このとき、<span
 class="math inline">A \subset (A \cup B)</span> であるが、これは <span
 class="math inline">A</span> が MSCC であることに矛盾する。<br>
