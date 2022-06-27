@@ -363,7 +363,7 @@ $\bm{AU}$ について。<br>
 例えば、$\bm{AU}$ が入れ子になった式を正規化すると、部分式の数は指数関数的に増加しそう。<br>
 しかし、重複を除くと線形な増加になる。
 
-[AUについての実験](https://play.rust-lang.org/?version=stable&mode=release&edition=2021&gist=fc582c2653c0cbdcb14b5c12638eafea)
+[AUについての実験](https://play.rust-lang.org/?version=stable&mode=release&edition=2021&gist=43e4f528cbf34d9e970771fd5b907652)
 
 ## 具体例
 ::: {.flex64}
