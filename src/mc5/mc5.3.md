@@ -443,7 +443,7 @@ $\textbf{EG} f_1$ は $\tau(Z) = f_1 \land \textbf{EX}Z$ の不動点である�
 <details class="filled-box">
 <summary>証明</summary>
 
-$s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash \textbf{EXEG}f_1$ を示す。
+$s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash f_1 \land \textbf{EXEG}f_1$ を示す。
 
 **($\Longrightarrow$ について)**<br>
 ::: {.indent}
@@ -481,8 +481,8 @@ $\textbf{EG}f_1$ は $\tau(Z) = f_1 \land \textbf{EX}(Z)$ の最大不動点で�
 **($\textbf{EG} f_1 \supseteq \cap_i \tau^i (\textit{true})$について)**<br>
 ::: {.indent}
 状態 $s \in \cap_i \tau^i (\textit{true})$ を考える。<br>
-このとき、$s$は不動点 $\tau^{i_0}(\textit{true})$に含まれる。<br>
-Lemma 5.12 より、$s$ から始まり常に$f_1$を満たすパスが存在するので、$s \vDash \textbf{EG} f_1$ である。
+このとき、$s$ は不動点 $\tau^{i_0}(\textit{true})$ に含まれる。<br>
+Lemma 5.12 より、$s$ から始まり常に $f_1$ を満たすパスが存在するので、$s \vDash \textbf{EG} f_1$ である。
 :::
 以上より、$\textbf{EG}f_1$ は $\tau(Z) = f_1 \land \textbf{EX}(Z)$ の最大不動点である。<br>
 $\square$
@@ -509,19 +509,34 @@ $\tau$ は最大で $|S|$ 回適用する必要があるので、計算量は $|
 $\textbf{E}_f\textbf{G}$, $\textbf{E}_f\textbf{X}$, $\textbf{E}_f\textbf{U}$ を不動点を用いて処理する方法を考える。
 
 ### $\textbf{E}_f\textbf{G}$ について
-$\textbf{E}_f\textbf{G} f$ を満たす状態集合$Z$は、次を満たす状態集合のなかで最大のものである。
+$\textbf{E}_f\textbf{G} f$ を満たす状態集合 $Z$ は、次を満たす状態集合のなかで最大のものである。
 1. $Z$ の全要素は $f$ を満たす。
-2. 任意の公平性条件 $P_k \in F$ と任意の状態 $s \in Z$ について、次をすべて満たすパスが存在する。
+2. 任意の公平性制約 $P_k \in F$ と任意の状態 $s \in Z$ について、次をすべて満たすパスが存在する。
    - $s$ で始まる。
    - $P_k$ を満たす $Z$ 内の状態で終わる。
    - 長さ1以上。
    - パス上の状態すべてが $f$ を満たす。
 
 $\textbf{E}_f\textbf{G} f$ は不動点を使うと次のように書ける。
-$$ \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n \textbf{EXE}(g \textbf{U} (Z \land P_k))) $$
+$$ \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n \textbf{EXE}(f\ \textbf{U}\ (Z \land P_k))) $$
+
+### 直感的な説明
+例えば...
+
+- $s$ から $P_1$ を満たす状態 $s^1$ まで、常に $f$ を満たしたまま移れるパスがある。
+- $s$ から $P_2$ を満たす状態 $s^2$ まで、常に $f$ を満たしたまま移れるパスがある。
+- ...
+- $s$ から $P_n$ を満たす状態 $s^n$ まで、常に $f$ を満たしたまま移れるパスがある。
+- $s$ から $P_1$ を満たす状態 $s^1$ まで、常に $f$ を満たしたまま移れるパスがある。
+- ...
+
+→ $s$ は $\textbf{E}_f\textbf{G}$ を満たす。
+
+---
+以降ではこれを証明する。
 
 #### Lemma 5.15
-$\textbf{E}_f\textbf{G} f$ は $f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U} (Z \land P_k))$ の不動点である。
+$\textbf{E}_f\textbf{G} f$ は $f \land \bigwedge_{k=1}^n \textbf{EXE}(f\ \textbf{U}\ (Z \land P_k))$ の不動点である。
 
 <details class="filled-box">
 <summary>証明</summary>
@@ -533,9 +548,12 @@ $s \in \textbf{E}_f\textbf{G} f$ を仮定すると、$s$ は常に $f$ を満�
 - $s_i \in P_i$
 - $s_i \neq s$
 
+このとき $s_i$ は、常に $f$ を満たす公平なパスの始点である。<br>
+
+
 **($\textbf{E}_f\textbf{G} f \subseteq \tau(\textbf{E}_f\textbf{G} f)$ について)**<br>
 ::: {.indent}
-このとき、$s_i$ もまた、常に $f$ を満たす公平なパスの始点である。<br>
+いま $s_i$ は、常に $f$ を満たす公平なパスの始点である。<br>
 よって、$s_i \in \textbf{E}_f\textbf{G} f$ である。<br>
 これにより、次式が成り立つ。
 $$ \forall k,\  s \vDash f \land \textbf{EXE}(\textbf{E}_f\textbf{G} f \textbf{ U } (f \land P_k)) $$
@@ -549,7 +567,7 @@ $$ \textbf{E}_f\textbf{G} f \subseteq \tau(\textbf{E}_f\textbf{G} f) $$
 
 **($\textbf{E}_f\textbf{G} f \supseteq \tau(\textbf{E}_f\textbf{G} f)$ について)**<br>
 ::: {.indent}
-$s \vDash (f \land \land_{k=1}^n \textbf{EXE}(f \textbf{ U }(\textbf{E}_f\textbf{G} f \land P_k)))$ とする。<br>
+$s \vDash (f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{ U }(\textbf{E}_f\textbf{G} f \land P_k)))$ とする。<br>
 このとき、$s$ で始まり $s' \vDash \textbf{E}_f\textbf{G} f \land P_k$ である $s'$ で終わる有限長のパスが存在する。<br>
 さらに、$s$ から $s'$ までの状態は全て $f$ を満たす。<br>
 したがって、$s \vDash \textbf{E}_f\textbf{G} f$ である。<br>
@@ -624,7 +642,7 @@ $$
 Left-total では:
 - $\mu Z.(f_1 \lor \textbf{AX}Z)$
 
-Not left-total では:
+Non left-total では:
 - $\mu Z.(f_1 \lor (\textbf{AX}Z \land \textbf{EX}\textit{true}))$
 
 Left-total でない場合、子ノードが無いノードが存在する。<br>
@@ -635,7 +653,7 @@ Left-total でない場合、子ノードが無いノードが存在する。<br
 Left-total では:
 - $\nu Z.(f_1 \land \textbf{EX}Z)$
 
-Not left-total では:
+Non left-total では:
 - $\nu Z.(f_1 \land (\textbf{EX}Z \lor \textbf{AX}\textit{false})$
 
 Left-total でない場合、パスが終了する可能性も考える必要がある。<br>

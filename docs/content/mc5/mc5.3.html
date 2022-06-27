@@ -705,7 +705,7 @@ class="math inline">\tau(Z) = f_1 \land \textbf{EX}Z</span>
 <summary>証明</summary>
 
 <p><span class="math inline">s_0 \vDash \textbf{EG}f_1 \iff s_0 \vDash
-\textbf{EXEG}f_1</span> を示す。</p>
+f_1 \land \textbf{EXEG}f_1</span> を示す。</p>
 <p><strong>(<span class="math inline">\Longrightarrow</span>
 について)</strong><br></p>
 <div class="indent">
@@ -753,10 +753,10 @@ class="math inline">\cap</span>-連続である。</p>
 <div class="indent">
 <p>状態 <span class="math inline">s \in \cap_i \tau^i
 (\textit{true})</span> を考える。<br> このとき、<span
-class="math inline">s</span>は不動点 <span
-class="math inline">\tau^{i_0}(\textit{true})</span>に含まれる。<br>
-Lemma 5.12 より、<span class="math inline">s</span> から始まり常に<span
-class="math inline">f_1</span>を満たすパスが存在するので、<span
+class="math inline">s</span> は不動点 <span
+class="math inline">\tau^{i_0}(\textit{true})</span> に含まれる。<br>
+Lemma 5.12 より、<span class="math inline">s</span> から始まり常に <span
+class="math inline">f_1</span> を満たすパスが存在するので、<span
 class="math inline">s \vDash \textbf{EG} f_1</span> である。</p>
 </div>
 <p>以上より、<span class="math inline">\textbf{EG}f_1</span> は <span
@@ -809,12 +809,12 @@ class="math inline">\textbf{E}_f\textbf{U}</span>
 <h3 id="textbfe_ftextbfg-について"><span
 class="math inline">\textbf{E}_f\textbf{G}</span> について</h3>
 <p><span class="math inline">\textbf{E}_f\textbf{G} f</span>
-を満たす状態集合<span
-class="math inline">Z</span>は、次を満たす状態集合のなかで最大のものである。</p>
+を満たす状態集合 <span class="math inline">Z</span>
+は、次を満たす状態集合のなかで最大のものである。</p>
 <ol type="1">
 <li><span class="math inline">Z</span> の全要素は <span
 class="math inline">f</span> を満たす。</li>
-<li>任意の公平性条件 <span class="math inline">P_k \in F</span>
+<li>任意の公平性制約 <span class="math inline">P_k \in F</span>
 と任意の状態 <span class="math inline">s \in Z</span>
 について、次をすべて満たすパスが存在する。
 <ul>
@@ -829,11 +829,37 @@ class="math inline">Z</span> 内の状態で終わる。</li>
 <p><span class="math inline">\textbf{E}_f\textbf{G} f</span>
 は不動点を使うと次のように書ける。 <span class="math display">
 \textbf{E}_f\textbf{G} f = \nu Z.(f \land \bigwedge_{k=1}^n
-\textbf{EXE}(g \textbf{U} (Z \land P_k))) </span></p>
+\textbf{EXE}(f\ \textbf{U}\ (Z \land P_k))) </span></p>
+<h3 id="直感的な説明">直感的な説明</h3>
+<p>例えば…</p>
+<ul>
+<li><span class="math inline">s</span> から <span
+class="math inline">P_1</span> を満たす状態 <span
+class="math inline">s^1</span> まで、常に <span
+class="math inline">f</span> を満たしたまま移れるパスがある。</li>
+<li><span class="math inline">s</span> から <span
+class="math inline">P_2</span> を満たす状態 <span
+class="math inline">s^2</span> まで、常に <span
+class="math inline">f</span> を満たしたまま移れるパスがある。</li>
+<li>…</li>
+<li><span class="math inline">s</span> から <span
+class="math inline">P_n</span> を満たす状態 <span
+class="math inline">s^n</span> まで、常に <span
+class="math inline">f</span> を満たしたまま移れるパスがある。</li>
+<li><span class="math inline">s</span> から <span
+class="math inline">P_1</span> を満たす状態 <span
+class="math inline">s^1</span> まで、常に <span
+class="math inline">f</span> を満たしたまま移れるパスがある。</li>
+<li>…</li>
+</ul>
+<p>→ <span class="math inline">s</span> は <span
+class="math inline">\textbf{E}_f\textbf{G}</span> を満たす。</p>
+<hr />
+<p>以降ではこれを証明する。</p>
 <h4 id="lemma-515">Lemma 5.15</h4>
 <p><span class="math inline">\textbf{E}_f\textbf{G} f</span> は <span
-class="math inline">f \land \bigwedge_{k=1}^n \textbf{EXE}(f \textbf{U}
-(Z \land P_k))</span> の不動点である。</p>
+class="math inline">f \land \bigwedge_{k=1}^n \textbf{EXE}(f\
+\textbf{U}\ (Z \land P_k))</span> の不動点である。</p>
 <details class="filled-box">
 <summary>証明</summary>
 
@@ -848,10 +874,12 @@ class="math inline">f</span> を満たす公平なパスの始点である。<br
 <li><span class="math inline">s_i \in P_i</span></li>
 <li><span class="math inline">s_i \neq s</span></li>
 </ul>
+<p>このとき <span class="math inline">s_i</span> は、常に <span
+class="math inline">f</span> を満たす公平なパスの始点である。<br></p>
 <p><strong>(<span class="math inline">\textbf{E}_f\textbf{G} f \subseteq
 \tau(\textbf{E}_f\textbf{G} f)</span> について)</strong><br></p>
 <div class="indent">
-<p>このとき、<span class="math inline">s_i</span> もまた、常に <span
+<p>いま <span class="math inline">s_i</span> は、常に <span
 class="math inline">f</span> を満たす公平なパスの始点である。<br>
 よって、<span class="math inline">s_i \in \textbf{E}_f\textbf{G}
 f</span> である。<br> これにより、次式が成り立つ。 <span
@@ -866,7 +894,7 @@ class="math display"> \forall k,\  s \vDash f \land
 <p><strong>(<span class="math inline">\textbf{E}_f\textbf{G} f \supseteq
 \tau(\textbf{E}_f\textbf{G} f)</span> について)</strong><br></p>
 <div class="indent">
-<p><span class="math inline">s \vDash (f \land \land_{k=1}^n
+<p><span class="math inline">s \vDash (f \land \bigwedge_{k=1}^n
 \textbf{EXE}(f \textbf{ U }(\textbf{E}_f\textbf{G} f \land P_k)))</span>
 とする。<br> このとき、<span class="math inline">s</span> で始まり <span
 class="math inline">s&#39; \vDash \textbf{E}_f\textbf{G} f \land
@@ -985,7 +1013,7 @@ class="math inline">\llbracket \textbf{AF} f_1 \rrbracket_M</span>
 <ul>
 <li><span class="math inline">\mu Z.(f_1 \lor \textbf{AX}Z)</span></li>
 </ul>
-<p>Not left-total では:</p>
+<p>Non left-total では:</p>
 <ul>
 <li><span class="math inline">\mu Z.(f_1 \lor (\textbf{AX}Z \land
 \textbf{EX}\textit{true}))</span></li>
@@ -1002,7 +1030,7 @@ class="math inline">\llbracket \textbf{EG} f_1 \rrbracket_M</span>
 <ul>
 <li><span class="math inline">\nu Z.(f_1 \land \textbf{EX}Z)</span></li>
 </ul>
-<p>Not left-total では:</p>
+<p>Non left-total では:</p>
 <ul>
 <li><span class="math inline">\nu Z.(f_1 \land (\textbf{EX}Z \lor
 \textbf{AX}\textit{false})</span></li>
