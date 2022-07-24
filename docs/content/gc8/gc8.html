@@ -69,6 +69,31 @@
       <tag><a href="../../tag.html?tag=GC">GC</a></tag>
   </p>
 
+<h1 id="gcの種別">GCの種別</h1>
+<p>GC界隈の並列/並行の扱いを整理する．</p>
+<p>GCは3種類に分けられる．</p>
+<ul>
+<li>Serial</li>
+<li>Parallel (並列)</li>
+<li>Concurrent (並行)</li>
+</ul>
+
+<figure><pre><code class="nohljsln txt">    ----&gt; : ユーザプログラム
+    ====&gt; : GC
+
+    Serial                  Parallel                Concurrent
+    -----&gt;|      |-----&gt;    -----&gt;|=====&gt;|-----&gt;    -----&gt;
+    -----&gt;|=====&gt;|-----&gt;    -----&gt;|=====&gt;|-----&gt;    -----&gt;
+    -----&gt;|      |-----&gt;    -----&gt;|=====&gt;|-----&gt;    -----&gt;
+                                                    =====&gt;</code></pre></figure>
+<p><strong>並行</strong>GCにおいて，GCとユーザプログラムは<strong>並列</strong>に走る．</p>
+<p>本章が扱う Incremental GC は恐らく，Serial/Parallel の一種．</p>
+<p>本章(前半)では，シングルコアでのコンカレントGCを扱う．</p>
+
+<figure><pre><code class="nohljsln txt">    --&gt;|   |   |   |--&gt;|   |   |   |
+       |--&gt;|   |   |   |--&gt;|   |   |
+       |   |--&gt;|   |   |   |--&gt;|   |
+       |   |   |==&gt;|   |   |   |==&gt;|</code></pre></figure>
 <h1
 id="incremental-and-concurrent-garbage-collection-gc-81---84">Incremental
 and Concurrent Garbage Collection (GC 8.1 - 8.4)</h1>
@@ -78,13 +103,13 @@ and Concurrent Garbage Collection (GC 8.1 - 8.4)</h1>
 <thead>
 <tr class="header">
 <th style="text-align: right;"></th>
-<th style="text-align: center;">Generational</th>
-<th style="text-align: center;">Incremental</th>
+<th style="text-align: center;">Generational (7章)</th>
+<th style="text-align: center;">Incremental (8章)</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">着眼点</td>
+<td style="text-align: right;">目的</td>
 <td style="text-align: center;">平均計算量の削減</td>
 <td style="text-align: center;">最悪計算量の削減</td>
 </tr>
@@ -92,53 +117,852 @@ and Concurrent Garbage Collection (GC 8.1 - 8.4)</h1>
 </table>
 <h2 id="generational-gc-の問題点">Generational GC の問題点</h2>
 <p>GCのポーズ時間を減らす手法として， generational GC (7章) を見た．<br>
-しかし，このアルゴリズムは :</p>
+しかし， generational GC は “予想” が外れた際のコストが大きい．</p>
 <ul>
-<li>“予想” が外れると上手く動かない．</li>
+<li>“予想” : 若い世代は短命である．</li>
+<li>予想が外れると major GC が大量に走る．</li>
 </ul>
-<h2 id="incremental--real-time-gc">Incremental / Real-time GC</h2>
+<h2 id="incremental-gc">Incremental GC</h2>
 <ul>
 <li>GCのポーズ時間を減らす手法．</li>
 <li>目的 : 最悪計算量の削減．</li>
 </ul>
-<p>GC には，trace</p>
-<p>Incremental GC の一例に，RC がある．</p>
+<p>RC は incremental GC の一例だが，欠点がある．</p>
 <ul>
 <li>ポインタの更新が遅い．</li>
 <li>循環データ構造を扱えない．</li>
-<li>→ ダメダメ．</li>
 </ul>
-<p>この章では incremental な tracing GC を見る．</p>
-<p>なお，主に sequential (非並行) なマシンを扱う．</p>
-<p>以降で紹介するアルゴリズムの一部は，元々マルチプロセッサ用に考案されたものを
-sequential に適用したものである．</p>
-<h2 id="sequential-gc">Sequential GC</h2>
+<p>この章では sequential なマシンにおける parallel な tracing GC
+を見る．<br>
+紹介するアルゴリズムの一部は，マルチプロセッサ用に考案されたものだが，serial
+machines への応用は容易である．</p>
+<!-- ## Sequential GC
+- ユーザプログラム と GC を並列に動かせば良い．
+- `alloc`毎に $k$-word 分だけグラフをトレースすることを考える．
+  - $k$ が小さいど ポーズ時間は<quiz>短く</quiz>，一時的なメモリリーク量は<quiz>多く</quiz>なる．
+
+### $k$ の値はどう決めればよいか？
+- `alloc` の所要時間は $k$ に比例するので， $k$ はなるべく小さくしたい．
+- ただし，途中でメモリが枯渇してはならない．
+
+<u>Q. $k$ はどこまで小さくできるか？</u>
+
+- あるGCサイクルで，サイズ $R$-word の領域のトレースすることを考える．
+- 各 `alloc` では，$1$-word 確保し，$k$-word にマークを付ける．
+- ヒープ全体のサイズを $M$-word とする．
+
+::: {.flex64}
+:::::: {.flex-left}
+このとき，
+- トレースは最大 $\dfrac{R}{k}$ 回の `alloc` で終わる．
+- その間に最大 $\dfrac{R}{k}$-word 確保される．
+- → トレース完了時のヒープ使用量は最大 $R + \dfrac{R}{k}$-word
+- メモリが枯渇しないた条件 : $R + \dfrac{R}{k} < M$
+- → $k > \dfrac{R}{M-R}$ でなくてはならない．
+::::::
+:::::: {.flex-right}
+![](img/trace-rate.dio.svg)
+::::::
+::: -->
+
+<h2 id="いわゆる-real-time-gc-への批判">いわゆる real-time GC
+への批判</h2>
+<p>Real-time システムには２種類ある (by Wikipedia):</p>
 <ul>
-<li>ユーザプログラム と GC が並列に動かせば良い．</li>
-<li>各 allocate 毎に k word 分だけグラフを trace
-してマークすることを考える．
+<li><strong>Hard real-time</strong> システム
 <ul>
-<li>k が小さいほど
-ポーズが<quiz>短く</quiz>，一時的なメモリリーク量は<quiz>多く</quiz>なる．</li>
+<li>遅延よりも誤った応答のほうがマシなシステム．</li>
+<li>→ 最悪ケースを抑えることが重要．</li>
+<li>e.g. エアバッグ</li>
+</ul></li>
+<li><strong>Soft real-time</strong> システム
+<ul>
+<li>遅延してでも答えを返すべきシステム．</li>
+<li>→ 平均を抑えることが重要．</li>
+<li>e.g. ATM</li>
 </ul></li>
 </ul>
-<p>要件 : メモリが枯渇しないこと</p>
+<p><strong>いわゆる real-time GC は，最悪ケースを見ておらず hard
+real-time なシステムで使えない．</strong><br>
+GC本筆者は，こうしたシステムを real-time と呼ぶことが許せない様子．</p>
+<h2 id="81-synchronization">8.1 Synchronization</h2>
+<h3 id="復習-tricolor">(復習) Tricolor</h3>
+<p>概念</p>
 <ul>
-<li>GC のあるサイクルの開始時に， <span class="math inline">R</span>
-word が到達可能だったとする．</li>
-<li>各 allocate では，<span class="math inline">1</span> word
-確保し，<span class="math inline">k</span> word にマークを付ける．
+<li>黒 (Black) : 自身と全ての子に訪問済み</li>
+<li>灰 (Gray) : 自身は訪問済み．未訪問の子あり．</li>
+<li>白 (White) : 未訪問 (最後まで白ならゴミ)．</li>
+</ul>
+<p>実装手段</p>
 <ul>
-<li>確保したノードもマークする．</li>
+<li>各セルに2bit割り当てる</li>
+<li>各セルに1bit割り当て，スタックを併用
+<ul>
+<li>黒 : マークされ，かつ，スタックにない</li>
+<li>灰 : マークされ，かつ，スタックにある</li>
+<li>白 : マークされてない</li>
 </ul></li>
+<li>Cheny のアルゴリズム (陽には色を塗らない)</li>
+</ul>
+<h3 id="一貫性の問題">一貫性の問題</h3>
+<div class="flex64">
+<div class="flex-left">
+<p>GC と ユーザプログラムが並列 or 並行に動く．</p>
+<ul>
+<li>→ <strong>一貫性</strong>に要注意．</li>
+</ul>
+<p><strong>守るべき一貫性 :
+ある白の親が全て黒になってはならない</strong></p>
+<ul>
+<li>その白は最後まで訪問されず，誤った解放が起こる．</li>
+<li><strong>Mutator
+により，こうしたエッジが貼られかねない．</strong></li>
+</ul>
+<p>Mutator が一貫性を破るには，次の2条件を同時に満たす必要がある．</p>
+<ol type="1">
+<li>黒から白へのエッジを貼る．</li>
+<li>いま貼ったエッジを，白に入る唯一のエッジとする．</li>
+</ol>
+</div>
+<div class="flex-right">
+<p><img src="img/illegal.dio.svg"
+alt="ユーザがポインタを張り替えた場合" /></p>
+</div>
+</div>
+<h2 id="82-barrier-methods">8.2 Barrier methods</h2>
+<p>「Mutator による一貫性の破壊」を防ぐ手段は2つある．</p>
+<ul>
+<li>黒 → 白 なエッジができる前に白を訪問 (Read barrier を使う)</li>
+<li>黒 → 白 なエッジを，それを作った際に覚えておく (Write barrier
+を使う)</li>
+</ul>
+<h3 id="手法1--mutator-に白を見せない-read-barrier">手法1 : Mutator
+に白を見せない (read barrier)</h3>
+<ul>
+<li>Mutator
+が白にアクセスしようとした瞬間にGCが割り込み，そこを訪問．</li>
+<li>Read barrier を用いる．</li>
+</ul>
+<p><strong>実装法 :</strong><br> <strong>ハードウェアの助けを借りる
+:</strong><br></p>
+<ul>
+<li>→ オーバヘッドは無視できる程度．</li>
+<li>大昔のハードウェア (e.g Symbolics, Explorer, SPUR) はこれができた．
+<ul>
+<li>今(’97年)はできない．</li>
+</ul></li>
+</ul>
+<p><strong>ソフトウェア的にやる :</strong><br></p>
+<ul>
+<li>遅い．</li>
+<li>Q. インライン化すればよいか？
+<ul>
+<li>A. No．</li>
+<li>Zorn の調査によれば，ポインタのロードはプログラム全体の 13-15%
+を占める．</li>
+<li>inline
+されるのがたった3命令だとしても40%のコードサイズ増加を招く</li>
+<li>命令バッファにも害があるだろう．</li>
+</ul></li>
+</ul>
+<p><strong>OS の助けを借りる (8.6節) :</strong><br></p>
+<ul>
+<li>OSのメモリプロテクションを使う (8.6 で詳しく見る)</li>
+</ul>
+<h3 id="手法2--黒白-なエッジを覚えておく-write-barrier">手法2 : 黒→白
+なエッジを覚えておく (write barrier)</h3>
+<p>Write barrier を使う．<br> Wilson は write-barrier を2種に分類した
+:</p>
+<dl>
+<dt><em>Snapshot-at-the-beginning</em></dt>
+<dd>
+参照を消す際に，もともと参照されていたノードに訪問．
+</dd>
+<dt><em>Incremental-update</em></dt>
+<dd>
+参照を書き込む際に，そのエッジの親 or 子を訪問．
+</dd>
+</dl>
+<p><img src="img/write-barrier.dio.svg" /></p>
+<h3 id="保守の度合い">保守の度合い</h3>
+<div class="flex64">
+<div class="flex-left">
+<p>ゴミは3つに分類できる．</p>
+<ul>
+<li>A : サイクル開始時にすでにゴミ</li>
+<li>B : サイクル開始時は生きていたが，サイクルの途中でゴミに</li>
+<li>C : サイクルの途中で作られ，サイクルの途中でゴミに</li>
+</ul>
+</div>
+<div class="flex-right">
+<p><img src="img/lifetime.dio.svg" /></p>
+</div>
+</div>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;"></th>
+<th style="text-align: center;">Snapshot</th>
+<th style="text-align: center;">Incremental (子を塗る)</th>
+<th style="text-align: center;">Incremental (親を塗る)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">A</td>
+<td style="text-align: center;">全回収</td>
+<td style="text-align: center;">全回収</td>
+<td style="text-align: center;">全回収</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">B</td>
+<td style="text-align: center;">回収しない</td>
+<td style="text-align: center;">部分的に回収<br>(回収率は実装依存)</td>
+<td
+style="text-align: center;">子を塗る場合より多く回収<br>(回収率は実装依存)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">C</td>
+<td style="text-align: center;">(新規セルの扱いに依存)</td>
+<td style="text-align: center;">(新規セルの扱いに依存)</td>
+<td style="text-align: center;">(新規セルの扱いに依存)</td>
+</tr>
+</tbody>
+</table>
+<!-- ### Write barrier の オーバヘッドについて
+オーバーヘッドは実装に依存する．
+- (一時的な)リークをどの程度許容するか．
+- バリア検知毎にどの程度処理をするのか．
+  - 単一ノードだけ見る？
+  - そのノードあるページを全部見る？
+- コレクションはどう始まり，どう終わるのか． -->
+
+<hr />
+<p>以降では write barrier を使う方法に着目する．</p>
+<h2 id="83-mark-sweep-collectors">8.3 Mark-Sweep collectors</h2>
+<p>Mark-Sweep は GC 前後でセルのアドレスが変わらない．<br> →
+GCがユーザに与える影響を考えなくて良い．<br> Read barrier
+はコストが掛かるので，non-moving
+なコレクタにはめったに使われない．<br></p>
+<p>よく知られた手法を比較していく．</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;">手法</th>
+<th style="text-align: left;">色の表現</th>
+<th style="text-align: left;">Write-barrier の種別</th>
+<th style="text-align: left;">新規セルの扱い</th>
+<th style="text-align: left;">GCサイクルの初期化処理</th>
+<th style="text-align: left;">GCサイクルの修了判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">Multi-processing, Compactifying
+algorithm<br>by Steele</td>
+<td style="text-align: left;">Mark-bit + Stack</td>
+<td style="text-align: left;">Incremental<br>(黒 → 白
+が貼られたら，親を灰に)</td>
+<td style="text-align: left;">フェーズごとに細かく分岐</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Mark-stack が空になったら</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">On the Fly collector<br>by Dijkstra et
+al.</td>
+<td style="text-align: left;">各セルに2-bit</td>
+<td style="text-align: left;">Incremental<br> (任意色 → 白
+が貼られたら，子を灰に)</td>
+<td style="text-align: left;">黒か灰</td>
+<td style="text-align: left;">全 root を灰に</td>
+<td style="text-align: left;">ヒープを走査して灰が無かったら</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">Four-color method<br>by Kung and
+Song</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Incremental</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">全 root を marking queue へ</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Sequential algorithm<br>by Yuasa</td>
+<td style="text-align: left;">Mark-bit + Stack</td>
+<td style="text-align: left;">Snapshot</td>
+<td style="text-align: left;">スイープ済みなら白．未スイープなら黒</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="gc-の初期化処理">GC の初期化処理</h2>
+<h3 id="gc-サイクルの開始時期">GC サイクルの開始時期</h3>
+<p>傾向としては :</p>
+<ul>
+<li>GCが平行に走る場合 : メモリが不足した際に開始</li>
+<li>GCが並列に走る場合 : 前回のサイクルが終わったら即開始</li>
+</ul>
+<p>何れにせよ，GC中にメモリが枯渇してはならない．<br> Incremental
+の場合は，空き容量が閾値を割った時にサイクルを始めるのが良い．<br> Yuasa
+曰く，通常は閾値を 22% に設定すれば良い．</p>
+<h4 id="閾値に関する考察">閾値に関する考察</h4>
+<div class="flex64">
+<div class="flex-left">
+<p><code>alloc</code>毎に <span class="math inline">k</span>-word
+分だけグラフをトレースすることを考える．</p>
+<ul>
+<li><span class="math inline">k</span> が小さいほど
+ポーズ時間は<quiz>短く</quiz>，一時的なメモリリーク量は<quiz>多く</quiz>なる．</li>
+<li>→ <span class="math inline">k</span>
+はなるべく小さくしたいが，途中でメモリが枯渇してはならない．</li>
+</ul>
+<p><u>Q. <span class="math inline">k</span>
+はどこまで小さくできるか？</u></p>
+<ul>
+<li>あるGCサイクルで，サイズ <span class="math inline">R</span>-word
+の領域のトレースすることを考える．</li>
+<li>各 <code>alloc</code> では，<span class="math inline">1</span>-word
+確保し，<span class="math inline">k</span>-word にマークを付ける．</li>
+<li>ヒープ全体のサイズを <span class="math inline">M</span>-word
+とする．</li>
 </ul>
 <p>このとき，</p>
 <ul>
-<li><span class="math inline">R</span> word を全て mark するには， <span
-class="math inline">\frac{R}{k}</span> 回の allocate が必要．</li>
-<li>その間に確保されるのは <span class="math inline">\frac{R}{k}</span>
-word．</li>
-<li>よって，trace 完了時には</li>
+<li>トレースは最大 <span class="math inline">\dfrac{R}{k}</span> 回の
+<code>alloc</code> で終わる．</li>
+<li>その間に最大 <span class="math inline">\dfrac{R}{k}</span>-word
+確保される．</li>
+<li>→ トレース完了時のヒープ使用量は最大 <span class="math inline">R +
+\dfrac{R}{k}</span>-word</li>
+<li>メモリが枯渇しないた条件 : <span class="math inline">R +
+\dfrac{R}{k} &lt; M</span></li>
+<li>→ <span class="math inline">k &gt; \dfrac{R}{M-R}</span>
+でなくてはならない．</li>
 </ul>
+</div>
+<div class="flex-right">
+<p><img src="img/trace-rate.dio.svg" /></p>
+</div>
+</div>
+<h3 id="初期化処理--ルートの把握">初期化処理 | ルートの把握</h3>
+<p><strong>最も簡単な方法</strong> :</p>
+<ul>
+<li>レジスタ，グローバル変数，スタック中のポインタ値を 灰に塗る (その間
+mutator はサスペンド)</li>
+</ul>
+<p><strong>問題点</strong> :</p>
+<ul>
+<li>所要時間が unbounded
+<ul>
+<li>Root set の大きさは unbonded．</li>
+</ul></li>
+</ul>
+<p><strong>対処</strong> :</p>
+<ul>
+<li>各手法を見る際に述べる．</li>
+</ul>
+<h2 id="yuasa-の手法">Yuasa の手法</h2>
+<ul>
+<li>Write-barrier の種別 : Snapshot
+<ul>
+<li>初期化以外の ptr update を trap</li>
+<li>古い白セルを gray に． (mark-bitを立て，スタックに積む)</li>
+</ul></li>
+<li>新規セルの扱い : スイープ済みなら白，未スイープなら黒．</li>
+</ul>
+
+<figure><pre><code class="nohljsln txt">  swept                not swept
+|===================XXXXXXXXXXXXXXXX|
+  ↑                     ↑ ここから確保するときは黒
+  ここから確保するときは白</code></pre></figure>
+<h3 id="free-list-の利用">Free list の利用</h3>
+<ul>
+<li>Incremental と lazy sweep の両立は難しい．</li>
+<li>→ Yuasa の手法では，free list を使う．</li>
+<li>Free list 上のセルとゴミを区別するため，free list 上のセルには
+4つめの色 off-white を塗る．</li>
+</ul>
+<h3 id="初期化処理">初期化処理</h3>
+<ul>
+<li>スタック : ポインタ値か否かにかかわらず，まるごと
+<code>saved_stack</code> にコピー
+<ul>
+<li><code>memcpy</code> を用いて高速にコピー</li>
+<li><code>saved_stack</code> は最終的に marking stack に移される．</li>
+</ul></li>
+<li>レジスタ, グローバル変数 : marking stack に直接コピー</li>
+<li>巨大な配列 :
+<ul>
+<li>手段1 : スタックと同じく <code>memcpy</code></li>
+<li>手段2 : ヘッダとボディに分割
+<ul>
+<li>ヘッダは incremental mark sweep で管理</li>
+<li>ボディは copy GC で管理 (→ 断片化緩和)．</li>
+</ul></li>
+</ul></li>
+</ul>
+<h3 id="リアルタイム性">リアルタイム性</h3>
+<p>Yuasa は彼のシステムがreal-timeだと主張する．</p>
+<ul>
+<li>根拠 : 計算量が定数 k1, k2, k3 の式で抑えられるから．
+<ul>
+<li>Mark phase :
+<ul>
+<li>最大 k1 セルを処理</li>
+<li>最大 k2 セルを saved stack から mark stack に移す．</li>
+</ul></li>
+<li>Sweep phase :
+<ul>
+<li>最大 k3 セルを処理．</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>しかし，その経験的な証拠は無い．</p>
+<ul>
+<li>例えば，<code>saved_stack</code>
+の初期化がその時間内に収まるか不明．</li>
+</ul>
+<hr />
+
+<figure><figcaption class="code-caption">Algo. 8.1 Yuasa's snapshot write-barrier</figcaption><pre><code class="cpp">// 白セルが渡されたら灰にする．
+void shade(Cell *p) {
+  if (p.marked()) return;
+  p.mark();
+  mark_stack.push(p);
+}
+
+// もともと指していた先を灰に塗る
+// usage: update(&amp;node_a-&gt;child, node_b)
+void update(Cell **a, Cell *b) {
+  if (phase == MARK_PHASE) shade(*a);
+  *a = b;
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">Algo. 8.2 Auxiliary procedures for Yuasa's algorithm.</figcaption><pre><code class="cpp">// Move cells from save_stack to mark_stack.
+// k2 : Upper bound of #cell to move.
+void transfer(int k2) {
+  int i = 0;
+  while (i &lt; k2 &amp;&amp; !save_stack.is_empty()) {
+    Cell *p = save_stack.pop();
+    if (p != nullptr) mark_stack.push(p);
+    i += 1;
+  }
+}
+
+// k3 : Upper bound of #cell to check.
+void sweep(int k3) {
+  int i = 0;
+  while (i &lt; k3 &amp;&amp; sweeper &lt;= Heap_top) {
+    if (sweeper.marked()) {
+      sweeper.unmark();
+      sweeper++;
+    } else {
+      free(sweeper);
+      free_count++;
+    }
+    i += 1;
+  }
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">Algo. 8.3 Yuasa's allocator.</figcaption><pre><code class="cpp">// k1 : Upper bound of #cell to trace.
+void mark(int k1) {
+  int i = 0;
+  while (i &lt; k1 &amp;&amp; !mark_stack.is_empty()) {
+    Cell *p = mark_stack.pop();
+    for (Cell *q : p-&gt;children()) {
+      if (!q-&gt;marked()) {
+        q-&gt;mark();
+        mark_stack.push(q);
+      }
+    }
+    i += 1;
+  }
+}
+
+Cell* New() {
+  if (phase == MARK_PHASE) {
+    if (!mark_stack.is_empty()) mark(k1);
+    if (mark_stack.is_empty() &amp;&amp; save_stack.is_empty()) {
+      phase = SWEEP_PHASE;
+    } else {
+      transfer(k2);
+    }
+  } else if (phase == SWEEP_PHASE) {
+      sweep(k3);
+      if (sweeper &gt; Heap_top) phase = IDLING
+  } else if (free_count &lt; threshold) {
+    phase = MARK_PHASE;
+    sweeper = Heap_bottom;
+    for (Cell* r: roots) mark_stack.push(r);
+    block_copy(system_stack, save_stack);
+  }
+  if (free_count == 0) abort(&quot;Heap exhausted.&quot;);
+
+  Cell *temp = allocate();
+  decrement free_count;
+
+  if (temp &gt;= sweeper) temp-&gt;mark();
+  else temp-&gt;unmark();
+
+  return temp;
+}</code></pre></figure>
+<h2 id="dijkstra-の方法">Dijkstra の方法</h2>
+<ul>
+<li>哲学 : 回収率 &lt;&lt; <strong>単純さ (証明の容易さ)</strong>
+<ul>
+<li>Mutator は update しかできない．</li>
+<li>free list は到達可能で，Newはupdateの組み合わせ．</li>
+<li>→ free listもマークする必要ある．</li>
+</ul></li>
+<li>Write-barrier の種別 : Incremental (子を塗る)
+<ul>
+<li>最も保守的</li>
+<li>任意色 -&gt; 白 が貼られたら，子を灰に</li>
+</ul></li>
+<li>Fine-grained parallelism</li>
+<li><code>Update</code> の各行が atomic であれば良い．</li>
+<li>新規セルの扱い : free list の先頭要素の色 (灰 or 黒) を引き継ぐ
+<ul>
+<li>フェーズごとの区別なし．</li>
+</ul></li>
+</ul>
+<h3 id="初期化処理-1">初期化処理</h3>
+<ul>
+<li><strong>対処不要</strong>．</li>
+<li>ユーザプログラムと並列に走るため，初期化処理が長くともユーザプログラムはポーズしない．</li>
+</ul>
+<h3 id="mark-の終了判定">Mark の終了判定</h3>
+<ul>
+<li>ヒープを走査し，灰が無かったら終了．</li>
+<li>灰が見つかったら，そこから mark を再開
+<ul>
+<li>このmarkはheapを一度も灰色に出会わずにあるき切ったときに終わる．</li>
+<li>この複雑さは論理的にはアクティブなデータ構造の2上である．</li>
+<li>さらに悪いことに，2次式になる例は簡単に作れる．</li>
+</ul></li>
+</ul>
+<p>???</p>
+
+<figure><pre><code class="cpp">bool is_finish() {
+  for (void *p = HEAP_BOTTOM; p &lt; HEAP_TOP; ++p) {
+    if (p-&gt;color == GRAY) {
+      g_next_to_visit = p;
+      return false;
+    }
+  }
+  return true;
+}</code></pre></figure>
+<p>コンスリストの例 : <img src="img/dijkstra-worst-case.dio.svg" /></p>
+
+<figure><figcaption class="code-caption">Algo. 8.4 Dijkstra's write-barrier</figcaption><pre><code class="cpp">void shade(Cell *p) {
+  if (p-&gt;color() == WHITE) p-&gt;set_color(GRAY);
+}
+
+void Update(Cell **a, Cell *b) {
+  *a = b;
+  shade(b);
+}</code></pre></figure>
+<h2 id="steele-の方法">Steele の方法</h2>
+<ul>
+<li>哲学 : <strong>回収率</strong> &gt;&gt; 単純さ (証明の容易さ)</li>
+<li>Write-barrier の種別 : Incremental (親を塗る)</li>
+<li>新規セルの扱い : フェーズごとに区別
+<ul>
+<li>MARK_PHASE : すべての子がマークされていたら黒に，それ以外は灰に</li>
+<li>SWEEP_PHASE :
+sweeperがすでに通過していたら白に．それ以外は黒に．</li>
+<li>それ以外 : 白</li>
+</ul></li>
+<li>Mark の終了判定 : stack が空になったら．</li>
+</ul>
+<!-- - `mark_stack` への同期アクセスは省略 -->
+
+<h3 id="初期化処理-2">初期化処理</h3>
+<ul>
+<li>Root から辿れる第1級オブジェクトをマーク．</li>
+<li>各 root は1つずつ push ・ trace する</li>
+</ul>
+<p>スタック上のエントリは最後まで残す．
+なぜなら，スタック上の要素は死にやすいから．</p>
+<p>残念なことに，遠くのアイテムはprogram stack か marking
+stackにpushされるかもしれない． program
+stackをマークした後にmutatorが新規セルをprogram
+stackに積んだ場合は，それをmarking stackにも積む必要がある．</p>
+<p>createで確保されたセルもまた，marking
+stackにmutatorによってpushされる必要があるかも． p194 algo 8.6</p>
+<p>concurrentなシステムでは，コレクターがmark
+stackをexamineする間lockする．
+もしmark中にstackが殻になったら，マーク終わり．
+さもなくば，コレクタはlockを開放してマークを続ける．</p>
+
+<figure><figcaption class="code-caption">Algo. 8.7 Steele's concurrent marker.</figcaption><pre><code class="cpp">void mark() {
+  phase = mark_phase;
+  for (Cell *r: Roots) {
+    gcpush(r, mark_stack);
+    mark1();
+  }
+  LOCK gcstate {
+    finished = mark_stack-&gt;is_empty();
+  }
+  while (!finished) {
+    mark1();
+    LOCK gcstate
+      finished = mark_stack-&gt;is_empty();
+  }
+}
+
+void mark1() {
+  while (!mark_stack-&gt;is_empty()) {
+    Cell *x = gcpop(mark_stack);
+    if (x-&gt;marked()) return;
+    LOCK x {
+      for (Cell *y: x-&gt;children()) {
+        gcpush(y, mark_stack)
+        x-&gt;mark();
+      }
+    }
+  }
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">Algo. 8.5 Steele's write-barrier.</figcaption><pre><code class="cpp">void shade(Cell *p) {
+  p-&gt;unmark();
+  gcpush(p, mark_stack);
+}
+
+// usage : update(&amp;node_a, &amp;node_a-&gt;child, node_c);
+void update(Cell *parent, Cell **a, Cell *c) {
+  LOCK gcstate {
+    *a = c;
+    if (phase == MARKING_PHASE) {
+      if (parent-&gt;is_marked() &amp;&amp; !c-&gt;is_marked()) {
+        shade(parent);
+      }
+    }
+  }
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">Algo 8.6 Steele's allocation.</figcaption><pre><code class="cpp">void push(Cell *p, Stack *program_stack) {
+  LOCK program_stack {
+    stack_index+= 1;
+    program_stack[stack_index] = p;
+    if (phase == MARK_PHASE &amp;&amp; program_stack.is_marked() &amp;&amp; !x.is_marked()) {
+      gcpush(p, mark_stack);
+    }
+  }
+}
+
+// Create new cell with n fields
+void create(n) {
+  Lock gcstate {
+    Cell *temp = allocate();
+    LOCK temp {
+      if (phase == SWEEP_PHASE) {
+        newmark = sweeper &lt;= temp;
+      } else {
+        newmark = true;
+      }
+      for (int i = 1; i &lt; n; ++i) {
+        Cell *p = pop();
+        temp[i] = p;
+        TODO
+      }
+    }
+  }
+}</code></pre></figure>
+<h2 id="kung-and-song-の手法">Kung and Song の手法</h2>
+<ul>
+<li>哲学 : <strong>回収率</strong> &gt;&gt; 単純さ (証明の容易さ)</li>
+<li>Dijkstra の手法を改良したもの．
+<ul>
+<li>Free list はマークせず．
+<ul>
+<li>代わりに，Yuasa と同じく sweep 時に free セルを off-white
+で塗る．</li>
+</ul></li>
+<li>クリティカルセクションをへらすため，スタックではなくoutput
+restricted deque を使う．</li>
+</ul></li>
+</ul>
+<p>output restricted deque :</p>
+<ul>
+<li>削除は片方の口から</li>
+<li>挿入は両方の口から</li>
+</ul>
+<p>できる deque (double-ended queue)．</p>
+<p>queueの中にあるセルはどうせ再訪問するので，初めから(ホントは灰でも)黒にしておく，という最適化もしている．</p>
+<h3 id="初期化処理-3">初期化処理</h3>
+<ul>
+<li><strong>対処不要</strong>．</li>
+<li>ユーザプログラムと並列に走るため，初期化処理が長くともユーザプログラムはポーズしない．</li>
+</ul>
+<h3 id="新規セル">新規セル</h3>
+<ul>
+<li>marking phase : 灰色</li>
+<li>それ以外 : 白</li>
+</ul>
+
+<figure><figcaption class="code-caption">Algo. 8.8 Kung and Song mutator code.</figcaption><pre><code class="cpp">Cell *new() {
+  Cell *temp = allocate();
+  if (phase == mark_phase) {
+    colour(R) = black;
+  }
+  return temp;
+}
+
+void shade(Cell *p) {
+  if (white(p) || off_white(p)) {
+    colour(p) = grey;
+    gcpush(p, queue.mutator_end())
+  }
+}
+
+void update (a, c) {
+  *a = c
+  if phase == mark_phase
+    shade(c)
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">Algo. 8.9 The Kung and Song marker.</figcaption><pre><code class="cpp">void mark() {
+  phase = mark_phase;
+  while (!queue.is_empty()) {
+    Cell *n = (node at gc_end of queue);
+    colour(n) = black;
+    gcpop(queue);
+    for (auto m: n-&gt;children()) {
+      if !black(*m) {
+        colour(*m) = black;
+        gcpush(*m, gc_end of queue);
+      }
+    }
+  }
+  phase = sweep_phase;
+}</code></pre></figure>
+<h2 id="mark-の改善">Mark の改善</h2>
+<ul>
+<li>4章の手法で mark を改善することも可能．</li>
+<li>ただし，Deutsch-Schorr-Waiteのpointer-reversal method は使えない．
+<ul>
+<li>トレース中にノードが mutator からアクセス不能になるため．</li>
+</ul></li>
+</ul>
+<h2 id="mark-と-sweep-を並列に動かす-パイプライン処理">Mark と Sweep
+を並列に動かす (パイプライン処理)</h2>
+<h3 id="quinnec-のアルゴリズム">Quinnec のアルゴリズム</h3>
+<ul>
+<li>セルは2つのカラーフィールドを持つ．</li>
+<li>プログラム実行時の任意の時点で，nサイクル目のsweepとn+1サイクル目のmarkが並列に走る．</li>
+<li>偶数番目のサイクルは1つ目のカラーフィールド使い，着数番目は2つ目を使う．</li>
+</ul>
+<p>疑問点 : ダイクストラはfree-listをlive dataとしてマークしていた．
+marking は 黒-&gt;白 が無いことを満たす必要ある．
+もしnサイクル目のsweepが白を開放する際には，もう片方のカラーフィールドをshadeする必要あり．</p>
+<h3 id="lamport-のアルゴリズム">Lamport のアルゴリズム</h3>
+<ul>
+<li>Lamportもmarkとsweepをparallelに．</li>
+<li>しかもmultiple GCを許可．</li>
+<li>Queinnecと違い，各markerとsweeperは1つのカラーフィールドを共有．</li>
+<li>sweeperはゴミだとわかったものを開放するだけだし，markerはゴミをmarkしないからこれができる．</li>
+</ul>
+<p>でも問題がある :</p>
+<ul>
+<li>mark開始時は全セルが白いことがそれ．</li>
+<li>でもsweeperは任意の白セルを開放してしまうのでマズイ．</li>
+</ul>
+<p>この問題を克服するために，another mark/scan のペアが走る前に</p>
+<ul>
+<li>白を紫に</li>
+<li>黒を白か灰に</li>
+</ul>
+<p>塗り替える．この色の変化は色の解釈を変えるだけで良い． →
+1命令で良い</p>
+
+<figure><pre><code class="nohljsln txt">base = 0
+white == base + 0
+gray == base + 1
+black == base + 2
+purple == base + 3
+
+base++;</code></pre></figure>
+<h2 id="virtual-memory-techniques">Virtual memory techniques</h2>
+<p>ソフトウェアでの write-barrier は重い．<br> →
+仮想メモリの助けを借りてオーバヘッドを減らすことができる．</p>
+<h3 id="dirty-bit-の利用">Dirty bit の利用</h3>
+<p>Boehm-Demers-Shenker の手法 (9章):</p>
+<ul>
+<li><p>incremental に mark する手法．</p></li>
+<li><p>OS の dirty bits に依存した同期をおこなう (7章と同じ)．</p>
+<!-- - 停止を担保するため，mark フェーズは全 mutator スレッドをサスペンドし，dirty bits を検査して mark が始まって以来どのオブジェクトが編集されたかを知る．
+- mark は root と dirty page (→灰を含む) にある mark 済みセルから再開する．
+- そしてdirty bitを消す．
+- mark stackが殻になったら，collectorは再度終了を試みる． -->
+</li>
+<li><p>利点 : Dirty bits の検査はトラップが起きない</p>
+<ul>
+<li>オーバヘッドの主な要素はGCによるページのスキャン</li>
+<li>コンパイラの助けが不要．</li>
+</ul></li>
+<li><p>欠点 :</p>
+<ul>
+<li>精度が荒い</li>
+<li>Hard real-time システムでは使えない．
+<ul>
+<li>終了を試みるときに mutator を止める．</li>
+<li>Dirty bits の検査やページのスキャンは重い．</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>にも関わらず，彼らは Cedarにおけるless
+demandingなアプリについて，VMを使うことでポーズ時間を超絶に改善したと報告している．</p>
+<h3 id="copy-on-write-cow-の利用">Copy On Write (COW) の利用</h3>
+<p>Furusou らの snapshot を用いた手法</p>
+<ul>
+<li>COW によってインクリメンタルに snapshot を取る．
+<ul>
+<li>ヒープの仮想コピーを mark フェーズ開始時に取る．</li>
+<li>Mutator があるページに書き込むと，COW により snapshot
+が撮れる．</li>
+<li>マークは Yuasa と同様に行う．</li>
+</ul></li>
+</ul>
+<p>利点 :</p>
+<ul>
+<li>ポーズ時間が短い．
+<ul>
+<li>ポーズするのは COW の準備にかかる時間だけ．</li>
+</ul></li>
+<li>Mutator と collector の間で同期をとる必要なし．</li>
+</ul>
+<p>欠点 :</p>
+<ul>
+<li>オブジェクトがコピーされる．</li>
+<li>非常に保守的である (GCサイクル中に死んだセルは回収不能)．</li>
+<li>パフォーマンスが出ない．
+<ul>
+<li>必要な割当速度 : 数百万オブジェクト / 秒</li>
+<li>実際の割当速度 : 数千オブジェクト / 秒</li>
+<li>複数の mutator スレッドが単一の collector
+スレッドに割当を要求するため．</li>
+</ul></li>
+</ul>
+<p>パフォーマンスが出ない問題への対処 :</p>
+<ul>
+<li>(単一のセルではなく) メモリチャンクを各 mutator
+スレッドに渡す．</li>
+<li>Mutator はこのチャンクから割当を行う．
+<ul>
+<li>その間，チャンクは全て生きているとみなす．</li>
+<li>これらチャンクはトレースされるがマークされない．</li>
+</ul></li>
+</ul>
+<p>ひとたびチャンクが満たされると，その管理はチャンクをコレクション時にmark/sweepするメモリマネージャに引き継がれる．
+このメモリマネージャの管理下に置かれていこうはチャンク内に新たなセルを割り当てることはできないので，内部的に深刻な断片化が起こる恐れがある．</p>
+<h2 id="84-concurrent-reference-counting">8.4 Concurrent Reference
+Counting</h2>
+<p>RCはincremental GC に適している． なぜなら，mutator と collector
+の操作が自然とインターリーブするから．
+ただし，循環データ構造を扱えない．</p>
+<p>しかしながら，RCはconcurrentな環境では魅力的でない．</p>
+<p>参照カウントの更新はatomicじゃないといけない．</p>
 </body>
 </html>
