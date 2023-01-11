@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../../style.css">
+  <script type="text/javascript" src="../../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>ゆるふわ C++ の vcall</title>
+  <meta name="keywords" content=""/>
+  <meta name="date" content="2023-01-11"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../../index.html">トップへ</a>
+<p>
+  <date>2023-01-11</date>
+  </p>
+
+<h1 id="ゆるふわ-c-の-virtual-call">ゆるふわ C++ の virtual call</h1>
+<p>目的 :</p>
+<ul>
+<li>vcall のイメージをゆるふわに説明する．</li>
+</ul>
+<p>この記事の (ドラスティックな) 主張 :</p>
+<ul>
+<li>C++ のメソッドは糖衣構文である．</li>
+<li>C++ のメソッド呼び出しも糖衣構文である．</li>
+<li>糖衣を剥がせば vcall の仕組みがわかる．</li>
+</ul>
+<p>魔除け :</p>
+<ul>
+<li>厳密な考証はしていない (が，雰囲気は合っているハズ)．</li>
+<li>簡単のために…
+<ul>
+<li>後方参照を認める．</li>
+<li><code>const</code> の有無を精査しない．</li>
+<li>多重継承や複雑なケースは考えない．</li>
+</ul></li>
+</ul>
+<h2 id="c-のメソッド">C++ のメソッド</h2>
+<ul>
+<li>C++ では，構造体やクラスにメソッドを持たせられる．</li>
+</ul>
+
+<figure><pre><code class="cpp">struct Foo {
+  int member;
+  int method() { return this-&gt;member; }
+};</code></pre></figure>
+<p>これは，次の糖衣構文とみなせる．</p>
+
+<figure><pre><code class="cpp">struct Foo {
+  int member;
+};
+
+int foo_method(Foo *this) { return this-&gt;member; }</code></pre></figure>
+<h2 id="仮想関数と仮想関数テーブル-vtable">仮想関数と仮想関数テーブル
+(vtable)</h2>
+<ul>
+<li>メソッドは「仮想関数」と「それ以外」の2種に分けられる．</li>
+<li>vtable は仮想関数へのポインタを集めた表である．
+<ul>
+<li>動的ディスパッチ (後述) で使われる．</li>
+</ul></li>
+</ul>
+
+<figure><pre><code class="cpp">struct Base {
+  int base;
+  virtual void virt1() { puts(&quot;b1&quot;); } // 仮想関数
+  virtual void virt2() { puts(&quot;b2&quot;); } // 仮想関数
+  void non_virt() { puts(&quot;bn&quot;); }      // それ以外
+};</code></pre></figure>
+<p>これは，次の糖衣構文とみなせる．</p>
+
+<figure><pre><code class="cpp">void base_virt1(Base *this) { puts(&quot;b1&quot;); }
+void base_virt2(Base *this) { puts(&quot;b2&quot;); }
+void base_non_virt(Base *this) { puts(&quot;bn&quot;); }
+
+void *BaseVtable[] = { (void*)base_virt1, (void*)base_virt2, };
+
+struct Base {
+  void **vptr = BaseVtable;
+  int base;
+};</code></pre></figure>
+<p><img src="img/base.dio.svg" /></p>
+<h2 id="継承と仮想関数テーブル">継承と仮想関数テーブル</h2>
+<p>簡単なケースのみを扱う．<br>
+仮想関数が増える場合や多重継承は扱わない．</p>
+<p>基本は継承元クラスの vtable と同じものを作る．<br>
+ただし，メソッドのオーバーライドがある場合はテーブルのエントリを書き換える．</p>
+
+<figure><pre><code class="cpp">struct Extend: public Base {
+  int ext;
+  void virt1() { puts(&quot;e1&quot;); }
+  void non_virt() { puts(&quot;en&quot;); }
+};</code></pre></figure>
+<p>これは，次の糖衣構文とみなせる．</p>
+
+<figure><pre><code class="cpp">void extend_virt1(Extend *this) { puts(&quot;e1&quot;); }
+void extend_non_virt(Extend *this) { puts(&quot;en&quot;); }
+
+void *ExtendVtable[] = { (void*)extend_virt1, (void*)base_virt2, };
+
+struct Extend {
+  void **vptr = ExtendVtable;
+  int base;
+  int ext;
+};</code></pre></figure>
+<p><img src="img/extend.dio.svg" /></p>
+<h2 id="メソッド呼び出し">メソッド呼び出し</h2>
+
+<figure><pre><code class="cpp">Base b;
+b.virt1();
+b.virt2();
+b.non_virt();
+
+Extend e;
+e.virt1();
+e.virt2();
+e.non_virt();</code></pre></figure>
+<p>これは，次の糖衣構文とみなせる．</p>
+
+<figure><pre><code class="cpp">typedef void(*B)(Base*);
+typedef void(*E)(Extend*);
+                                                // vtable of Base   0: base_virt1
+Base b;                                         //                  1: base_virt2
+((B)(b.vptr[0]))(&amp;b); // call base_virt1
+((B)(b.vptr[1]))(&amp;b); // call base_virt2
+base_non_virt(&amp;b);                              // vtable of Extend 0: exntend_virt1
+                                                //                  1: base_virt1
+Extend e;
+(E)(e.vptr[0]))(&amp;e); // call extend_virt1
+(E)(e.vptr[1]))(&amp;e); // call base_virt2
+extend_non_virt(&amp;b);</code></pre></figure>
+<ul>
+<li>Q. base_virt2 の第1引数は <code>Base*</code> なので
+引数に<code>Extend*</code> を渡すのは不正では？</li>
+<li>A. 今回のケースではメモリ配置的に問題ない (次で見る)．</li>
+</ul>
+<h2
+id="アップキャストと動的ディスパッチ">アップキャストと動的ディスパッチ</h2>
+<p>以上の性質を踏まえると，アップキャストと動的ディスパッチの仕組みが何となく分かるはず．</p>
+
+<figure><pre><code class="cpp">Extend e;
+Base *upcast = &amp;e;
+upcast-&gt;virt1();
+upcast-&gt;virt2();
+upcast-&gt;non_virt();</code></pre></figure>
+<p>これは次の糖衣構文とみなせる．</p>
+
+<figure><pre><code class="cpp">typedef void(*B)(Base*);
+Extend e;
+Base *upcast = (Base*)(&amp;e);
+((B)(upcast-&gt;vptr[0]))(upcast); // Q1. 呼ばれる関数は？
+((B)(upcast-&gt;vptr[1]))(upcast); // Q2. 呼ばれる関数は？
+base_non_virt(upcast);</code></pre></figure>
+<p><img src="img/upcast.dio.svg" /></p>
+<h3 id="まとめ--演習">まとめ &amp; 演習</h3>
+<div class="flex46">
+<div class="flex-left">
+
+<figure><pre><code class="cpp">struct Base {
+  int base;
+  virtual void virt1() { puts(&quot;b1&quot;); }
+  virtual void virt2() { puts(&quot;b2&quot;); }
+  void non_virt() { puts(&quot;bn&quot;); }
+};
+
+struct Extend: public Base {
+  int ext;
+  void virt1() { puts(&quot;e1&quot;); }
+  void non_virt() { puts(&quot;en&quot;); }
+};
+
+int main(void) {
+  Base base;
+  base.virt1();        // ??
+  base.virt2();        // ??
+  base.non_virt();     // ??
+
+  Extend ext;
+  ext.virt1();         // ??
+  ext.virt2();         // ??
+  ext.non_virt();      // ??
+
+  Base *upcast = &amp;ext;
+  upcast-&gt;virt1();     // ??
+  upcast-&gt;virt2();     // ??
+  upcast-&gt;non_virt();  // ??
+  return 0;
+}</code></pre></figure>
+</div>
+<div class="flex-right">
+<p><img src="img/vcall.dio.svg" /></p>
+<p>Q. ?? の出力は？</p>
+<ul>
+<li><quiz>b1</quiz></li>
+<li><quiz>b2</quiz></li>
+<li><quiz>bn</quiz></li>
+<li><quiz>e1</quiz></li>
+<li><quiz>b2</quiz></li>
+<li><quiz>en</quiz></li>
+<li><quiz>e1</quiz></li>
+<li><quiz>b2</quiz></li>
+<li><quiz>bn</quiz></li>
+</ul>
+</div>
+</div>
+<h2 id="補足--実証">補足 : 実証</h2>
+
+<figure><figcaption class="code-caption">vtable の存在を確かめる (clang++ 10 で検証済み)</figcaption><pre><code class="cpp">#include &lt;cstdio&gt;
+#include &lt;cassert&gt;
+
+struct Base {
+  int base;
+  virtual void virt1() { puts(&quot;b1&quot;); }
+  virtual void virt2() { puts(&quot;b2&quot;); }
+  void non_virt() { puts(&quot;bn&quot;); }
+};
+
+struct Extend: public Base {
+  int ext;
+  void virt1() { puts(&quot;e1&quot;); }
+  void non_virt() { puts(&quot;en&quot;); }
+};
+
+typedef void(*B)(Base*);
+typedef void(*E)(Extend*);
+int main(void) {
+  Base base;
+  void **base_vptr = *(void***)(&amp;base);
+  ((B)(base_vptr[0]))(&amp;base); // b1
+  ((B)(base_vptr[1]))(&amp;base); // b2
+
+  Extend ext;
+  void **ext_vptr = *(void***)(&amp;ext);
+  ((E)(ext_vptr[0]))(&amp;ext); // e1
+  ((E)(ext_vptr[1]))(&amp;ext); // b2
+
+  Base *upcast = &amp;ext;
+  assert((void*)upcast == &amp;ext);
+  void **upcast_vptr = *(void***)(upcast);
+  ((B)(upcast_vptr[0]))(upcast); // e1
+  ((B)(upcast_vptr[1]))(upcast); // b2
+
+  return 0;
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">糖衣構文を剥がした例</figcaption><pre><code class="cpp">#include &lt;cstdio&gt;
+
+struct Base;
+void Base_virt1(Base *self) { puts(&quot;b1&quot;); }
+void Base_virt2(Base *self) { puts(&quot;b2&quot;); }
+void Base_non_virt(Base *self) { puts(&quot;bn&quot;); }
+void *base_vtable[] = { (void*)Base_virt1, (void*)Base_virt2 };
+struct Base {
+    void **vptr = (void**)base_vtable;
+    int base;
+};
+
+struct Extend;
+void Extend_virt1(Extend *self) { puts(&quot;e1&quot;); }
+void Extend_non_virt(Extend *self) { puts(&quot;en&quot;); }
+void *extend_vtable[] = { (void*)Extend_virt1, (void*)Base_virt2 };
+struct Extend {
+    void **vptr = (void**)extend_vtable;
+    int ext;
+};
+
+typedef void(*B)(Base*);
+typedef void(*E)(Extend*);
+int main(void) {
+  Base base;
+  ((B)(base.vptr[0]))(&amp;base); // b1
+  ((B)(base.vptr[1]))(&amp;base); // b2
+  Base_non_virt(&amp;base);       // bn
+
+  Extend ext;
+  Extend_virt1(&amp;ext);         // e1
+  ((E)(ext.vptr[1]))(&amp;ext);   // b2
+  Extend_non_virt(&amp;ext);      // en
+
+  Base *upcast = (Base*)&amp;ext;
+  ((B)(upcast-&gt;vptr[0]))(upcast); // e1
+  ((B)(upcast-&gt;vptr[1]))(upcast); // b2
+  Base_non_virt(upcast);          // bn
+  return 0;
+}</code></pre></figure>
+</body>
+</html>

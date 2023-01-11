@@ -10,6 +10,11 @@
     src: url(font/HackGenNerd-Regular.ttf);
 }
 
+@font-face {
+    font-family: "HackGenNerdConsole";
+    src: url(font/HackGenNerdConsole-Regular.ttf);
+}
+
 ::selection {
     background-color: #000;
     color: #fff;
@@ -43,7 +48,7 @@ hr {
 
 pre, code {
     /* font-weight: bold; */
-    font-family: 'HackGenNerd', monospace;
+    font-family: 'HackGenNerdConsole', monospace;
 }
 
 pre {
@@ -119,16 +124,17 @@ ol {
     font-family: inherit;
     user-select: none;
     padding-right: 0.5ch;
+    padding-left: 0.5ch;
     width: 2ch;
     min-width: 2ch;
-    position: absolute;
+    position: relative;
     vertical-align: top;
     text-align: right;
     background: #dfdfdf;
 }
 
 .hljs-ln-code.hljs-ln-line {
-    padding-left: 3.5ch;
+    padding-left: 1ch;
     vertical-align: bottom;
 }
 
@@ -222,6 +228,8 @@ details {
 .flex73 > .flex-left { width: 70%; }
 .flex73 > .flex-right { width: 30%; }
 
+.h100-yscroll { height: 100vh; overflow-y: scroll }
+
 
 .sticky {
 	position: sticky;
@@ -239,7 +247,7 @@ img {
 figure {
     margin-left: auto;
     margin-right: auto;
-    width: 90%;
+    width: 95%;
 }
 
 .graphviz {
