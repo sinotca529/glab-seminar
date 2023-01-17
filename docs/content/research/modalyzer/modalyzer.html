@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../../style.css">
+  <script type="text/javascript" src="../../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>Modalyzer [wip]</title>
+  <meta name="keywords" content="dfa, modular"/>
+  <meta name="date" content="2023-01-XX"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../../index.html">トップへ</a>
+<p>
+  <date>2023-01-XX</date>
+      <tag><a href="../../../tag.html?tag=dfa">dfa</a></tag>
+      <tag><a href="../../../tag.html?tag=modular">modular</a></tag>
+  </p>
+
+<h1 id="modalyzer-philipp-ecoop21">Modalyzer [Philipp+ ECOOP’21]</h1>
+<p>原題 : Lossless, Persisted Summarization of Static Callgraph,
+Points-To and Data-Flow Analysis</p>
+<p><strong>目的 :</strong></p>
+<ul>
+<li>高精度でスケールする inter-procedural な静的解析</li>
+<li>対象は C/C++ (LLVM IR)</li>
+</ul>
+<p><strong>既存手法の問題 :</strong></p>
+<ul>
+<li>目的の解析が依存する解析を考慮していない．
+<ul>
+<li>依存先は Whole Program Analysis (WPA) が必要</li>
+<li>→ スケールしない</li>
+</ul></li>
+<li>(扱えるポインタ操作が少ない．)
+<ul>
+<li>Java しか扱えない</li>
+</ul></li>
+</ul>
+<p><strong>解決策 :</strong></p>
+<ul>
+<li>解析の依存関係を考慮する．
+<ul>
+<li>目的の解析 (例 : テイント解析) が依存する解析 (例 : ポインタ解析) も
+compositional に．</li>
+<li>Compositional ≒ サマリベース</li>
+</ul></li>
+</ul>
+<p><strong>結果 :</strong></p>
+<ul>
+<li>WPA と同等かそれ以上の解析精度．</li>
+<li>メインコードの解析時間を平均 72% 削減．</li>
+<li>ただし，各モジュールの解析は 3.67 倍掛かる．</li>
+</ul>
+<p><strong>備考 :</strong></p>
+<ul>
+<li>PhASAR を改造して実装 (Modalyzer 作者 = PhASAR 作者)</li>
+<li>自称オープンソース (見当たらない)</li>
+</ul>
+<h2 id="summary-based-vs-compositional">Summary Based vs
+Compositional</h2>
+<p><strong>Summary Based :</strong></p>
+<ul>
+<li>解析中に関数の副作用等を要約して(再)利用する手法．</li>
+</ul>
+<p><strong>Compositional (⊂ Summary Based):</strong></p>
+<ul>
+<li>Summary Based
+のうち，サマリを永続化して別の解析でも使い回す手法．</li>
+<li>一つの解析タスクが終わっても，サマリを消去しない．</li>
+</ul>
+<div class="box">
+<p><strong>本資料ではこれらを区別しない．<br> summary based も
+compositional の意で用いる．</strong></p>
+</div>
+<h2 id="q-なぜ既存研究はスケールしない">Q.
+なぜ既存研究はスケールしない？</h2>
+<p><strong>A. 解析の依存関係を考えてないから．</strong></p>
+<p>例えば，テイント解析には下図のような依存関係がある．</p>
+
+<figure><figcaption class="code-caption">テイント解析の依存関係</figcaption><pre><code class="nohljsln txt">---&gt; : 解析の依存関係
+
+     ┌───────────┐        ┌───────────┐       ┌───────────┐       ┌───────┐
+     │ points-to │&lt;------&gt;│ callgraph │&lt;------│ data-flow │&lt;------│ taint │
+     └───────────┘        └───────────┘       └───────────┘       └───────┘
+                             |
+┌────────────────┐           |
+│ type hierarchy │&lt;----------+
+└────────────────┘</code></pre></figure>
+<p>既存手法は この内 taint のみをサマライズしていた．</p>
+
+<figure><figcaption class="code-caption">既存手法</figcaption><pre><code class="nohljsln txt">---&gt; : 解析の依存関係
+════ : サマライズした解析
+──── : サマライズしてない解析 (WPA が必要)
+
+     ┌───────────┐        ┌───────────┐       ┌───────────┐       ╔═══════╗
+     │ points-to │&lt;------&gt;│ callgraph │&lt;------│ data-flow │&lt;------║ taint ║
+     └───────────┘        └───────────┘       └───────────┘       ╚═══════╝
+                             |
+┌────────────────┐           |
+│ type hierarchy │&lt;----------+
+└────────────────┘</code></pre></figure>
+<p>これでは points-to 等の解析で WPA
+が必要になるため，スケールしない．<br> そこで Modalyzer
+はこれら依存を全てサマライズする．<br> これを fully compositional
+と呼ぶ．</p>
+
+<figure><figcaption class="code-caption">Modalyzer</figcaption><pre><code class="nohljsln txt">---&gt; : 解析の依存関係
+════ : サマライズした解析
+
+     ╔═══════════╗        ╔═══════════╗       ╔═══════════╗       ╔═══════╗
+     ║ points-to ║&lt;------&gt;║ callgraph ║&lt;------║ data-flow ║&lt;------║ taint ║
+     ╚═══════════╝        ╚═══════════╝       ╚═══════════╝       ╚═══════╝
+                             |
+╔════════════════╗           |
+║ type hierarchy ║&lt;----------+
+╚════════════════╝</code></pre></figure>
+<h2 id="modalyzer-が扱う解析">Modalyzer が扱う解析</h2>
+<p>次の4種を対象とする．</p>
+<ul>
+<li>Type hierarchy (型階層 = 継承関係)</li>
+<li>Callgraph</li>
+<li>Points-to</li>
+<li>IFDS/IDE で表現された data-flow</li>
+</ul>
+<h2 id="ステップ">ステップ</h2>
+<ol type="1">
+<li>モジュールごとに解析のサマリを作る．</li>
+<li>集めた情報を合成する．
+<ul>
+<li>合成時に新情報が得られたら適宜更新．</li>
+</ul></li>
+</ol>
+<p>新情報 :</p>
+<ul>
+<li>Callgraph の合成/更新時に新たに判明した CFG のエッジ (→ points-to
+に影響)</li>
+<li>Points-to の合成/更新時に新たに判明した指し先 (→ Callgraph
+影響)</li>
+</ul>
+<h2 id="モチベ例--テイント解析">モチベ例 : テイント解析</h2>
+<p><strong>想定する攻撃 :</strong></p>
+<ul>
+<li>SQL インジェクション攻撃．</li>
+</ul>
+<p><strong>ソース・シンク</strong></p>
+<ul>
+<li>ソース : コマンドライン引数</li>
+<li>シンク : クエリの実行 (executeQuery)</li>
+</ul>
+<p><strong>仮定</strong> (論文に言及が無いため真相は不明)</p>
+<ul>
+<li><code>string</code> の内部構造は考慮しない．</li>
+</ul>
+
+<figure><figcaption class="code-caption">main.cpp</figcaption><pre><code class="cpp">#include &lt;iostream&gt;
+#include &quot;dbg_sanitizer.hpp&quot;
+#include &quot;db.hpp&quot;
+using namespace std;
+
+int main(int argc, char **argv) {
+  auto *con = (new Driver)-&gt;connect(/* props */);
+  auto *stmt = con-&gt;createStatement();
+  string q = &quot;SELECT * FROM ships where id=&quot;;
+  string input = argv[1];
+  string sanin = applySanitizer(input);
+  auto *res = stmt-&gt;execQuery(q + sanin);
+  while (res-&gt;next())
+    cout &lt;&lt; res-&gt;getString(&quot;name&quot;) &lt;&lt; '\n';
+  delete stmt; delete res; delete con;
+  return 0;
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">sanitizer.hpp</figcaption><pre><code class="cpp">struct Sanitizer {
+    virtual ~Sanitizer() = default;
+    virtual string sanitize(string &amp;in);
+    bool isMallicious(string &amp;in);
+};</code></pre></figure>
+
+<figure><figcaption class="code-caption">sanitizer.cpp</figcaption><pre><code class="cpp">#include &quot;sanitizer.hpp&quot;
+#include &quot;dbg_sanitizer.hpp&quot;
+using namespace std;
+
+string Sanitizer::sanitize(string &amp;in) {
+  if (isMallicious(in))
+    in = &quot;(sanitized query)&quot;;
+  return in;
+}
+
+bool Sanitizer::isMallicious(string &amp;in) {
+  return false;
+}
+
+string applySanitizer(string &amp;in) {
+  Sanitizer *s = getGlobalSan();
+  string out = s-&gt;sanitize(in);
+  return out;
+}</code></pre></figure>
+
+<figure><figcaption class="code-caption">dbg_sanitizer.hpp</figcaption><pre><code class="cpp">#pragma once
+#include &quot;sanitizer.hpp&quot;
+
+struct DbgSanitizer: Sanitizer {
+  bool disable = true;
+  ~DbgSanitizer() override = default;
+  std::string sanitize(std::string &amp;in) override;
+};
+
+Sanitizer *getGlobalSan();</code></pre></figure>
+
+<figure><figcaption class="code-caption">dbg_sanitizer.cpp</figcaption><pre><code class="cpp">#include &quot;dbg_sanitizer.hpp&quot;
+using namespace std;
+
+string DbgSanitizer::sanitize(string &amp;in) {
+  if (!disable &amp;&amp; isMallicious(in))
+    throw &quot;malicious input&quot;;
+  return in;
+}
+
+Sanitizer *getGlobalSan() {
+  static Sanitizer *s = new DbgSanitizer;
+  return s;
+}</code></pre></figure>
+<h2 id="型階層--vtable-解析">型階層 + vtable 解析</h2>
+<p>予備知識 : <a href="../../scrap/vcall/vcall.html">c++ の
+vcall</a></p>
+<!--
+記法 :
+- $\tau_t$ : クラス/構造体 $t$ に対応するノード．
+- $T_C$ : モジュール C における型階層．
+-->
+
+<p><img src="img/type.dio.svg" /></p>
+<h2 id="関数内-points-to-解析">関数<strong>内</strong> points-to
+解析</h2>
+<p>Pointer-assignment graph (PAG) を作る．</p>
+<ul>
+<li>Andersen または Steensgaard の手法を使う．
+<ul>
+<li>Flow-<strong>in</strong>sensitive</li>
+</ul></li>
+</ul>
+<div class="box">
+<p>ふつう PAG は有向グラフだが， Modalyzer は違う．<br> おそらく alias
+関係にあるものを線で結んでいる．</p>
+</div>
+<p><img src="img/pi-san.dio.svg" /></p>
+<h2 id="関数間-points-to-解析--call-graph-解析">関数<strong>間</strong>
+points-to 解析 + call graph 解析</h2>
+<ul>
+<li>関数間 points-to 解析 と call graph 解析は依存しあっている．</li>
+<li>→ 同時にやる．</li>
+<li>他モジュールの情報が必要な部分には「穴」を空け，依存を覚えておく．</li>
+</ul>
+<p><img src="img/my-cg.dio.svg" /></p>
+<!--
+
+    - 穴の空いた CG を partial な CG と呼ぶ．
+記法 :
+- $\text{CG}_c$ : モジュール c の partial な CG
+-->
+
+<!-- ![](img/cg.dio.svg) -->
+
+<details>
+<summary>アルゴリズム</summary>
+
+
+<figure><pre><code class="python">def walk(f: Function):
+    if f.is_visited():
+        return;
+    f.set_visited(True);
+
+    for cs in f.static_call_sites():
+        cg_c.add_edge(cs, cs.callee())
+
+    for cs in f.dynamic_call_sites():
+        for callee in cs.resolve_dyn_call_sites():
+            cg_c.add_edge(cs, callee)
+            update_ptr_info(f, callee)
+
+def make_call_graph():
+    PI_c = CallGraph()
+    for f in c.func_defs():
+        PI_c.append(f.make_pag())
+
+    for f in c.public_func_defs():
+        if not f.is_visited():
+            cg_c.insert(f)
+            walk(f)</code></pre></figure>
+
+<figure><figcaption class="code-caption">resolve dyn call site</figcaption><pre><code class="python">def resolve_dyn_call_sites():
+    callees = {}
+    if cs.is_fn_ptr_call():
+        fptr = cs.get_called_ptr()
+        rfptrs = fptr.get_reachable_ptrs()
+        for fp in rfptrs:
+            if fp.is_boundary():
+                D[cs] += fp
+        callees += fptr.reachable_functions()
+    else: # vptr
+        aptr = cs.get_allocation_ptr()
+        raptrs = aptr.get_reachable_ptrs()
+        for ap in raptrs:
+            if ap.is_boundary():
+                D[cs] += ap;
+
+        alloc_sites = aptr.reachable_alloc_sites()
+        for alloc_site in alloc_sites:
+            alloc_type = alloc_site.allocated_type()
+            vtable = get_type_hierarchy().get_vtable(alloc_type)
+            if not vtable:
+                D[alloc_type] += cs
+            else:
+                i = cs.vcall_idx()
+                callee = vtable[i]
+                callees += callee
+    return callees</code></pre></figure>
+
+<figure><pre><code class="python">def update_ptr_info(f, callee):
+    cs = (返り値を受け取る変数, 返り値) の集合
+    cs += (実引数, 仮引数) の集合
+    PI_c = Graph(
+        node = PI_c[f].node + PI_c[callee].node,
+        edge =  PI_c[f].edge + PI_c[callee].edge + cs,
+    )
+
+    modptrs = get_vertices_involved_in_graph_op(stitch, PI_c[f], PI_c[callee], cs)
+    for ptr in modptrs:
+        if ptr in D:
+            fmod = get_function_containing(D[ptr])
+            v.remove(fmod)
+        walk(callee)</code></pre></figure>
+</details>
+
+<!--
+## グラフ同士の stitch
+- 2つのグラフ $G1, G2$ とエッジの集合 $P$ を受け取り，それらの和を取ったグラフを返す．
+- $\text{stitch}(G1, G2, P) = (V1 \cup V2, E1 \cup E2 \cup P)$
+-->
+
+<h2 id="data-flow-information">Data-Flow Information</h2>
+<ul>
+<li>汎用的なデータフロー情報の定義は困難．</li>
+<li>Points-to や Call Graph
+とは異なり，解析内容に合わせて求めるデータフロー情報を決定する．</li>
+<li>サマリ生成には IFDS/IDE を使う．</li>
+</ul>
+<h3 id="ifdside">IFDS/IDE</h3>
+<ul>
+<li>IFDS (Interprocedural Finite Distributive Subset)</li>
+<li>IDE : Interprocedural Distributive Environments</li>
+</ul>
+<p><a
+href="https://www.cs.jhu.edu/~huang/cs624/spring21/readings/program-analysis-graph.pdf">元論文</a>，<a
+href="https://euske.github.io/slides/sem20170606/index.html">参考1</a>，<a
+href="https://www.csa.iisc.ac.in/~raghavan/CleanedPav2011/idfs.pdf">参考2</a></p>
+<p>関数間データフロー解析をグラフ問題 (CFL-reachability)
+に帰着する手法．</p>
+<p>辺の起点が taint されているならば，辺の終点も taint
+されているという意味． <img src="img/sg-san.dio.svg" /></p>
+<p><img src="img/sg-apply.dio.svg" /></p>
+<p><strong>前提条件 :</strong></p>
+<ul>
+<li>伝播関数が dataflow fact に対して distributive であること．
+<ul>
+<li>distributive : <span class="math inline">f(a \cup b) = f(a) \cup
+f(b)</span></li>
+</ul></li>
+</ul>
+<p><strong>嬉しい性質 :</strong></p>
+<ul>
+<li>解析対象は不完全 (リンク前のモジュール) でも良い．</li>
+<li>サマリの生成・合成ができる．</li>
+<li>Context sensitive ． (実際には call-graph の精度も絡むだろうが)</li>
+</ul>
+<p><strong>IFDS (Interprocedural Finite Distributive
+Subset)</strong></p>
+<ul>
+<li>Gen/Kill の一般化</li>
+<li>関数をまたぐデータフロー解析をする．</li>
+<li>グラフ上の到達可能問題に帰着して解く．</li>
+<li>yes/no で答えられる問題を解く．
+<ul>
+<li>例1 : 変数 x は未初期化になりうるか？</li>
+<li>例2 : 定義 a = 10 はこの地点に到達するか？</li>
+</ul></li>
+<li>計算量 : <span
+class="math inline">O(|\#\text{Node}|\cdot|\text{Domain}|^3)</span></li>
+</ul>
+<p><strong>IDE : Interprocedural Distributive Environments</strong></p>
+<ul>
+<li>IFDS の一般化</li>
+<li>より複雑な問題 (例 : 変数の取りうる範囲) が解ける．</li>
+</ul>
+<h3 id="関数のサマリを作る順番">関数のサマリを作る順番</h3>
+<p>依存の少ない順番，つまり Call Graph を戻りがけ順で DFS
+した際の訪問順でサマリを作る．</p>
+<h3 id="状況-12--関数が-call-graph-の葉ノード">状況 1/2 : 関数が call
+graph の葉ノード</h3>
+<p>全体をサマライズする．</p>
+<div class="flex55">
+<div class="flex-left">
+<p>サマリ前 <img src="img/sg-leaf.dio.svg" /></p>
+</div>
+<div class="flex-right">
+<p>サマリ後 (赤線がサマリ) <img src="img/sg-leaf-jump.dio.svg" /></p>
+</div>
+</div>
+<h3 id="状況-22--関数が-call-graph-の葉ノードでない">状況 2/2 : 関数が
+call graph の葉ノードでない</h3>
+<p>関数を呼ぶ手前までと，関数を呼んだ後の部分をサマライズする．</p>
+<div class="flex55">
+<div class="flex-left">
+<p>サマリ前 <img src="img/sg-apply.dio.svg" /></p>
+</div>
+<div class="flex-right">
+<p>サマリ後 (赤線がサマリ，青線はギャップ) <img
+src="img/sg-apply-jump.dio.svg" /></p>
+</div>
+</div>
+<h2 id="サマリの合成">サマリの合成</h2>
+<h3 id="グラフの縮約">グラフの縮約</h3>
+<p>グラフ内の2頂点を1つにまとめる操作．</p>
+<h3 id="型階層">型階層</h3>
+<p>和集合を取る (重複はとり除く)</p>
+<p><img src="img/merge-type.dio.svg" /></p>
+<h3 id="call-graph-と-points-to">Call graph と Points-to</h3>
+<p>Call graph</p>
+<ul>
+<li>関数宣言と関数定義を同一ノードとみなして合成． (グラフの縮約)</li>
+</ul>
+<p>Points-to</p>
+<ul>
+<li>(返り値, その受け取り口)，(仮引数, 実引数) の間を辺で結ぶ．</li>
+</ul>
+<p>(TODO : 図表)</p>
+<h4 id="fix-point-アルゴリズム">Fix-point アルゴリズム</h4>
+<ul>
+<li>Call graph と points-to は互いに依存した解析．</li>
+<li>収束するまで互いの更新を繰り返す．</li>
+</ul>
+
+<figure><pre><code class="cpp">void (*f)();
+void bar() {}
+void foo() { f = &amp;bar; }
+void init(void (*f)()) { f = &amp;foo; }
+int main() {
+  init(f);
+  f();  // icall
+  return 0;
+}</code></pre></figure>
+<p>foo, bar に収束．</p>
+<p>(TODO : 図表)</p>
+<h3 id="データフロー">データフロー</h3>
+<p>TODO</p>
+<h3 id="最適化">最適化</h3>
+<ul>
+<li>副作用がない関数呼び出しは無視する．</li>
+<li>Meet (union) の挙動を踏まえた “短絡評価” する．</li>
+</ul>
+<h4 id="hookrightarrowid-副作用がない関数呼び出しを無視"><span
+class="math inline">\hookrightarrow^{id}</span>
+副作用がない関数呼び出しを無視</h4>
+<ul>
+<li>データフロー解析における副作用がないと断言できる場合，その関数の解析を回避できる．</li>
+<li>クライアントによって条件は変わる．
+<ul>
+<li>一例 : 引数が全て値渡しである．</li>
+</ul></li>
+</ul>
+<h4 id="hookrightarrowt-meet-union-の挙動を踏まえた-短絡評価"><span
+class="math inline">\hookrightarrow^{T}</span> Meet (union)
+の挙動を踏まえた “短絡評価”</h4>
+<ul>
+<li>may-taint 解析を考える．</li>
+<li>else 節を踏まえると，<code>bar</code> の実装が不明でも
+<code>foo</code> の返り値は may-taint といえる．</li>
+</ul>
+
+<figure><pre><code class="cpp">extern string bar(string&amp;);
+string foo(bool p) {
+    string in = userInput();
+    if (p) {
+        return bar(in);
+    } else {
+        return in;
+    }
+}</code></pre></figure>
+
+<figure><pre><code class="python">class Summary {
+    th: TypeHierarchy,
+    cg: CallGraph,
+    pag: PointerAssignmentGraph,
+    dep: Dependencies,
+    dflow: Dataflow,
+}
+
+def merge(s1: Summary, s2: Summary):
+    Summary merged = s1;
+    merged.dep += s2.dep;
+    merged.dflow += s2.dflow;
+    merged.pag += s2.pag;
+    merged.th = contract_same_type_nodes(merged.th, s2.th)
+    contracted_types = merged.th &amp; s2.th
+    for t in contracted_types:
+        if t in merged.dep:
+            f = get_fn_containing(d[t])
+        pass</code></pre></figure>
+<h2 id="実装">実装</h2>
+<ul>
+<li>PhASAR をベースに実装．
+<ul>
+<li>PhASAR : LLVM 対象の静的解析基盤</li>
+<li>単調なデータフロー問題を溶ける．</li>
+<li>IFDS/IDE も溶ける．</li>
+</ul></li>
+<li>サマリの保存には LLVM の metadata を用いた．
+<ul>
+<li>これバイナリにしたら消えるのでは??</li>
+<li>(適当な ELF セクションを作れば良いので重篤な問題ではないが)</li>
+</ul></li>
+<li>サマリは Boost Graph Library を用いて扱い，フォーマットは Graphviz
+を使った．</li>
+</ul>
+<h2 id="評価実験">評価実験</h2>
+<ul>
+<li>RQ1 : MWA の precision は WPA のそれに比べ劣るか？
+<ul>
+<li>解析結果の比較</li>
+</ul></li>
+<li>RQ2 : MWA は WPA に比べどれほど高速か？
+<ul>
+<li>解析時間の比較 (ただしサマリは事前に生成しておく)</li>
+</ul></li>
+<li>RQ3 : サマリ生成時の工夫はどれほど効いているか？
+<ul>
+<li>「工夫」が利用された回数を計測</li>
+</ul></li>
+</ul>
+<h3 id="実験条件">実験条件</h3>
+<p>検体 (比較的 vcall の多い物を用意した)</p>
+<ul>
+<li>GNU Core Utilities (version 8.28)</li>
+<li>PhASAR</li>
+</ul>
+<p>環境</p>
+<ul>
+<li>virtual machine (詳細不明)</li>
+<li>CPU : Intel Xeon CPU E5-2695 v3 @ 2.30GHz</li>
+<li>メモリ : 128GB</li>
+</ul>
+<p>統計手法</p>
+<ul>
+<li>5回計測し，最小・最大を除いた3点の平均を取る．</li>
+</ul>
+<p>検体の特性 :</p>
+<ul>
+<li>ライブラリ : 複数のアプリで共有されているモジュール</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Program</th>
+<th style="text-align: right;">Compilation Units</th>
+<th style="text-align: right;">IR LOC lib / IR LOC app</th>
+<th style="text-align: right;">Statements</th>
+<th style="text-align: right;">Pointers</th>
+<th style="text-align: right;">Allocation Sites</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">wc</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">41.2</td>
+<td style="text-align: right;">63,166</td>
+<td style="text-align: right;">10,644</td>
+<td style="text-align: right;">396</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">ls</td>
+<td style="text-align: right;">253</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">71,712</td>
+<td style="text-align: right;">13,200</td>
+<td style="text-align: right;">438</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">cat</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">66.3</td>
+<td style="text-align: right;">62,588</td>
+<td style="text-align: right;">10,584</td>
+<td style="text-align: right;">391</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">cp</td>
+<td style="text-align: right;">256</td>
+<td style="text-align: right;">10.5</td>
+<td style="text-align: right;">67,097</td>
+<td style="text-align: right;">11,722</td>
+<td style="text-align: right;">443</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">whoami</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">335.7</td>
+<td style="text-align: right;">61,860</td>
+<td style="text-align: right;">10,433</td>
+<td style="text-align: right;">389</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">dd</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">16.8</td>
+<td style="text-align: right;">65,287</td>
+<td style="text-align: right;">11,150</td>
+<td style="text-align: right;">408</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">fold</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">105.8</td>
+<td style="text-align: right;">62,201</td>
+<td style="text-align: right;">10,509</td>
+<td style="text-align: right;">390</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">join</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">24.9</td>
+<td style="text-align: right;">64,196</td>
+<td style="text-align: right;">11,042</td>
+<td style="text-align: right;">402</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">kill</td>
+<td style="text-align: right;">253</td>
+<td style="text-align: right;">88.2</td>
+<td style="text-align: right;">62,304</td>
+<td style="text-align: right;">10,527</td>
+<td style="text-align: right;">394</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">uniq</td>
+<td style="text-align: right;">252</td>
+<td style="text-align: right;">60.1</td>
+<td style="text-align: right;">62,663</td>
+<td style="text-align: right;">10,650</td>
+<td style="text-align: right;">396</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">MPT</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: right;">13.8</td>
+<td style="text-align: right;">1,351,735</td>
+<td style="text-align: right;">755,567</td>
+<td style="text-align: right;">176,540</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">PhASAR (driver)</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: right;">56.4</td>
+<td style="text-align: right;">1,368,297</td>
+<td style="text-align: right;">763,796</td>
+<td style="text-align: right;">178,486</td>
+</tr>
+</tbody>
+</table>
+<p>テイント解析 :</p>
+<ul>
+<li>source : コマンドライン引数と read 系関数 (<code>fread</code>,
+<code>fgets</code>, …) の結果</li>
+<li>sinc : write 系関数 (<code>fwrite</code>, <code>printf</code>,
+…)</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">T: Program</th>
+<th style="text-align: right;">WPA [s]</th>
+<th style="text-align: right;"><span class="math inline">\sum_{m\in
+lib}</span> [s]</th>
+<th style="text-align: right;">MWA [s]</th>
+<th style="text-align: right;">∆ runtimes / (∆ reports)</th>
+<th style="text-align: right;">#CG⟳</th>
+<th style="text-align: right;">#<span
+class="math inline">\hookrightarrow^{id}</span></th>
+<th style="text-align: right;">#<span
+class="math inline">\hookrightarrow^{T}</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">wc</td>
+<td style="text-align: right;">2.3</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">-1.8 / (0)</td>
+<td style="text-align: right;">47</td>
+<td style="text-align: right;">8,052</td>
+<td style="text-align: right;">78</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">ls</td>
+<td style="text-align: right;">4.8</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">1.3</td>
+<td style="text-align: right;">-3.5 / (0)</td>
+<td style="text-align: right;">166</td>
+<td style="text-align: right;">13,470</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">cat</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">-1.7 / (0)</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">2,117</td>
+<td style="text-align: right;">269</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">cp</td>
+<td style="text-align: right;">4.4</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">-2.6 / (0)</td>
+<td style="text-align: right;">197</td>
+<td style="text-align: right;">19,712</td>
+<td style="text-align: right;">1077</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">whoami</td>
+<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">-1.6 / (0)</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6,065</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">dd</td>
+<td style="text-align: right;">8.1</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">5.5</td>
+<td style="text-align: right;">-2.6 / (-3)</td>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;">48,747</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">fold</td>
+<td style="text-align: right;">2.1</td>
+<td style="text-align: right;">5.8</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">-1.7 / (0)</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">6,695</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">join</td>
+<td style="text-align: right;">2.4</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">0.6</td>
+<td style="text-align: right;">-1.8 / (0)</td>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;">8,979</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">kill</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">-1.7 / (0)</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">2,079</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">uniq</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">5.7</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">-1.8 / (0)</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">7,281</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">MPT</td>
+<td style="text-align: right;">2,306</td>
+<td style="text-align: right;">42,847</td>
+<td style="text-align: right;">1,516</td>
+<td style="text-align: right;">-809 / (0)</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">29,061</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">PhASAR</td>
+<td style="text-align: right;">7,176</td>
+<td style="text-align: right;">42,876</td>
+<td style="text-align: right;">598</td>
+<td style="text-align: right;">-6578 / (0)</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">47,736</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>未初期化変数解析 :</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">U: Program</th>
+<th style="text-align: right;">WPA [s]</th>
+<th style="text-align: right;"><span class="math inline">\sum_{m\in
+lib}</span> [s]</th>
+<th style="text-align: right;">MWA [s]</th>
+<th style="text-align: right;">∆ runtimes / (∆ reports)</th>
+<th style="text-align: right;">#CG⟳</th>
+<th style="text-align: right;">#<span
+class="math inline">\hookrightarrow^{id}</span></th>
+<th style="text-align: right;">#<span
+class="math inline">\hookrightarrow^{T}</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">wc</td>
+<td style="text-align: right;">2.6</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">0.6</td>
+<td style="text-align: right;">-2.0 / (0)</td>
+<td style="text-align: right;">47</td>
+<td style="text-align: right;">2,413</td>
+<td style="text-align: right;">162</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">ls</td>
+<td style="text-align: right;">8.4</td>
+<td style="text-align: right;">6.0</td>
+<td style="text-align: right;">3.3</td>
+<td style="text-align: right;">-5.1 / (0)</td>
+<td style="text-align: right;">166</td>
+<td style="text-align: right;">7,173</td>
+<td style="text-align: right;">184</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">cat</td>
+<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">6.0</td>
+<td style="text-align: right;">0.3</td>
+<td style="text-align: right;">-1.7 / (0)</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">845</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">cp</td>
+<td style="text-align: right;">5.2</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">-3.0 / (0)</td>
+<td style="text-align: right;">197</td>
+<td style="text-align: right;">6,684</td>
+<td style="text-align: right;">1122</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">whoami</td>
+<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">0.3</td>
+<td style="text-align: right;">-1.7 / (0)</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">535</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">dd</td>
+<td style="text-align: right;">3.1</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">0.9</td>
+<td style="text-align: right;">-2.2 / (0)</td>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;">2,522</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">fold</td>
+<td style="text-align: right;">2.1</td>
+<td style="text-align: right;">6.0</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">-1.7 / (0)</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">895</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">join</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: right;">6.0</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">-2.3 / (0)</td>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;">2,582</td>
+<td style="text-align: right;">171</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">kill</td>
+<td style="text-align: right;">2.2</td>
+<td style="text-align: right;">6.0</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">-1.8 / (0)</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">793</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">uniq</td>
+<td style="text-align: right;">2.5</td>
+<td style="text-align: right;">5.9</td>
+<td style="text-align: right;">0.5</td>
+<td style="text-align: right;">-2.0 / (0)</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">1,433</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">MPT</td>
+<td style="text-align: right;">3,811</td>
+<td style="text-align: right;">53,703</td>
+<td style="text-align: right;">2,958</td>
+<td style="text-align: right;">-826 / (0)</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">137,722</td>
+<td style="text-align: right;">8,136</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">PhASAR</td>
+<td style="text-align: right;">10,160</td>
+<td style="text-align: right;">53,348</td>
+<td style="text-align: right;">968</td>
+<td style="text-align: right;">-9,192 / (0)</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">210,032</td>
+<td style="text-align: right;">24,446</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rq1-mwa-の-precision-は-wpa-のそれに比べ劣るか">RQ1 MWA の
+precision は WPA のそれに比べ劣るか？</h3>
+<p>劣らない．むしろ MWA の方が高精度な場合があった．</p>
+<ul>
+<li>MWA と WPA
+の違いは，ファイルスコープを認識できるかどうかである．</li>
+<li>実例 : 検体 dd の static global function pointer
+<ul>
+<li>WPA
+は指し先として，そのポインタ変数がないモジュールの関数も挙げていた．結果
+FP となった．</li>
+<li>MWA
+はモジュール単位で解析するので，ファイルスコープが考慮され，そのようなことは起こらない．</li>
+</ul></li>
+<li>ただし， WPA でもファイルスコープを考慮することは可能．</li>
+</ul>
+<h3 id="rq2--mwa-は-wpa-に比べどれほど高速か">RQ2 : MWA は WPA
+に比べどれほど高速か？</h3>
+<p>プロジェクトを占めるライブラリの比率が高いほど，メインの解析時間は短くなる．</p>
+<ul>
+<li><p>平均して 72% の時間削減．</p></li>
+<li><p>ただし，各モジュールの解析は 3.67 倍掛かる．</p>
+<ul>
+<li>これは WPA (PhASAR) と MODALYZER
+のチューニング度合いの差によるところもある．</li>
+</ul></li>
+<li><p>サマリサイズはコードサイズの5乗のオーダー．</p>
+<ul>
+<li>PhASAR には 2.8GB 必要で， core utils には 30MB 必要だった．</li>
+</ul></li>
+</ul>
+<h3 id="rq3--サマリ生成時の工夫はどれほど効いているか">RQ3 :
+サマリ生成時の工夫はどれほど効いているか？</h3>
+<ul>
+<li>ショートカットはそこそこ発動している．</li>
+<li>(ショートカットしない場合の解析時間が計測されておらず，実際の効果の程は不明．ただ直感的には効いていそう．)</li>
+</ul>
+<h2 id="limitation">Limitation</h2>
+<p>Modalyzer は non-distributive な問題に対する効能が低い．</p>
+<ul>
+<li>ただし， non-distributive であっても call graph 解析や points-to
+解析の結果は使える．</li>
+</ul>
+<p>現状， points-to 解析の精度が荒い．</p>
+<ul>
+<li>Andersen 等の低精度な解析を用いている．</li>
+<li>ただし Boomerang は flow, context sensitive な解析を distributive
+かつサマリベースに行う方法を示しており，希望はある (future work) ．</li>
+</ul>
+<p>コールバックを多用するプログラムへの効能が低いかも．</p>
+<ul>
+<li>call graph と points-to の更新回数が多いと，時短効果が薄まる．</li>
+</ul>
+<h2
+id="自分の研究-高精度高速なサマリベース関数ポインタ解析-との関連">自分の研究
+(高精度・高速なサマリベース関数ポインタ解析) との関連</h2>
+<p>スコープが違う．</p>
+<ul>
+<li>修論では関数ポインタの指し先解析 (= call graph 生成)
+をサマリベースにやりたい．</li>
+<li>本論文はデータフロー解析が主軸にあり， call graph 解析は
+Andersen/Steensgaard に依存しており，精度が低い．</li>
+</ul>
+<p>Boomerang は近そう．</p>
+<ul>
+<li>対象言語は Java ．</li>
+</ul>
+</body>
+</html>

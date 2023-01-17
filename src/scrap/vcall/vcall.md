@@ -1,6 +1,9 @@
 ---
 title: ゆるふわ C++ の vcall
 date: 2023-01-11
+tag :
+    - scrap
+    - vcall
 ---
 
 # ゆるふわ C++ の virtual call
