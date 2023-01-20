@@ -45,17 +45,17 @@
   </p>
 
 <h1 id="ゆるふわ-c-の-virtual-call">ゆるふわ C++ の virtual call</h1>
-<p>目的 :</p>
+<p><strong>目的 :</strong></p>
 <ul>
 <li>vcall のイメージをゆるふわに説明する．</li>
 </ul>
-<p>この記事の (ドラスティックな) 主張 :</p>
+<p><strong>この記事の (ドラスティックな) 主張 :</strong></p>
 <ul>
 <li>C++ のメソッドは糖衣構文である．</li>
 <li>C++ のメソッド呼び出しも糖衣構文である．</li>
 <li>糖衣を剥がせば vcall の仕組みがわかる．</li>
 </ul>
-<p>魔除け :</p>
+<p><strong>魔除け :</strong></p>
 <ul>
 <li>厳密な考証はしていない (が，雰囲気は合っているハズ)．</li>
 <li>簡単のために…
@@ -66,15 +66,13 @@
 </ul></li>
 </ul>
 <h2 id="c-のメソッド">C++ のメソッド</h2>
-<ul>
-<li>C++ では，構造体やクラスにメソッドを持たせられる．</li>
-</ul>
+<p>C++ の構造体・クラスはメソッドを持てる．</p>
 
 <figure><pre><code class="cpp">struct Foo {
   int member;
   int method() { return this-&gt;member; }
 };</code></pre></figure>
-<p>これは，次の糖衣構文とみなせる．</p>
+<p>これは次の糖衣構文とみなせる．</p>
 
 <figure><pre><code class="cpp">struct Foo {
   int member;
@@ -85,7 +83,7 @@ int foo_method(Foo *this) { return this-&gt;member; }</code></pre></figure>
 (vtable)</h2>
 <ul>
 <li>メソッドは「仮想関数」と「それ以外」の2種に分けられる．</li>
-<li>vtable は仮想関数へのポインタを集めた表である．
+<li>仮想関数は vtable という表で管理される．
 <ul>
 <li>動的ディスパッチ (後述) で使われる．</li>
 </ul></li>
@@ -97,7 +95,7 @@ int foo_method(Foo *this) { return this-&gt;member; }</code></pre></figure>
   virtual void virt2() { puts(&quot;b2&quot;); } // 仮想関数
   void non_virt() { puts(&quot;bn&quot;); }      // それ以外
 };</code></pre></figure>
-<p>これは，次の糖衣構文とみなせる．</p>
+<p>これは次の糖衣構文とみなせる．</p>
 
 <figure><pre><code class="cpp">void base_virt1(Base *this) { puts(&quot;b1&quot;); }
 void base_virt2(Base *this) { puts(&quot;b2&quot;); }
@@ -114,14 +112,14 @@ struct Base {
 <p>簡単なケースのみを扱う．<br>
 仮想関数が増える場合や多重継承は扱わない．</p>
 <p>基本は継承元クラスの vtable と同じものを作る．<br>
-ただし，メソッドのオーバーライドがある場合はテーブルのエントリを書き換える．</p>
+ただし，仮想関数のオーバーライドがある場合はテーブルのエントリを書き換える．</p>
 
 <figure><pre><code class="cpp">struct Extend: public Base {
   int ext;
   void virt1() { puts(&quot;e1&quot;); }
   void non_virt() { puts(&quot;en&quot;); }
 };</code></pre></figure>
-<p>これは，次の糖衣構文とみなせる．</p>
+<p>これは次の糖衣構文とみなせる．</p>
 
 <figure><pre><code class="cpp">void extend_virt1(Extend *this) { puts(&quot;e1&quot;); }
 void extend_non_virt(Extend *this) { puts(&quot;en&quot;); }
@@ -166,7 +164,7 @@ extend_non_virt(&amp;b);</code></pre></figure>
 </ul>
 <h2
 id="アップキャストと動的ディスパッチ">アップキャストと動的ディスパッチ</h2>
-<p>以上の性質を踏まえると，アップキャストと動的ディスパッチの仕組みが何となく分かるはず．</p>
+<p>いよいよアップキャストと動的ディスパッチの仕組みを見ていく．</p>
 
 <figure><pre><code class="cpp">Extend e;
 Base *upcast = &amp;e;
@@ -233,6 +231,36 @@ int main(void) {
 </ul>
 </div>
 </div>
+<h2 id="余談--override-キーワード">余談 : <code>override</code>
+キーワード</h2>
+<p>基底クラスの関数に virtual を書き忘れると override が起きない．<br>
+<code>virtual</code> を書き忘れたり，うっかり消したり，関数名を typo
+したりした時に意図せぬ挙動を起こし，不便である．</p>
+
+<figure><pre><code class="cpp">struct Base { void foo() { puts(&quot;base&quot;); } };
+struct Extend: Base { void foo() { puts(&quot;extend&quot;); } };
+
+int main() {
+    Extend e;
+    Base *b = &amp;e;
+    b-&gt;foo(); // puts base
+    return 0;
+}</code></pre></figure>
+<p>そこで <code>override</code> キーワードを使う．<br>
+<code>override</code> がついたメソッドは，基底クラスのメソッドを
+override しなければならない．<br>
+そうでない場合，コンパイルエラーが起こる．</p>
+
+<figure><pre><code class="cpp">struct Base { void foo() { puts(&quot;base&quot;); } };
+// ↓ compile error
+struct Extend: Base { void foo() override { puts(&quot;extend&quot;); } };
+
+int main() {
+    Extend e;
+    Base *b = &amp;e;
+    b-&gt;foo(); // puts base
+    return 0;
+}</code></pre></figure>
 <h2 id="補足--実証">補足 : 実証</h2>
 
 <figure><figcaption class="code-caption">vtable の存在を確かめる (clang++ 10 で検証済み)</figcaption><pre><code class="cpp">#include &lt;cstdio&gt;

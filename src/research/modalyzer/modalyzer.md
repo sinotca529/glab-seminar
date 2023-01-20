@@ -15,10 +15,10 @@ tag:
 
 **既存手法の問題 :**
 - 目的の解析が依存する解析を考慮していない．
-    - 依存先は Whole Program Analysis (WPA) が必要
-    - → スケールしない
+    - 依存先は Whole Program Analysis (WPA) が必要．
+    - → スケールしない．
 - (扱えるポインタ操作が少ない．)
-    - Java しか扱えない
+    - Java しか扱えない．
 
 **解決策 :**
 - 解析の依存関係を考慮する．
@@ -78,8 +78,7 @@ tag:
 ```
 
 これでは points-to 等の解析で WPA が必要になるため，スケールしない．<br>
-そこで Modalyzer はこれら依存を全てサマライズする．<br>
-これを fully compositional と呼ぶ．
+そこで **Modalyzer はこれら依存を全てサマライズする**．<br>
 ``` {caption="Modalyzer"}
 ---> : 解析の依存関係
 ════ : サマライズした解析
@@ -95,14 +94,14 @@ tag:
 
 ## Modalyzer が扱う解析
 次の4種を対象とする．
-- Type hierarchy (型階層 = 継承関係)
-- Callgraph
+- Type hierarchy (継承の関係)
+- Call graph
 - Points-to
-- IFDS/IDE で表現された data-flow
+- IFDS/IDE (後述) で表現された data-flow
 
-## ステップ
-1. モジュールごとに解析のサマリを作る．
-2. 集めた情報を合成する．
+## 手法の流れ
+1. \[サマリ生成\] モジュールごとに解析のサマリを作る．
+2. \[サマリ合成\] 集めた情報を合成する．
     - 合成時に新情報が得られたら適宜更新．
 
 新情報 :
@@ -113,12 +112,9 @@ tag:
 **想定する攻撃 :**
 - SQL インジェクション攻撃．
 
-**ソース・シンク**
+**ソース・シンク :**
 - ソース : コマンドライン引数
-- シンク : クエリの実行 (executeQuery)
-
-**仮定** (論文に言及が無いため真相は不明)
-- `string` の内部構造は考慮しない．
+- シンク : クエリの実行 (`execQuery`)
 
 ```cpp {caption="main.cpp"}
 #include <iostream>
@@ -326,10 +322,9 @@ def update_ptr_info(f, callee):
 - サマリ生成には IFDS/IDE を使う．
 
 ### IFDS/IDE
-- IFDS (Interprocedural Finite Distributive Subset)
-- IDE : Interprocedural Distributive Environments
-
 [元論文](https://www.cs.jhu.edu/~huang/cs624/spring21/readings/program-analysis-graph.pdf)，[参考1](https://euske.github.io/slides/sem20170606/index.html)，[参考2](https://www.csa.iisc.ac.in/~raghavan/CleanedPav2011/idfs.pdf)
+- IFDS : Interprocedural Finite Distributive Subset
+- IDE : Interprocedural Distributive Environments
 
 関数間データフロー解析をグラフ問題 (CFL-reachability) に帰着する手法．
 

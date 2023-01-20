@@ -74,12 +74,12 @@ Points-To and Data-Flow Analysis</p>
 <ul>
 <li>目的の解析が依存する解析を考慮していない．
 <ul>
-<li>依存先は Whole Program Analysis (WPA) が必要</li>
-<li>→ スケールしない</li>
+<li>依存先は Whole Program Analysis (WPA) が必要．</li>
+<li>→ スケールしない．</li>
 </ul></li>
 <li>(扱えるポインタ操作が少ない．)
 <ul>
-<li>Java しか扱えない</li>
+<li>Java しか扱えない．</li>
 </ul></li>
 </ul>
 <p><strong>解決策 :</strong></p>
@@ -146,9 +146,8 @@ compositional の意で用いる．</strong></p>
 │ type hierarchy │&lt;----------+
 └────────────────┘</code></pre></figure>
 <p>これでは points-to 等の解析で WPA
-が必要になるため，スケールしない．<br> そこで Modalyzer
-はこれら依存を全てサマライズする．<br> これを fully compositional
-と呼ぶ．</p>
+が必要になるため，スケールしない．<br> そこで <strong>Modalyzer
+はこれら依存を全てサマライズする</strong>．<br></p>
 
 <figure><figcaption class="code-caption">Modalyzer</figcaption><pre><code class="nohljsln txt">---&gt; : 解析の依存関係
 ════ : サマライズした解析
@@ -163,15 +162,15 @@ compositional の意で用いる．</strong></p>
 <h2 id="modalyzer-が扱う解析">Modalyzer が扱う解析</h2>
 <p>次の4種を対象とする．</p>
 <ul>
-<li>Type hierarchy (型階層 = 継承関係)</li>
-<li>Callgraph</li>
+<li>Type hierarchy (継承の関係)</li>
+<li>Call graph</li>
 <li>Points-to</li>
-<li>IFDS/IDE で表現された data-flow</li>
+<li>IFDS/IDE (後述) で表現された data-flow</li>
 </ul>
-<h2 id="ステップ">ステップ</h2>
+<h2 id="手法の流れ">手法の流れ</h2>
 <ol type="1">
-<li>モジュールごとに解析のサマリを作る．</li>
-<li>集めた情報を合成する．
+<li>[サマリ生成] モジュールごとに解析のサマリを作る．</li>
+<li>[サマリ合成] 集めた情報を合成する．
 <ul>
 <li>合成時に新情報が得られたら適宜更新．</li>
 </ul></li>
@@ -188,14 +187,10 @@ compositional の意で用いる．</strong></p>
 <ul>
 <li>SQL インジェクション攻撃．</li>
 </ul>
-<p><strong>ソース・シンク</strong></p>
+<p><strong>ソース・シンク :</strong></p>
 <ul>
 <li>ソース : コマンドライン引数</li>
-<li>シンク : クエリの実行 (executeQuery)</li>
-</ul>
-<p><strong>仮定</strong> (論文に言及が無いため真相は不明)</p>
-<ul>
-<li><code>string</code> の内部構造は考慮しない．</li>
+<li>シンク : クエリの実行 (<code>execQuery</code>)</li>
 </ul>
 
 <figure><figcaption class="code-caption">main.cpp</figcaption><pre><code class="cpp">#include &lt;iostream&gt;
@@ -392,14 +387,14 @@ def make_call_graph():
 <li>サマリ生成には IFDS/IDE を使う．</li>
 </ul>
 <h3 id="ifdside">IFDS/IDE</h3>
-<ul>
-<li>IFDS (Interprocedural Finite Distributive Subset)</li>
-<li>IDE : Interprocedural Distributive Environments</li>
-</ul>
 <p><a
 href="https://www.cs.jhu.edu/~huang/cs624/spring21/readings/program-analysis-graph.pdf">元論文</a>，<a
 href="https://euske.github.io/slides/sem20170606/index.html">参考1</a>，<a
 href="https://www.csa.iisc.ac.in/~raghavan/CleanedPav2011/idfs.pdf">参考2</a></p>
+<ul>
+<li>IFDS : Interprocedural Finite Distributive Subset</li>
+<li>IDE : Interprocedural Distributive Environments</li>
+</ul>
 <p>関数間データフロー解析をグラフ問題 (CFL-reachability)
 に帰着する手法．</p>
 <p>辺の起点が taint されているならば，辺の終点も taint

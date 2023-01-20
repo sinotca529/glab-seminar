@@ -7,15 +7,15 @@ tag :
 ---
 
 # ゆるふわ C++ の virtual call
-目的 :
+**目的 :**
 - vcall のイメージをゆるふわに説明する．
 
-この記事の (ドラスティックな) 主張 :
+**この記事の (ドラスティックな) 主張 :**
 - C++ のメソッドは糖衣構文である．
 - C++ のメソッド呼び出しも糖衣構文である．
 - 糖衣を剥がせば vcall の仕組みがわかる．
 
-魔除け :
+**魔除け :**
 - 厳密な考証はしていない (が，雰囲気は合っているハズ)．
 - 簡単のために...
     - 後方参照を認める．
@@ -23,7 +23,7 @@ tag :
     - 多重継承や複雑なケースは考えない．
 
 ## C++ のメソッド
-- C++ では，構造体やクラスにメソッドを持たせられる．
+C++ の構造体・クラスはメソッドを持てる．
 
 ```cpp
 struct Foo {
@@ -32,7 +32,7 @@ struct Foo {
 };
 ```
 
-これは，次の糖衣構文とみなせる．
+これは次の糖衣構文とみなせる．
 
 ```cpp
 struct Foo {
@@ -44,7 +44,7 @@ int foo_method(Foo *this) { return this->member; }
 
 ## 仮想関数と仮想関数テーブル (vtable)
 - メソッドは「仮想関数」と「それ以外」の2種に分けられる．
-- vtable は仮想関数へのポインタを集めた表である．
+- 仮想関数は vtable という表で管理される．
     - 動的ディスパッチ (後述) で使われる．
 
 ```cpp
@@ -56,7 +56,7 @@ struct Base {
 };
 ```
 
-これは，次の糖衣構文とみなせる．
+これは次の糖衣構文とみなせる．
 
 ```cpp
 void base_virt1(Base *this) { puts("b1"); }
@@ -78,7 +78,7 @@ struct Base {
 仮想関数が増える場合や多重継承は扱わない．
 
 基本は継承元クラスの vtable と同じものを作る．<br>
-ただし，メソッドのオーバーライドがある場合はテーブルのエントリを書き換える．
+ただし，仮想関数のオーバーライドがある場合はテーブルのエントリを書き換える．
 
 ```cpp
 struct Extend: public Base {
@@ -88,7 +88,7 @@ struct Extend: public Base {
 };
 ```
 
-これは，次の糖衣構文とみなせる．
+これは次の糖衣構文とみなせる．
 
 ```cpp
 void extend_virt1(Extend *this) { puts("e1"); }
@@ -139,7 +139,7 @@ extend_non_virt(&b);
 - A. 今回のケースではメモリ配置的に問題ない (次で見る)．
 
 ## アップキャストと動的ディスパッチ
-以上の性質を踏まえると，アップキャストと動的ディスパッチの仕組みが何となく分かるはず．
+いよいよアップキャストと動的ディスパッチの仕組みを見ていく．
 
 ```cpp
 Extend e;
@@ -215,6 +215,39 @@ Q. ?? の出力は？
 
 ::::::
 :::
+
+## 余談 : `override` キーワード
+基底クラスの関数に virtual を書き忘れると override が起きない．<br>
+`virtual` を書き忘れたり，うっかり消したり，関数名を typo したりした時に意図せぬ挙動を起こし，不便である．
+
+```cpp
+struct Base { void foo() { puts("base"); } };
+struct Extend: Base { void foo() { puts("extend"); } };
+
+int main() {
+    Extend e;
+    Base *b = &e;
+    b->foo(); // puts base
+    return 0;
+}
+```
+
+そこで `override` キーワードを使う．<br>
+`override` がついたメソッドは，基底クラスのメソッドを override しなければならない．<br>
+そうでない場合，コンパイルエラーが起こる．
+
+```cpp
+struct Base { void foo() { puts("base"); } };
+// ↓ compile error
+struct Extend: Base { void foo() override { puts("extend"); } };
+
+int main() {
+    Extend e;
+    Base *b = &e;
+    b->foo(); // puts base
+    return 0;
+}
+```
 
 ## 補足 : 実証
 ```cpp {caption="vtable の存在を確かめる (clang++ 10 で検証済み)"}
