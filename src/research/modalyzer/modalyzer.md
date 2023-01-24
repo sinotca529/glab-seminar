@@ -14,25 +14,19 @@ tag:
 - 対象は C/C++ (LLVM IR)
 
 **既存手法の問題 :**
-- 目的の解析が依存する解析を考慮していない．
-    - 依存先は Whole Program Analysis (WPA) が必要．
-    - → スケールしない．
-- (扱えるポインタ操作が少ない．)
-    - Java しか扱えない．
+- 目的の解析が依存する解析を考慮しておらず，スケールしない．
+- (C に比べポインタ操作の自由度が低い Java しか扱えない．)
 
 **解決策 :**
-- 解析の依存関係を考慮する．
-    - 目的の解析 (例 : テイント解析) が依存する解析 (例 : ポインタ解析) も compositional に．
-    - Compositional ≒ サマリベース
+- 目的の解析が依存する解析も compositional (≒ サマリベース) にする．
 
 **結果 :**
-- WPA と同等かそれ以上の解析精度．
-- メインコードの解析時間を平均 72% 削減．
+- 解析精度は保ちつつ，メインコードの解析時間を平均 72% 削減．
 - ただし，各モジュールの解析は 3.67 倍掛かる．
 
 **備考 :**
-- PhASAR を改造して実装 (Modalyzer 作者 = PhASAR 作者)
-- 自称オープンソース (見当たらない)
+- PhASAR を改造して実装 (Modalyzer 作者 = PhASAR 作者)．
+- 自称オープンソース (見当たらない)．
 
 ## Summary Based vs Compositional
 **Summary Based :**
@@ -43,13 +37,14 @@ tag:
 - 一つの解析タスクが終わっても，サマリを消去しない．
 
 ::: {.box}
-**本資料ではこれらを区別しない．<br> summary based も compositional の意で用いる．**
+**本資料ではこれらを区別しない．<br>
+Summary based も compositional の意で用いる．**
 :::
 
 ## Q. なぜ既存研究はスケールしない？
 **A. 解析の依存関係を考えてないから．**
 
-例えば，テイント解析には下図のような依存関係がある．
+例えば，テイント解析は様々な解析に依存している．
 ``` {caption="テイント解析の依存関係"}
 ---> : 解析の依存関係
 
@@ -62,8 +57,10 @@ tag:
 └────────────────┘
 ```
 
-既存手法は この内 taint のみをサマライズしていた．
-``` {caption="既存手法"}
+既存手法は この内 taint のみをサマライズしていた．<br>
+そのため points-to 等の解析で **WPA (Whole Program Analysis) が必要**である．<br>
+これはスケールしない．
+``` {caption="既存手法の解析"}
 ---> : 解析の依存関係
 ════ : サマライズした解析
 ──── : サマライズしてない解析 (WPA が必要)
@@ -77,9 +74,9 @@ tag:
 └────────────────┘
 ```
 
-これでは points-to 等の解析で WPA が必要になるため，スケールしない．<br>
-そこで **Modalyzer はこれら依存を全てサマライズする**．<br>
-``` {caption="Modalyzer"}
+
+**Modalyzer はこれら解析を全てサマライズする**ことで，この問題に対処する．
+``` {caption="Modalyzer の解析"}
 ---> : 解析の依存関係
 ════ : サマライズした解析
 
@@ -94,19 +91,21 @@ tag:
 
 ## Modalyzer が扱う解析
 次の4種を対象とする．
-- Type hierarchy (継承の関係)
+- Type hierarchy (継承関係)
 - Call graph
 - Points-to
 - IFDS/IDE (後述) で表現された data-flow
 
 ## 手法の流れ
-1. \[サマリ生成\] モジュールごとに解析のサマリを作る．
-2. \[サマリ合成\] 集めた情報を合成する．
+1. \[サマリ生成\]
+    - モジュールごとに解析のサマリを作る．
+2. \[サマリ合成\]
+    - 集めた情報を合成する．
     - 合成時に新情報が得られたら適宜更新．
 
 新情報 :
-- Callgraph の合成/更新時に新たに判明した CFG のエッジ (→ points-to に影響)
-- Points-to の合成/更新時に新たに判明した指し先 (→ Callgraph 影響)
+- Call graph の更新時に新たに判明したエッジ (→ points-to に影響)
+- Points-to の更新時に新たに判明した指し先 (→ Callgraph 影響)
 
 ## モチベ例 : テイント解析
 **想定する攻撃 :**
@@ -195,35 +194,61 @@ Sanitizer *getGlobalSan() {
 }
 ```
 
-## 型階層 + vtable 解析
+## STEP1 : サマリの生成
+以下の情報についてサマリを作っていく．
+- 型階層 + vtable
+- Points-to 関係
+- Call graph
+- Data-flow info
+
+### 型階層 + vtable 解析
 予備知識 : [c++ の vcall](../../scrap/vcall/vcall.html)
 
-<!--
 記法 :
 - $\tau_t$ : クラス/構造体 $t$ に対応するノード．
 - $T_C$ : モジュール C における型階層．
--->
 
 ![](img/type.dio.svg)
 
-## 関数**内** points-to 解析
+### 関数内 points-to 解析
 Pointer-assignment graph (PAG) を作る．
-- Andersen または Steensgaard の手法を使う．
-    - Flow-**in**sensitive
+- Andersen か Steensgaard の手法 (ともに flow-insensitive)を使う．
 
 ::: {.box}
-ふつう PAG は有向グラフだが， Modalyzer は違う．<br>
+ふつう PAG は有向グラフだが， Modalyzer は違うようだ．<br>
 おそらく alias 関係にあるものを線で結んでいる．
 :::
 
+![](img/pi-mod.dio.svg)
+
+論文の図はこれとは違うのだが，解釈に苦しむため改変した．
+<details>
+<summary>論文の図</summary>
+
+なぜ `isMalicious` の返り値 (bool) がノードとして扱われれているのか解釈不能．
 ![](img/pi-san.dio.svg)
 
-## 関数**間** points-to 解析 + call graph 解析
-- 関数間 points-to 解析 と call graph 解析は依存しあっている．
-- → 同時にやる．
-- 他モジュールの情報が必要な部分には「穴」を空け，依存を覚えておく．
+</details>
 
-![](img/my-cg.dio.svg)
+### 関数間 points-to 解析 + call graph 解析
+- 関数間 points-to 解析 と call graph 解析は相互に依存しあう．
+    - → 同時にやる．
+- 他モジュールの情報が必要な部分には「穴」を空け，覚えておく．
+
+![](img/cg-mod.dio.svg)
+
+論文の図はこれとは違うのだが，解釈に苦しむため改変した．
+<details>
+<summary>論文の図</summary>
+
+なぜ `*::sanitize` へのエッジが張れるのか不明．<br>
+この段階では変数 `s` の割り当て位置の候補は得られない．<br>
+そのため，このようなエッジは張られないはずである．
+
+![](img/cg.dio.svg)
+
+</details>
+
 
 <!--
 
@@ -292,7 +317,7 @@ def resolve_dyn_call_sites():
     return callees
 ```
 
-```python
+```python {caption="update ptr info"}
 def update_ptr_info(f, callee):
     cs = (返り値を受け取る変数, 返り値) の集合
     cs += (実引数, 仮引数) の集合
@@ -316,22 +341,17 @@ def update_ptr_info(f, callee):
 - $\text{stitch}(G1, G2, P) = (V1 \cup V2, E1 \cup E2 \cup P)$
 -->
 
-## Data-Flow Information
-- 汎用的なデータフロー情報の定義は困難．
-- Points-to や Call Graph とは異なり，解析内容に合わせて求めるデータフロー情報を決定する．
+### Data-Flow Information
+- 汎用的なデータフローの定義は困難．
+- 解析内容に合わせて求めるデータフロー情報を決める．
 - サマリ生成には IFDS/IDE を使う．
 
-### IFDS/IDE
+#### IFDS/IDE
 [元論文](https://www.cs.jhu.edu/~huang/cs624/spring21/readings/program-analysis-graph.pdf)，[参考1](https://euske.github.io/slides/sem20170606/index.html)，[参考2](https://www.csa.iisc.ac.in/~raghavan/CleanedPav2011/idfs.pdf)
 - IFDS : Interprocedural Finite Distributive Subset
 - IDE : Interprocedural Distributive Environments
 
 関数間データフロー解析をグラフ問題 (CFL-reachability) に帰着する手法．
-
-辺の起点が taint されているならば，辺の終点も taint されているという意味．
-![](img/sg-san.dio.svg)
-
-![](img/sg-apply.dio.svg)
 
 **前提条件 :**
 - 伝播関数が dataflow fact に対して distributive であること．
@@ -340,9 +360,9 @@ def update_ptr_info(f, callee):
 **嬉しい性質 :**
 - 解析対象は不完全 (リンク前のモジュール) でも良い．
 - サマリの生成・合成ができる．
-- Context sensitive ． (実際には call-graph の精度も絡むだろうが)
+- Context sensitive ． (実際には call-graph の精度が絡むだろう)
 
-**IFDS (Interprocedural Finite Distributive Subset)**
+**IFDS (Interprocedural Finite Distributive Subset):**
 - Gen/Kill の一般化
 - 関数をまたぐデータフロー解析をする．
 - グラフ上の到達可能問題に帰着して解く．
@@ -351,15 +371,23 @@ def update_ptr_info(f, callee):
     - 例2 : 定義 a = 10 はこの地点に到達するか？
 - 計算量 : $O(|\#\text{Node}|\cdot|\text{Domain}|^3)$
 
-**IDE : Interprocedural Distributive Environments**
+**IDE (Interprocedural Distributive Environments):**
 - IFDS の一般化
 - より複雑な問題 (例 : 変数の取りうる範囲) が解ける．
 
-### 関数のサマリを作る順番
-依存の少ない順番，つまり Call Graph を戻りがけ順で DFS した際の訪問順でサマリを作る．
+#### モチベ例の場合
+辺の起点が taint されているならば，辺の終点も taint されるという意味 (だろう)．
+![](img/sg-san.dio.svg)
 
-### 状況 1/2 : 関数が call graph の葉ノード
-全体をサマライズする．
+![](img/sg-apply.dio.svg)
+
+グラフをそのまま保持するのは大変なので，サマリを作る．
+
+#### 関数のサマリを作る順序
+依存の少ない順，つまり call graph を戻りがけ順で DFS した際の訪問順でサマリを作る．
+
+**状況 1/2 : 関数が call graph の葉ノード**<br>
+全体のサマリを作る．
 ::: {.flex55}
 :::::: {.flex-left}
 サマリ前
@@ -371,8 +399,8 @@ def update_ptr_info(f, callee):
 ::::::
 :::
 
-### 状況 2/2 : 関数が call graph の葉ノードでない
-関数を呼ぶ手前までと，関数を呼んだ後の部分をサマライズする．
+**状況 2/2 : 関数が call graph の葉ノードでない**<br>
+関数を呼ぶ手前までのサマリと，関数を呼んだ後の部分のサマリを作る．
 
 ::: {.flex55}
 :::::: {.flex-left}
@@ -386,70 +414,8 @@ def update_ptr_info(f, callee):
 :::
 
 ## サマリの合成
-### グラフの縮約
-グラフ内の2頂点を1つにまとめる操作．
-
-### 型階層
-和集合を取る (重複はとり除く)
-
-![](img/merge-type.dio.svg)
-
-### Call graph と Points-to
-Call graph
-- 関数宣言と関数定義を同一ノードとみなして合成． (グラフの縮約)
-
-Points-to
-- (返り値, その受け取り口)，(仮引数, 実引数) の間を辺で結ぶ．
-
-(TODO : 図表)
-
-#### Fix-point アルゴリズム
-- Call graph と points-to は互いに依存した解析．
-- 収束するまで互いの更新を繰り返す．
-```cpp
-void (*f)();
-void bar() {}
-void foo() { f = &bar; }
-void init(void (*f)()) { f = &foo; }
-int main() {
-  init(f);
-  f();  // icall
-  return 0;
-}
-```
-
-foo, bar に収束．
-
-(TODO : 図表)
-
-
-### データフロー
-TODO
-
-### 最適化
-- 副作用がない関数呼び出しは無視する．
-- Meet (union) の挙動を踏まえた "短絡評価" する．
-
-#### $\hookrightarrow^{id}$ 副作用がない関数呼び出しを無視
-- データフロー解析における副作用がないと断言できる場合，その関数の解析を回避できる．
-- クライアントによって条件は変わる．
-    - 一例 : 引数が全て値渡しである．
-
-#### $\hookrightarrow^{T}$ Meet (union) の挙動を踏まえた "短絡評価"
-- may-taint 解析を考える．
-- else 節を踏まえると，`bar` の実装が不明でも `foo` の返り値は may-taint といえる．
-
-```cpp
-extern string bar(string&);
-string foo(bool p) {
-    string in = userInput();
-    if (p) {
-        return bar(in);
-    } else {
-        return in;
-    }
-}
-```
+<details>
+<summary>アルゴリズム</summary>
 
 ```python
 class Summary {
@@ -470,16 +436,67 @@ def merge(s1: Summary, s2: Summary):
     for t in contracted_types:
         if t in merged.dep:
             f = get_fn_containing(d[t])
-        pass
+        pass # TODO
+```
+
+</details>
+
+### 型階層
+和集合を取る (重複はとり除く)
+
+![](img/merge-type.dio.svg)
+
+### Call graph と Points-to
+Call graph
+- 関数宣言と関数定義を1つのノードに纏めて合成． ([グラフの縮約](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%A9%E3%83%95%E7%90%86%E8%AB%96#:~:text=%E8%BE%BA%E3%81%AE%E4%B8%A1%E7%AB%AF%E7%82%B9%E3%82%92%E4%B8%80%E3%81%A4%E3%81%AE%E9%A0%82%E7%82%B9%E3%81%AB%E3%81%BE%E3%81%A8%E3%82%81%E3%82%8B%E3%81%93%E3%81%A8%E3%82%92(%E8%BE%BA%E3%81%AE)%E7%B8%AE%E7%B4%84%E3%81%A8%E3%81%84%E3%81%84)的な操作)
+
+Points-to
+- (返り値, その受け口)，(仮引数, 実引数) の間を辺で結んで合成．
+
+![](img/merge-cg.dio.svg)
+
+![](img/merge-pi.dio.svg)
+
+合成の流れ :
+1. (赤色) CG 上で `getGlobalSan` の宣言と定義が纏まる．
+2. (青色) 1 の更新を反映し，PAG 上で `getGlobalSan` の返り値と受け口をつなぐ．
+3. (緑色) 2 の更新が影響する変数 `s` は CG の依存対象なので， CG を再構築．
+    - 上記の `walk` を使う．
+
+このように， CG と PAG の更新は互いに影響し合うので fix-point に到達するまで更新を繰り返す．
+
+### データフロー
+Call graph の合成の結果を反映し，新たに判明した実引数・仮引数のペアに辺を張る．
+
+#### データフロー解析の最適化
+- 副作用がない関数呼び出しは無視する．
+- Meet (union) の挙動を踏まえた "短絡評価" する．
+
+**$\hookrightarrow^{id}$ : 副作用がない関数呼び出しを無視**
+- データフロー解析における副作用がないと断言できる場合，その関数の解析を回避できる．
+- クライアントによって条件は変わる．
+    - 例 : 引数が全て値渡しである．
+
+**$\hookrightarrow^{T}$ : Meet (union) の挙動を踏まえた "短絡評価"**
+- may-taint 解析を考える．
+- else 節を踏まえると，`bar` の実装が不明でも `foo` の返り値は may-taint といえる．
+
+```cpp
+extern string bar(string&);
+string foo(bool p) {
+    string in = userInput();
+    if (p) return bar(in);
+    else   return in;
+}
 ```
 
 ## 実装
 - PhASAR をベースに実装．
     - PhASAR : LLVM 対象の静的解析基盤
-    - 単調なデータフロー問題を溶ける．
-    - IFDS/IDE も溶ける．
+    - 単調なデータフロー問題を解ける．
+    - IFDS/IDE も解ける．
 - サマリの保存には LLVM の metadata を用いた．
-    - これバイナリにしたら消えるのでは??
+    - (これバイナリにしたら消えるのでは??)
     - (適当な ELF セクションを作れば良いので重篤な問題ではないが)
 - サマリは Boost Graph Library を用いて扱い，フォーマットは Graphviz を使った．
 
