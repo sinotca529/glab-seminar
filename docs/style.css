@@ -222,6 +222,10 @@ details {
 .flex-left { margin-right: 8px; }
 .flex-right { margin-left: 8px; }
 
+.flex37 { display: flex; }
+.flex37 > .flex-left { width: 30%; }
+.flex37 > .flex-right { width: 70%; }
+
 .flex46 { display: flex; }
 .flex46 > .flex-left { width: 40%; }
 .flex46 > .flex-right { width: 60%; }
@@ -278,4 +282,37 @@ figure {
 .box {
     border: 2px solid black;
     padding-left: 0.5ch;
+}
+
+/* floating image */
+.overlay {
+    position: fixed;
+    transition: all 0.3s 0s ease;
+    visibility: hidden;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+.toggle-float {
+    display: none;
+}
+.toggle-float:checked + .overlay {
+    visibility: visible;
+    opacity: 1;
+    z-index: 100000;
+    background-color: #000000D0;
+    width: 100%;
+}
+.float-window {
+    overflow: auto;
+    max-height: 90%;
+    max-width: 90%;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100010;
+    transition: all 500ms ease-in-out;
 }

@@ -23,10 +23,34 @@ tag:
 **結果 :**
 - 解析精度は保ちつつ，メインコードの解析時間を平均 72% 削減．
 - ただし，各モジュールの解析は 3.67 倍掛かる．
+- サマリのサイズはコードサイズの5乗のオーダー．
 
 **備考 :**
 - PhASAR を改造して実装 (Modalyzer 作者 = PhASAR 作者)．
 - 自称オープンソース (見当たらない)．
+
+## WPA vs MWA
+プログラム解析手法は WPA と MWA に大別される．<br>
+
+::: {.flex46}
+:::::: {.flex-left}
+**WPA (Whole Program Analysis)** :
+- プログラム全体を一度に解析する．
+- 精度良くやろうとするとスケールしない．
+
+**MWA (Module-Wise Analysis)** Modalyzer はこちら:
+- モジュール単位でサマリを作る．
+- それらを合成してプログラム全体を解析する．
+- サマリ生成のコストが掛かる．
+- サマリ合成 (メインの解析) は WPA に比べ短時間で済む．
+::::::
+:::::: {.flex-right}
+![](img/wpa-mwa.dio.svg)
+::::::
+:::
+
+Q. 解析時間の観点において MWA が WPA より優位になるのはどのような場合か？<br>
+A. <quiz>サマリが何回も使い回される場合．</quiz>
 
 ## Summary Based vs Compositional
 **Summary Based :**
@@ -212,11 +236,11 @@ Sanitizer *getGlobalSan() {
 
 ### 関数内 points-to 解析
 Pointer-assignment graph (PAG) を作る．
-- Andersen か Steensgaard の手法 (ともに flow-insensitive)を使う．
+- Andersen か Steensgaard の手法 (ともに flow-insensitive) を使う．
 
 ::: {.box}
 ふつう PAG は有向グラフだが， Modalyzer は違うようだ．<br>
-おそらく alias 関係にあるものを線で結んでいる．
+おそらく alias 関係にあるものを結んでいる．
 :::
 
 ![](img/pi-mod.dio.svg)
@@ -232,7 +256,7 @@ Pointer-assignment graph (PAG) を作る．
 
 ### 関数間 points-to 解析 + call graph 解析
 - 関数間 points-to 解析 と call graph 解析は相互に依存しあう．
-    - → 同時にやる．
+    - → 同時に解析する．
 - 他モジュールの情報が必要な部分には「穴」を空け，覚えておく．
 
 ![](img/cg-mod.dio.svg)
@@ -351,7 +375,7 @@ def update_ptr_info(f, callee):
 - IFDS : Interprocedural Finite Distributive Subset
 - IDE : Interprocedural Distributive Environments
 
-関数間データフロー解析をグラフ問題 (CFL-reachability) に帰着する手法．
+関数間データフロー解析をグラフ問題 ([CFL-reachability](../../scrap/cfl-reachability/cfl-reachability.html)) に帰着する手法．<br>
 
 **前提条件 :**
 - 伝播関数が dataflow fact に対して distributive であること．
@@ -363,20 +387,26 @@ def update_ptr_info(f, callee):
 - Context sensitive ． (実際には call-graph の精度が絡むだろう)
 
 **IFDS (Interprocedural Finite Distributive Subset):**
-- Gen/Kill の一般化
+- Gen/Kill の一般化．
 - 関数をまたぐデータフロー解析をする．
 - グラフ上の到達可能問題に帰着して解く．
 - yes/no で答えられる問題を解く．
     - 例1 : 変数 x は未初期化になりうるか？
-    - 例2 : 定義 a = 10 はこの地点に到達するか？
+    - 例2 : ユーザの入力はこの地点に到達するか？
 - 計算量 : $O(|\#\text{Node}|\cdot|\text{Domain}|^3)$
 
 **IDE (Interprocedural Distributive Environments):**
-- IFDS の一般化
+- IFDS の一般化．
 - より複雑な問題 (例 : 変数の取りうる範囲) が解ける．
 
 #### モチベ例の場合
-辺の起点が taint されているならば，辺の終点も taint されるという意味 (だろう)．
+図の見方 (元論文呼んでないので曖昧です．ごめんなさい．) :
+- エッジのラベルは省略している．
+- $\Lambda$ は制御フローに対応する特殊な記号．
+- 辺の起点が taint されているならば，辺の終点も taint されるという意味．
+
+話を簡単にするために，解析器は `isMalicious` が偽の場合にテイントの伝播を切るものとする．
+
 ![](img/sg-san.dio.svg)
 
 ![](img/sg-apply.dio.svg)
@@ -387,7 +417,8 @@ def update_ptr_info(f, callee):
 依存の少ない順，つまり call graph を戻りがけ順で DFS した際の訪問順でサマリを作る．
 
 **状況 1/2 : 関数が call graph の葉ノード**<br>
-全体のサマリを作る．
+全体のサマリを作る．<br>
+`ret` は恐らく返り値を指す特殊変数 (確証はない)．
 ::: {.flex55}
 :::::: {.flex-left}
 サマリ前
@@ -408,7 +439,7 @@ def update_ptr_info(f, callee):
 ![](img/sg-apply.dio.svg)
 ::::::
 :::::: {.flex-right}
-サマリ後 (赤線がサマリ，青線はギャップ)
+サマリ後 (赤線がサマリ，青線は未解決部分)
 ![](img/sg-apply-jump.dio.svg)
 ::::::
 :::
@@ -447,21 +478,28 @@ def merge(s1: Summary, s2: Summary):
 ![](img/merge-type.dio.svg)
 
 ### Call graph と Points-to
-Call graph
+::: {.flex37}
+:::::: {.flex-left}
+::::::::: {.sticky}
+**Call graph :**
 - 関数宣言と関数定義を1つのノードに纏めて合成． ([グラフの縮約](https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%A9%E3%83%95%E7%90%86%E8%AB%96#:~:text=%E8%BE%BA%E3%81%AE%E4%B8%A1%E7%AB%AF%E7%82%B9%E3%82%92%E4%B8%80%E3%81%A4%E3%81%AE%E9%A0%82%E7%82%B9%E3%81%AB%E3%81%BE%E3%81%A8%E3%82%81%E3%82%8B%E3%81%93%E3%81%A8%E3%82%92(%E8%BE%BA%E3%81%AE)%E7%B8%AE%E7%B4%84%E3%81%A8%E3%81%84%E3%81%84)的な操作)
 
-Points-to
+**Points-to :**
 - (返り値, その受け口)，(仮引数, 実引数) の間を辺で結んで合成．
 
-![](img/merge-cg.dio.svg)
-
-![](img/merge-pi.dio.svg)
-
-合成の流れ :
+**合成の流れ :**
 1. (赤色) CG 上で `getGlobalSan` の宣言と定義が纏まる．
 2. (青色) 1 の更新を反映し，PAG 上で `getGlobalSan` の返り値と受け口をつなぐ．
 3. (緑色) 2 の更新が影響する変数 `s` は CG の依存対象なので， CG を再構築．
     - 上記の `walk` を使う．
+:::::::::
+::::::
+:::::: {.flex-right}
+![](img/merge-cg.dio.svg)
+
+![](img/merge-pi.dio.svg)
+::::::
+:::
 
 このように， CG と PAG の更新は互いに影響し合うので fix-point に到達するまで更新を繰り返す．
 

@@ -84,12 +84,37 @@ Points-To and Data-Flow Analysis</p>
 <ul>
 <li>解析精度は保ちつつ，メインコードの解析時間を平均 72% 削減．</li>
 <li>ただし，各モジュールの解析は 3.67 倍掛かる．</li>
+<li>サマリのサイズはコードサイズの5乗のオーダー．</li>
 </ul>
 <p><strong>備考 :</strong></p>
 <ul>
 <li>PhASAR を改造して実装 (Modalyzer 作者 = PhASAR 作者)．</li>
 <li>自称オープンソース (見当たらない)．</li>
 </ul>
+<h2 id="wpa-vs-mwa">WPA vs MWA</h2>
+<p>プログラム解析手法は WPA と MWA に大別される．<br></p>
+<div class="flex46">
+<div class="flex-left">
+<p><strong>WPA (Whole Program Analysis)</strong> :</p>
+<ul>
+<li>プログラム全体を一度に解析する．</li>
+<li>精度良くやろうとするとスケールしない．</li>
+</ul>
+<p><strong>MWA (Module-Wise Analysis)</strong> Modalyzer はこちら:</p>
+<ul>
+<li>モジュール単位でサマリを作る．</li>
+<li>それらを合成してプログラム全体を解析する．</li>
+<li>サマリ生成のコストが掛かる．</li>
+<li>サマリ合成 (メインの解析) は WPA に比べ短時間で済む．</li>
+</ul>
+</div>
+<div class="flex-right">
+<p><img src="img/wpa-mwa.dio.svg" /></p>
+</div>
+</div>
+<p>Q. 解析時間の観点において MWA が WPA
+より優位になるのはどのような場合か？<br> A.
+<quiz>サマリが何回も使い回される場合．</quiz></p>
 <h2 id="summary-based-vs-compositional">Summary Based vs
 Compositional</h2>
 <p><strong>Summary Based :</strong></p>
@@ -274,12 +299,12 @@ class="math inline">t</span> に対応するノード．</li>
 <h3 id="関数内-points-to-解析">関数内 points-to 解析</h3>
 <p>Pointer-assignment graph (PAG) を作る．</p>
 <ul>
-<li>Andersen か Steensgaard の手法 (ともに
-flow-insensitive)を使う．</li>
+<li>Andersen か Steensgaard の手法 (ともに flow-insensitive)
+を使う．</li>
 </ul>
 <div class="box">
 <p>ふつう PAG は有向グラフだが， Modalyzer は違うようだ．<br> おそらく
-alias 関係にあるものを線で結んでいる．</p>
+alias 関係にあるものを結んでいる．</p>
 </div>
 <p><img src="img/pi-mod.dio.svg" /></p>
 <p>論文の図はこれとは違うのだが，解釈に苦しむため改変した．</p>
@@ -296,7 +321,7 @@ call graph 解析</h3>
 <ul>
 <li>関数間 points-to 解析 と call graph 解析は相互に依存しあう．
 <ul>
-<li>→ 同時にやる．</li>
+<li>→ 同時に解析する．</li>
 </ul></li>
 <li>他モジュールの情報が必要な部分には「穴」を空け，覚えておく．</li>
 </ul>
@@ -412,8 +437,9 @@ href="https://www.csa.iisc.ac.in/~raghavan/CleanedPav2011/idfs.pdf">参考2</a><
 <li>IFDS : Interprocedural Finite Distributive Subset</li>
 <li>IDE : Interprocedural Distributive Environments</li>
 </ul>
-<p>関数間データフロー解析をグラフ問題 (CFL-reachability)
-に帰着する手法．</p>
+<p>関数間データフロー解析をグラフ問題 (<a
+href="../../scrap/cfl-reachability/cfl-reachability.html">CFL-reachability</a>)
+に帰着する手法．<br></p>
 <p><strong>前提条件 :</strong></p>
 <ul>
 <li>伝播関数が dataflow fact に対して distributive であること．
@@ -431,32 +457,42 @@ f(b)</span></li>
 <p><strong>IFDS (Interprocedural Finite Distributive
 Subset):</strong></p>
 <ul>
-<li>Gen/Kill の一般化</li>
+<li>Gen/Kill の一般化．</li>
 <li>関数をまたぐデータフロー解析をする．</li>
 <li>グラフ上の到達可能問題に帰着して解く．</li>
 <li>yes/no で答えられる問題を解く．
 <ul>
 <li>例1 : 変数 x は未初期化になりうるか？</li>
-<li>例2 : 定義 a = 10 はこの地点に到達するか？</li>
+<li>例2 : ユーザの入力はこの地点に到達するか？</li>
 </ul></li>
 <li>計算量 : <span
 class="math inline">O(|\#\text{Node}|\cdot|\text{Domain}|^3)</span></li>
 </ul>
 <p><strong>IDE (Interprocedural Distributive Environments):</strong></p>
 <ul>
-<li>IFDS の一般化</li>
+<li>IFDS の一般化．</li>
 <li>より複雑な問題 (例 : 変数の取りうる範囲) が解ける．</li>
 </ul>
 <h4 id="モチベ例の場合">モチベ例の場合</h4>
-<p>辺の起点が taint されているならば，辺の終点も taint されるという意味
-(だろう)． <img src="img/sg-san.dio.svg" /></p>
+<p>図の見方 (元論文呼んでないので曖昧です．ごめんなさい．) :</p>
+<ul>
+<li>エッジのラベルは省略している．</li>
+<li><span class="math inline">\Lambda</span>
+は制御フローに対応する特殊な記号．</li>
+<li>辺の起点が taint されているならば，辺の終点も taint
+されるという意味．</li>
+</ul>
+<p>話を簡単にするために，解析器は <code>isMalicious</code>
+が偽の場合にテイントの伝播を切るものとする．</p>
+<p><img src="img/sg-san.dio.svg" /></p>
 <p><img src="img/sg-apply.dio.svg" /></p>
 <p>グラフをそのまま保持するのは大変なので，サマリを作る．</p>
 <h4 id="関数のサマリを作る順序">関数のサマリを作る順序</h4>
 <p>依存の少ない順，つまり call graph を戻りがけ順で DFS
 した際の訪問順でサマリを作る．</p>
 <p><strong>状況 1/2 : 関数が call graph の葉ノード</strong><br>
-全体のサマリを作る．</p>
+全体のサマリを作る．<br> <code>ret</code> は恐らく返り値を指す特殊変数
+(確証はない)．</p>
 <div class="flex55">
 <div class="flex-left">
 <p>サマリ前 <img src="img/sg-leaf.dio.svg" /></p>
@@ -472,7 +508,7 @@ class="math inline">O(|\#\text{Node}|\cdot|\text{Domain}|^3)</span></li>
 <p>サマリ前 <img src="img/sg-apply.dio.svg" /></p>
 </div>
 <div class="flex-right">
-<p>サマリ後 (赤線がサマリ，青線はギャップ) <img
+<p>サマリ後 (赤線がサマリ，青線は未解決部分) <img
 src="img/sg-apply-jump.dio.svg" /></p>
 </div>
 </div>
@@ -506,18 +542,19 @@ def merge(s1: Summary, s2: Summary):
 <p>和集合を取る (重複はとり除く)</p>
 <p><img src="img/merge-type.dio.svg" /></p>
 <h3 id="call-graph-と-points-to">Call graph と Points-to</h3>
-<p>Call graph</p>
+<div class="flex37">
+<div class="flex-left">
+<div class="sticky">
+<p><strong>Call graph :</strong></p>
 <ul>
 <li>関数宣言と関数定義を1つのノードに纏めて合成． (<a
 href="https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%A9%E3%83%95%E7%90%86%E8%AB%96#:~:text=%E8%BE%BA%E3%81%AE%E4%B8%A1%E7%AB%AF%E7%82%B9%E3%82%92%E4%B8%80%E3%81%A4%E3%81%AE%E9%A0%82%E7%82%B9%E3%81%AB%E3%81%BE%E3%81%A8%E3%82%81%E3%82%8B%E3%81%93%E3%81%A8%E3%82%92(%E8%BE%BA%E3%81%AE)%E7%B8%AE%E7%B4%84%E3%81%A8%E3%81%84%E3%81%84">グラフの縮約</a>的な操作)</li>
 </ul>
-<p>Points-to</p>
+<p><strong>Points-to :</strong></p>
 <ul>
 <li>(返り値, その受け口)，(仮引数, 実引数) の間を辺で結んで合成．</li>
 </ul>
-<p><img src="img/merge-cg.dio.svg" /></p>
-<p><img src="img/merge-pi.dio.svg" /></p>
-<p>合成の流れ :</p>
+<p><strong>合成の流れ :</strong></p>
 <ol type="1">
 <li>(赤色) CG 上で <code>getGlobalSan</code> の宣言と定義が纏まる．</li>
 <li>(青色) 1 の更新を反映し，PAG 上で <code>getGlobalSan</code>
@@ -528,6 +565,13 @@ href="https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%A9%E3%83%95%E7%90%86%E8%AB%9
 <li>上記の <code>walk</code> を使う．</li>
 </ul></li>
 </ol>
+</div>
+</div>
+<div class="flex-right">
+<p><img src="img/merge-cg.dio.svg" /></p>
+<p><img src="img/merge-pi.dio.svg" /></p>
+</div>
+</div>
 <p>このように， CG と PAG の更新は互いに影響し合うので fix-point
 に到達するまで更新を繰り返す．</p>
 <h3 id="データフロー">データフロー</h3>

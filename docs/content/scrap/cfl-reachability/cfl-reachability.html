@@ -25,6 +25,14 @@
 
 
 
+  <!-- viz.js (graphviz) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/1.8.2/viz.js"></script>
+  <script>
+    window.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".graphviz")
+        .forEach(e => e.innerHTML = Viz(e.textContent));
+    });
+  </script>
 
   <title>CFL-reachability</title>
   <meta name="keywords" content="scrap"/>
@@ -61,7 +69,7 @@
       <tag><a href="../../../tag.html?tag=scrap">scrap</a></tag>
   </p>
 
-<h1 id="cfl-reachability-wip">CFL-reachability [wip]</h1>
+<h1 id="cfl-reachability">CFL-reachability</h1>
 <p>グラフ問題の一つ．</p>
 <p><strong>入力 :</strong></p>
 <ul>
@@ -78,11 +86,96 @@ class="math inline">G</span></strong>．</li>
 </ul>
 <h2 id="プログラム解析への応用">プログラム解析への応用</h2>
 <p>次の文法を考える :</p>
-<ul>
-<li><span class="math inline">S \rightarrow S S \ |\ (_1 S )_1 \ |\
-\cdots \ |\ (_n S )_n \ |\ \varepsilon</span></li>
-</ul>
+<p><span class="math display">
+S \rightarrow S S \ |\ (_1 S )_1 \ |\ \cdots \ |\ (_n S )_n \ |\
+\varepsilon
+</span></p>
 <p>開き括弧を関数呼び出し，閉じ括弧を関数リターン，それ以外を <span
-class="math inline">\varepsilon</span>と考えると，これはプログラムのトレースを表す．</p>
+class="math inline">\varepsilon</span>
+と考えると，これはプログラムのトレースを表す．</p>
+<h3 id="例とクイズ">例とクイズ</h3>
+<div class="flex64">
+<div class="flex-left">
+
+<figure><pre><code class="c">int entry(void) {
+    int a = 0;
+    x2(&amp;a);
+    x4(&amp;a);
+}
+
+void x2(int *i) {
+    *i *= 2;
+}
+
+int x4(&amp;a) {
+    x2(&amp;a);
+    x2(&amp;a);
+}</code></pre></figure>
+
+<figure><div class="graphviz">digraph G {
+    graph [layout=neato]
+    node [shape=circle, style=filled, fillcolor=&quot;white&quot;, fixedsize=true]
+    edge [len = 1.3];
+    L2  -&gt; L3  [ label=&quot;ε&quot;   ];
+    L3  -&gt; L8  [ label=&quot;(3&quot;  ];
+    L8  -&gt; L9  [ label=&quot;ε&quot;   ];
+    L9  -&gt; L4  [ label=&quot;)3&quot;  ];
+    L4  -&gt; L12 [ label=&quot;(4&quot;  ];
+    L12 -&gt; L8  [ label=&quot;(12&quot; ];
+    L9  -&gt; L13 [ label=&quot;)12&quot; ];
+    L13 -&gt; L8  [ label=&quot;(13&quot; ];
+    L9  -&gt; L14 [ label=&quot;)13&quot; ];
+    L14 -&gt; L5  [ label=&quot;)4&quot;  ];
+}</div></figure>
+</div>
+<div class="flex-right">
+<p><strong>Q1. パス L2 → L3 → L8 → L9 → L14 → L5</strong><br></p>
+<ul>
+<li>1-1. このパスが作るラベルの並びは？
+<ul>
+<li><quiz>ε (3 ε )14 )4</quiz></li>
+</ul></li>
+<li>1-2. これは上記の文法から生成できるか？
+<ul>
+<li><quiz>いいえ．</quiz></li>
+</ul></li>
+<li>1-3. このパスは feasible か？
+<ul>
+<li><quiz>いいえ．</quiz></li>
+</ul></li>
+</ul>
+<p><strong>Q2. パス L12 → L8 → L9 → L13</strong><br></p>
+<ul>
+<li>1-1. このパスが作るラベルの並びは？
+<ul>
+<li><quiz>(12 ε )12</quiz></li>
+</ul></li>
+<li>1-2. これは上記の文法から生成できるか？
+<ul>
+<li><quiz>はい．</quiz></li>
+</ul></li>
+<li>1-3. このパスは feasible か？
+<ul>
+<li><quiz>はい．</quiz></li>
+</ul></li>
+</ul>
+<p><strong>Q3. パス L9 → L14 → L5</strong><br></p>
+<ul>
+<li>1-1. このパスが作るラベルの並びは？
+<ul>
+<li><quiz>)13 )4<quiz></li>
+</ul></li>
+<li>1-2. これは上記の文法から生成できるか？
+<ul>
+<li><quiz>いいえ．</quiz></li>
+</ul></li>
+<li>1-3. このパスは feasible か？
+<ul>
+<li><quiz>はい．</quiz></li>
+</ul></li>
+<li>(文法を変えればこの問題には対処できる．)</li>
+</ul>
+</div>
+</div>
 </body>
 </html>
