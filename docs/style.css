@@ -77,18 +77,13 @@ quiz {
     padding-right: 0.5ch;
 }
 
-tag {
+.tag {
     font-size: 0.875em;
-    border-width: 2px;
-    border-radius: 1ch;
     padding-right: 0.5ch;
     padding-left: 0.5ch;
-    border-style: solid;
-    border-color: #000000;
     white-space: nowrap;
-}
-tag > a {
     text-decoration: none;
+    color: gray;
 }
 
 ol {

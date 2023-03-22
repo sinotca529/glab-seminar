@@ -11,25 +11,19 @@
             .map(key => CONTENT_META_DATA[key])
             .sort((a, b) => (a.date < b.date) ? 1 : -1)
             .forEach(function (page) {
-                const link_to_page = document.createElement("a");
-                link_to_page.appendChild(document.createTextNode(page.title));
-                link_to_page.href = page.path;
-
                 const li = document.createElement("li");
-                const date = document.createTextNode(page.date + nsbp);
-                li.appendChild(date);
-                li.appendChild(link_to_page);
+                li.innerHTML = `
+                    <div>${page.date}\u00a0<a href='${page.path}'>${page.title}</a></div>
+                `;
 
-                page.tags.forEach(function (tag_name) {
-                    const elem_a = document.createElement("a");
-                    elem_a.appendChild(document.createTextNode(tag_name));
-                    elem_a.href = "./tag.html?tag=" + tag_name;
+                page.tags.forEach((tag_name) => {
+                    const tag_link = document.createElement('a');
+                    tag_link.classList.add('tag');
+                    tag_link.appendChild(document.createTextNode('#' + tag_name));
+                    tag_link.href = './tag.html?tag=' + tag_name;
 
-                    const elem_tag = document.createElement("tag");
-                    elem_tag.appendChild(elem_a);
-
-                    li.appendChild(document.createTextNode(nsbp));
-                    li.appendChild(elem_tag);
+                    li.children[0].appendChild(document.createTextNode(nsbp));
+                    li.children[0].appendChild(tag_link);
                 });
 
                 fragment.appendChild(li);
