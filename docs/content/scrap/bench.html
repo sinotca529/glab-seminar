@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>ベンチでは幾何平均を使え(?)</title>
+  <meta name="keywords" content="scrap"/>
+  <meta name="date" content="2023-03-22"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-03-22</date>
+      <tag><a href="../../tag.html?tag=scrap">scrap</a></tag>
+  </p>
+
+<h1 id="ベンチでは幾何平均を使え">ベンチでは幾何平均を使え(?)</h1>
+<p>タネ論文 : <a href="https://dl.acm.org/doi/pdf/10.1145/5666.5673">HOW
+NOT TO LIE WITH STATISTICS: THE CORRECT WAY TO SUMMARIZE BENCHMARK
+RESULTS</a></p>
+<h2 id="問題">問題</h2>
+<p>次の表は検体 A～E に対するアルゴリズム (手法) 1～3 の実行時間である。
+各手法の性能差はどう評価すればよいだろうか？</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: right;">手法1</th>
+<th style="text-align: right;">手法2</th>
+<th style="text-align: right;">手法3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">A</td>
+<td style="text-align: right;">417</td>
+<td style="text-align: right;">244</td>
+<td style="text-align: right;">134</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">B</td>
+<td style="text-align: right;">83</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">C</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">153</td>
+<td style="text-align: right;">135</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">D</td>
+<td style="text-align: right;">39449</td>
+<td style="text-align: right;">33527</td>
+<td style="text-align: right;">66000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">E</td>
+<td style="text-align: right;">772</td>
+<td style="text-align: right;">368</td>
+<td style="text-align: right;">369</td>
+</tr>
+</tbody>
+</table>
+<p>ここでは2つの手法を比べる。</p>
+<ul>
+<li>各ケースについて正規化したのち、算術平均をとる。</li>
+<li>各ケースについて正規化したのち、幾何平均をとる。</li>
+</ul>
+<h2 id="先に結論">先に結論</h2>
+<p><strong>結論 : 幾何平均を使え。</strong></p>
+<p><strong>Q. なぜ性能測定で幾何平均を使うのか？</strong><br> A.
+幾何平均はどの比較対象を基準にするかで結果が変わらないから。</p>
+<p><strong>Q. 算術平均ではだめか？</strong><br> A.
+どの比較対象を基準に正規化するかで結果が変わるからダメ。</p>
+<p><strong>Q.
+正規化なんかせずに、生の値の総和で性能比較すればよいのでは？
+(本稿では省略)</strong><br> A.
+それでも良い。各検体に重みをつけたい場合は、生データに重みを掛けた上で和をとればよい。</p>
+<h2 id="実際に試してみる">実際に試してみる</h2>
+<p>先ほどの例について、正規化の基準を変えつつ算術平均と幾何平均を比べてみる。</p>
+<h3 id="状況1--手法1-を基準に正規化する">状況1 : 手法1
+を基準に正規化する</h3>
+<p>手法1を基準に各列を正規化する場合、結果は次のようになる。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: right;">手法1</th>
+<th style="text-align: right;">手法2</th>
+<th style="text-align: right;">手法3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">B</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.84</td>
+<td style="text-align: right;">0.85</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">A</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.59</td>
+<td style="text-align: right;">0.32</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">C</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.32</td>
+<td style="text-align: right;">2.05</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">D</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">1.67</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">E</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.45</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">算術平均</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.01</td>
+<td style="text-align: right;">1.07</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">幾何平均</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.86</td>
+<td style="text-align: right;">0.84</td>
+</tr>
+</tbody>
+</table>
+<h3 id="状況2--手法2-を基準に正規化する">状況2 : 手法2
+を基準に正規化する</h3>
+<p>手法2を基準に各列を正規化する場合、結果は次のようになる。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: right;">手法1</th>
+<th style="text-align: right;">手法2</th>
+<th style="text-align: right;">手法3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">A</td>
+<td style="text-align: right;">1.71</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.55</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">B</td>
+<td style="text-align: right;">1.19</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">C</td>
+<td style="text-align: right;">0.43</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">D</td>
+<td style="text-align: right;">1.18</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.97</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">E</td>
+<td style="text-align: right;">2.10</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">算術平均</td>
+<td style="text-align: right;">1.32</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">幾何平均</td>
+<td style="text-align: right;">1.17</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.99</td>
+</tr>
+</tbody>
+</table>
+<h3 id="状況1-2-を比べる">状況1, 2 を比べる</h3>
+<p><strong>算術平均 :
+状況1と2で各手法の性能の比率も順序も変わっている。</strong></p>
+<ul>
+<li>状況1では手法2は手法1の1.01倍。状況2では0.76倍。</li>
+</ul>
+<p><strong>幾何平均 :
+状況1と2で各手法の性能の比率も順序も変わっていない。</strong></p>
+<ul>
+<li>状況1でも2でも、手法2は手法1の0.86倍。</li>
+</ul>
+<p>したがって、幾何平均のほうが良い性質を持っていそうである。</p>
+<h2 id="数学的証明">数学的証明</h2>
+<p>(論文の説明は複雑に感じたので条件を変えているが、おそらくは論文の主張と同値。)</p>
+<p>検体 <span class="math inline">c_1, \cdots c_n</span>
+について、様々な手法で実験したとする。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: center;">手法A</th>
+<th style="text-align: center;">手法B</th>
+<th style="text-align: center;"><span
+class="math inline">\cdots</span></th>
+<th style="text-align: center;">手法X</th>
+<th style="text-align: center;">手法Y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">c_1</span></td>
+<td style="text-align: center;"><span
+class="math inline">a_1</span></td>
+<td style="text-align: center;"><span
+class="math inline">b_1</span></td>
+<td style="text-align: center;"><span
+class="math inline">\cdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">x_1</span></td>
+<td style="text-align: center;"><span
+class="math inline">y_1</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">c_i</span></td>
+<td style="text-align: center;"><span
+class="math inline">a_i</span></td>
+<td style="text-align: center;"><span
+class="math inline">b_i</span></td>
+<td style="text-align: center;"><span
+class="math inline">\cdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">x_i</span></td>
+<td style="text-align: center;"><span
+class="math inline">y_i</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">c_n</span></td>
+<td style="text-align: center;"><span
+class="math inline">a_n</span></td>
+<td style="text-align: center;"><span
+class="math inline">b_n</span></td>
+<td style="text-align: center;"><span
+class="math inline">\cdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">x_n</span></td>
+<td style="text-align: center;"><span
+class="math inline">y_n</span></td>
+</tr>
+</tbody>
+</table>
+<p>このうち X, Y について A を基準に正規化し、ある関数 <span
+class="math inline">f</span> で X と Y の性能を算出する。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: center;">手法X</th>
+<th style="text-align: center;">手法Y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">c_1</span></td>
+<td style="text-align: center;"><span
+class="math inline">x_1/a_1</span></td>
+<td style="text-align: center;"><span
+class="math inline">y_1/a_1</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">c_i</span></td>
+<td style="text-align: center;"><span
+class="math inline">x_i/a_i</span></td>
+<td style="text-align: center;"><span
+class="math inline">y_i/a_i</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+<td style="text-align: center;"><span
+class="math inline">\vdots</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span
+class="math inline">c_n</span></td>
+<td style="text-align: center;"><span
+class="math inline">x_n/a_n</span></td>
+<td style="text-align: center;"><span
+class="math inline">y_n/a_n</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">性能</td>
+<td style="text-align: center;"><span
+class="math inline">f(x_1/a_1,\cdots,x_n/a_n)</span></td>
+<td style="text-align: center;"><span
+class="math inline">f(y_1/a_1,\cdots,y_n/a_n)</span></td>
+</tr>
+</tbody>
+</table>
+<p>この時 X と比べた時の Y の性能は次であらわされる。 <span
+class="math display">
+\dfrac{f(x_1/a_1,\cdots,x_n/a_n)}{f(y_1/a_1,\cdots,y_n/a_n)}
+</span></p>
+<p>同様に、B を基準に正規化した場合は次のようになる。 <span
+class="math display">
+\dfrac{f(x_1/b_1,\cdots,x_n/b_n)}{f(y_1/b_1,\cdots,y_n/b_n)}
+</span></p>
+<p>これら二つの値が (A, B, X, Y の選び方によらず)
+同じになるのが理想である。</p>
+<p>つまり <span class="math inline">f</span>
+は次を満たすべきである。</p>
+<ul>
+<li>(性質1) <span class="math inline">\forall A, B, X, Y \in
+\mathbb{R}^{+n} \ \
+\dfrac{f(x_1/a_1,\cdots,x_n/a_n)}{f(y_1/a_1,\cdots,y_n/a_n)} =
+\dfrac{f(x_1/b_1,\cdots,x_n/b_n)}{f(y_1/b_1,\cdots,y_n/b_n)}</span></li>
+</ul>
+<p>また平均的な性能を表す関数として、次の2条件も満たしてほしい。</p>
+<ul>
+<li>(性質2) <span class="math inline">f(a, \cdots, a) = a</span></li>
+<li>(性質3) <span class="math inline">f(a_1, \cdots, a_n) =
+f(a_{\sigma{(1)}}, \cdots a_{\sigma{(n)}})</span></li>
+</ul>
+<p>(ただし <span class="math inline">\sigma</span> は任意の順列)</p>
+<h3 id="主張">主張</h3>
+<p>これら3条件を満たすのは幾何平均だけである。</p>
+<h3 id="証明">証明</h3>
+<p>幾何平均がこれら条件を満たすのは簡単に示せる。<br>
+あとは逆を示せばよい。</p>
+<p>(性質1) について <span class="math inline">B = Y</span>
+のとき次が成り立つ。 <span class="math display">
+\begin{align*}
+\dfrac{f(x_1/a_1,\cdots,x_n/a_n)}{f(y_1/a_1,\cdots,y_n/a_n)}
+&amp;= \dfrac{f(x_1/y_1,\cdots,x_n/y_n)}{f(1,\cdots,1)} \\
+&amp;= f(x_1/y_1,\cdots,x_n/y_n) \ \ \because \text{(性質2)}\\
+\end{align*}
+</span></p>
+<p><span class="math inline">s_i = x_i/y_i</span>, <span
+class="math inline">t_i = y_1/a_i</span> と置くと、 <span
+class="math display">
+\begin{align*}
+\dfrac{f(s_1t_1,\cdots,\alpha_nt_n)}{f(t_1,\cdots,t_n)} &amp;=
+f(\alpha_1,\cdots,\alpha_n) \\
+f(s_1t_1,\cdots,\alpha_nt_n) &amp;= f(\alpha_1,\cdots,\alpha_n)
+f(t_1,\cdots,t_n)\\
+\end{align*}
+</span></p>
+<p>したがって、関数 <span class="math inline">f</span>
+は次を満たす。</p>
+<ul>
+<li>(性質1’) <span class="math inline">\forall S, T \in \mathbb{R}^{+n}
+f(s_1t_1,\cdots,\alpha_nt_n) = f(\alpha_1,\cdots,\alpha_n)
+f(t_1,\cdots,t_n)</span></li>
+</ul>
+<p>適当な数 <span class="math inline">r</span> について (性質1’),
+(性質2), (性質3) より次が成り立つ。 <span class="math display">
+\begin{align*}
+r &amp;= f(r, \cdots, r) \\
+&amp;= f(r, 1, \cdots, 1) f(1, r, 1, \cdots, 1) \cdots f(1, \cdots, 1,
+r) \\
+&amp;= f(r, 1, \cdots, 1) f(r, 1, \cdots, 1) \cdots f(r, 1, \cdots, 1)
+\\
+&amp;= f(r, 1, \cdots, 1)^n \\
+r^{1/n} &amp;= f(r, 1, \cdots, 1)
+\end{align*}
+</span></p>
+<p>これと (性質1’), (性質3) より次が成り立つ。 <span
+class="math display">
+\begin{align*}
+f(a_1, \cdots, a_n)
+&amp;= f(a_1, 1, \cdots, 1) f(1, a_2, 1, \cdots, 1) \cdots f(1, \cdots,
+1, a_n) \\
+&amp;= f(a_1, 1, \cdots, 1) f(a_2, 1, \cdots, 1) \cdots f(a_n, 1,
+\cdots, 1) \\
+&amp;= (a_1 \cdots a_n)^{1/n}
+\end{align*}
+</span></p>
+<p>これは幾何平均である。</p>
+<p>以上より、順方向も逆方向も示せたので、上記3条件を満たすのは幾何平均だけであることが示された。</p>
+<h2 id="感想">感想</h2>
+<p>確かに幾何平均をとれば、正規化の基準を変えても評価は変わらない。
+これは扱いやすい性質である。
+しかし、果たしてこれはアルゴリズムの性能を正確に示しているのだろうか？</p>
+<p>そうは言い切れないと思う。<br>
+例えばこういう極端なケースを考えてみる。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: right;">手法1</th>
+<th style="text-align: right;">手法2</th>
+<th style="text-align: right;">手法3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">A</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">B</td>
+<td style="text-align: right;">20000</td>
+<td style="text-align: right;">10000</td>
+<td style="text-align: right;">40000</td>
+</tr>
+</tbody>
+</table>
+<p>これを正規化して幾何平均をとると、どれも同じ性能ということになる。</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">検体</th>
+<th style="text-align: right;">手法1</th>
+<th style="text-align: right;">手法2</th>
+<th style="text-align: right;">手法3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">A</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.50</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">B</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">幾何平均</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+</tbody>
+</table>
+<p>しかし実用上、手法1と手法2が同じ性能になりそうなのはAとBの利用頻度が
+5000 : 1
+の時であるし、手法2と手法3が同じ性能になりそうなのはAとBの利用頻度が
+10000 : 1 の時である。</p>
+<p>ある人は、生データの和では実行時間の長いプログラムの重みが大きくなってしまうから正規化した値の幾何平均をとった方が良いのだと言っていた。
+はたして、そんなことを勝手にしていいのだろうか。分からない。</p>
+</body>
+</html>
