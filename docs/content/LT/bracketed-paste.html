@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>Bracketed Paste</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2023-04-21"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-04-21</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="bracketed-paste">Bracketed Paste</h1>
+<h2 id="貼り付け大暴走">貼り付け大暴走</h2>
+<p>貼り付け内容に改行があるとコマンド実行が起きる．<br>
+変なコマンドが実行されてそうで怖い．</p>
+
+<figure><figcaption class="code-caption">うっかり Hello World を貼り付けちゃったの図</figcaption><pre><code class="txt">user@pc1:~
+$ #include &lt;stdio.h&gt;                  // クリップボードの内容
+zsh: parse error near `\n'            //   #include &lt;stdio.h&gt;
+user@pc1:~                            //   int main(void) {
+$ int main(void) {                    //       puts(&quot;Hello world!&quot;);
+zsh: unknown file attribute: v        //       return 0;
+user@pc1:~                            //   }
+$     puts(&quot;Hello world!&quot;);
+dquote&gt;     return 0;
+dquote&gt; }</code></pre></figure>
+<h2 id="bracketed-paste-1">Bracketed Paste</h2>
+<p>これを防ぐしくみが <a
+href="https://en.wikipedia.org/wiki/Bracketed-paste">bracketed paste</a>
+．<br> 有効だと複数行の貼付けでコマンド実行が起きない．</p>
+
+<figure><figcaption class="code-caption">Bracketed paste が有効な状態で貼り付け</figcaption><pre><code class="txt">user@pc1:~
+$ #include &lt;stdio.h&gt;
+int main(void) {
+    puts(&quot;Hello World!&quot;);
+    return 0;
+}</code></pre></figure>
+<p>しくみ :
+貼り付け内容の前後に特殊文字をつけてキー入力と貼り付けを区別．</p>
+<h2 id="bracketed-paste-機能の有効化">Bracketed Paste 機能の有効化</h2>
+<p>環境によって違うので各自調べて🙏<br>
+端末エミュ・シェル・ターミナルマルチプレクサ・エディタ等々考えることは多いが，デフォで有効な場合も多そう．</p>
+<p>tmux なら paste-buffer に p を渡して有効化．</p>
+
+<figure><pre><code class="nohljsln txt"># ruh-shell する際も同様
+bind p paste-buffer -p</code></pre></figure>
+</body>
+</html>

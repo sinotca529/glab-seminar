@@ -12,7 +12,7 @@ tag:
 
 ## 解決したい問題
 左のコードをタイプセットすると、右のような見た目になったりする。
-::: {.flex}
+::: {.flex55}
 :::::: {.flex-left}
 ```tex {caption=ソース}
 \begin{lstlisting}[]
@@ -32,7 +32,7 @@ tag:
 :::
 
 ## \[解決\] autogobble を使う。
-::: {.flex}
+::: {.flex55}
 :::::: {.flex-left}
 ```tex {caption=ソース(autogobble使用)}
 \usepackage{lstautogobble}
