@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>おまえの YouTube は n 倍遅い</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2023-04-25"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-04-25</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="おまえの-youtube-は-n-倍遅い">おまえの YouTube は n 倍遅い</h1>
+<p>時間は有限なのに YouTube は2倍速まで．<br>
+もっと《加速》したいですよね？</p>
+<h3 id="それ-bookmarklet-でできます">それ， Bookmarklet でできます</h3>
+<p>Bookmarklet : ブックマークから JavaScript を呼ぶしくみ．</p>
+<p>↓ をブックマークのリンクに指定して呼び出すだけ．</p>
+
+<figure><figcaption class="code-caption">2.5倍速</figcaption><pre><code class="js">javascript:(()=&gt;{document.querySelector('.video-stream.html5-main-video').playbackRate=2.5;})();</code></pre></figure>
+<h3 id="おまけ">おまけ</h3>
+<p>自己責任ですが，某マトリクス認証も自動化できます．<br>
+なんたらアプリに課金しなくておｋ．</p>
+</body>
+</html>
