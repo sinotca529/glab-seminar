@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>^H はなぜ BS なのか</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2023-04-28"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-04-28</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="h-はなぜ-bs-なのか">^H はなぜ BS なのか</h1>
+<p>bash 等で <code>^H</code> (Ctrl + h) を押すと <code>BS</code>
+のように振る舞う．<br> なぜだろうか？</p>
+<h2 id="a-ctrl-キーは元来制御文字を送るためのキーだから-">A. Ctrl
+キーは元来，制御文字を送るためのキーだから (?)</h2>
+<blockquote>
+<p>テレタイプ端末、及び初期のコンピュータキーボードでは、コントロールキーを押しながら他のキーを押すと、生成されるASCIIの下位5ビット以外がゼロとなった。
+これによりユーザーはASCIIの非表示文字である最初の32文字 (0x00 - 0x1f)
+を生成、入力できる。 (<a
+href="https://ja.wikipedia.org/wiki/%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%AB%E3%82%AD%E3%83%BC">Wikipedia</a>)</p>
+</blockquote>
+<p>ASCII 表を見ると確かに色々と対応している．</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">下位5bit\上位3bit</th>
+<th style="text-align: center;">*</th>
+<th style="text-align: center;">000</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">00100</td>
+<td style="text-align: center;">d</td>
+<td style="text-align: center;">EOT</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">01000</td>
+<td style="text-align: center;">h</td>
+<td style="text-align: center;">BS</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">01001</td>
+<td style="text-align: center;">i</td>
+<td style="text-align: center;">HT</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">01010</td>
+<td style="text-align: center;">j</td>
+<td style="text-align: center;">LF</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">01101</td>
+<td style="text-align: center;">m</td>
+<td style="text-align: center;">CR</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">11011</td>
+<td style="text-align: center;">[</td>
+<td style="text-align: center;">ESC</td>
+</tr>
+</tbody>
+</table>
+<h2 id="余談">余談</h2>
+<ul>
+<li>「テレタイプ」はテレタイプ社の商標．一般名詞は「テレプリンタ」．</li>
+<li>テレタイプ端末 ASR-33 を修復している<a
+href="https://www.youtube.com/watch?v=S81GyMKH7zw&amp;list=PL-_93BVApb5-84G5kmgfuu7TQduTMc73H&amp;index=9">この動画</a>
+は見もの．</li>
+<li>古い端末で <code>^</code> を打つと <code>↑</code>
+が印字されたらしい． (ref: man ascii)
+<ul>
+<li>まさか Pascal のポインタ外しが <code>↑</code> なのは…？</li>
+</ul></li>
+</ul>
+</body>
+</html>
