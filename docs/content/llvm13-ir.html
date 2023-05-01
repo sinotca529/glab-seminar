@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../style.css">
+  <script type="text/javascript" src="../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>LLVM13 マニュアル抜粋 [wip]</title>
+  <meta name="keywords" content="llvm"/>
+  <meta name="date" content="2023-MM-dd"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../index.html">トップへ</a>
+<p>
+  <date>2023-MM-dd</date>
+      <tag><a href="../tag.html?tag=llvm">llvm</a></tag>
+  </p>
+
+<h1 id="llvm13-マニュアル抜粋">LLVM13 マニュアル抜粋</h1>
+<p>c.f <a href="https://releases.llvm.org/13.0.0/docs/LangRef.html">LLVM
+Language Reference Manual</a></p>
+<h2 id="識別子-identifier">識別子 (Identifier)</h2>
+<ul>
+<li>局所識別子 : <code>%</code> で始まる．</li>
+<li>大域識別子 : <code>@</code> で始まる．
+<ul>
+<li>LLVM の大域変数はすべて，値を格納する場所へのポインタ．</li>
+</ul></li>
+</ul>
+<h2 id="コメント">コメント</h2>
+<ul>
+<li><code>;</code> 以降行末まで．</li>
+</ul>
+<h2 id="module">Module</h2>
+<ul>
+<li>Module : LLVM の翻訳単位
+<ul>
+<li>関数 + 大域変数 + 記号表 (シンボルテーブル)</li>
+</ul></li>
+</ul>
+<h2 id="linkage-type">Linkage Type</h2>
+<ul>
+<li><code>private</code>
+<ul>
+<li>同一モジュール内からのみアクセス可能．</li>
+<li>記号表には載らない．</li>
+</ul></li>
+<li><code>internal</code>
+<ul>
+<li>C の <code>static</code> キーワードに対応．</li>
+<li>同一モジュール内からのみアクセス可能．</li>
+<li><code>STB_LOCAL</code> に載る．</li>
+</ul></li>
+<li><code>available_externally</code>
+<ul>
+<li>無視して良い?</li>
+</ul></li>
+<li><code>linkonce</code>
+<ul>
+<li>リンク時に名前が衝突したら統合する．</li>
+</ul></li>
+<li><code>weak</code>
+<ul>
+<li>C の <code>weak</code> に対応．</li>
+<li>多重定義があった際にこの定義を捨てる．</li>
+</ul></li>
+<li><code>common</code>
+<ul>
+<li>?</li>
+</ul></li>
+<li><code>appending</code></li>
+<li><code>extern_weak</code></li>
+<li><code>linkonce_odr</code></li>
+<li><code>weak_odr</code></li>
+<li><code>external</code></li>
+</ul>
+<h2 id="可視性">可視性</h2>
+<p>グローバル変数と関数は可視性の指定を持つ．</p>
+<ul>
+<li><code>default</code>
+<ul>
+<li>ELF のオブジェクトファイルの場合 :
+<ul>
+<li>他のモジュールに宣言が見える．</li>
+</ul></li>
+<li>ELF の共有ライブラリの場合 :
+<ul>
+<li>宣言は上書き可能．</li>
+</ul></li>
+</ul></li>
+<li><code>hidden</code>
+<ul>
+<li>他のモジュールがこの変数を直接参照することはできない．</li>
+<li>動的シンボルテーブルに載らない．</li>
+</ul></li>
+<li><code>protected</code>
+<ul>
+<li>動的シンボルテーブルに載る．</li>
+<li>そのサシ先はローカルシンボルである．</li>
+<li>すなわち，そのシンボルは他のモジュールで上書きできない．</li>
+</ul></li>
+</ul>
+<h2 id="グローバル変数">グローバル変数</h2>
+<ul>
+<li>コンパイル時に配置するメモリ領域が決定する．</li>
+<li>初期化できる．</li>
+<li>配置するセクションを明示できる．</li>
+<li>アラインメントを指定できる．</li>
+</ul>
+<h2 id="型システム">型システム</h2>
+<ul>
+<li><p>void : <code>void</code></p></li>
+<li><p>関数 : <code>&lt;retty&gt; (&lt;param list&gt;)</code></p>
+<ul>
+<li><code>i32 (i32)</code></li>
+<li><code>i32 (i8*, ...)</code></li>
+<li><code>{i32, i32} (i32)</code></li>
+</ul></li>
+<li><p>第一級型 (命令の返り値として取れる型)</p>
+<ul>
+<li>整数 : <code>iN</code> (<code>N</code> はビット長)</li>
+<li>小数 : <code>half</code>, <code>bfloat</code>, <code>float</code>,
+…</li>
+<li>ポインタ : <code>&lt;type&gt;*</code>
+<ul>
+<li><code>[4 x i32]*</code> : 配列へのポインタ</li>
+<li><code>i32 (i32*) *</code> : 関数ポインタ</li>
+<li><code>void*</code> や <code>label*</code> は存在しない．代わりに
+<code>i8*</code> を使う．</li>
+</ul></li>
+<li>ベクタ型 (SIMD 用)</li>
+<li>ラベル型</li>
+<li>トークン型</li>
+<li>メタデータ型</li>
+<li>集約型 (aggregate type)
+<ul>
+<li>array 型 : <code>[40 x i32]</code>,
+<code>[3 x [4 x i32]]]</code></li>
+<li>struct 型 : <code>{ i32, i32 }</code>,
+<code>&lt;{ i8, i32 }&gt;</code>
+<ul>
+<li><code>&lt;&gt;</code> 囲みは packed.</li>
+<li>メモリ内の struct の要素には， <code>getelementptr</code>
+でポインタを得て <code>load</code>/<code>store</code> でアクセス</li>
+<li>レジスタ内の struct
+の要素には，<code>extractvalue</code>/<code>insertvalue</code>
+でアクセス</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li><p>target extension type</p></li>
+<li><p>vector type</p>
+<ul>
+<li>SIMD で使う．</li>
+</ul></li>
+</ul>
+<h2 id="定数">定数</h2>
+<ul>
+<li>Token : <code>none</code> は空のトークン型の値</li>
+<li>大域変数，関数のアドレス
+<ul>
+<li>これらはリンク時に確定する． (大域変数はすべてポインタなので)</li>
+</ul></li>
+<li>undef</li>
+<li>poison</li>
+<li>well-defined</li>
+<li>address of bb</li>
+<li>dso local</li>
+<li>constexpr</li>
+</ul>
+<h2 id="その他の値">その他の値</h2>
+<ul>
+<li>インラインアセンブリ : よしなに作った値を
+<code>call</code>/<code>invoke</code> して使う．</li>
+</ul>
+<h2 id="メタデータ">メタデータ</h2>
+<h2 id="組み込み大域変数">組み込み大域変数</h2>
+<h2 id="命令">命令</h2>
+<ul>
+<li>終端命令
+<ul>
+<li><code>ret</code></li>
+<li><code>br</code></li>
+<li><code>switch</code></li>
+<li><code>indirectbr</code></li>
+<li><code>invoke</code></li>
+<li><code>callbr</code></li>
+<li><code>resume</code></li>
+<li><code>catchswitch</code></li>
+<li><code>catchret</code></li>
+<li><code>cleanupret</code></li>
+<li><code>unreachable</code></li>
+</ul></li>
+<li>単項演算
+<ul>
+<li><code>fneg</code></li>
+</ul></li>
+<li>二項演算
+<ul>
+<li><code>add</code></li>
+<li>…</li>
+</ul></li>
+<li>ベクトル演算 (SIMD)
+<ul>
+<li>…</li>
+</ul></li>
+<li>メモリアクセス
+<ul>
+<li><code>alloca</code></li>
+<li><code>load</code></li>
+<li><code>store</code></li>
+<li><code>fence</code></li>
+<li><code>cmpxchg</code></li>
+<li><code>atomicrmw</code></li>
+<li><code>getelementptr</code></li>
+</ul></li>
+<li>変換
+<ul>
+<li><code>trunc .. to</code></li>
+<li>…</li>
+</ul></li>
+<li>その他
+<ul>
+<li><code>icmp</code></li>
+<li><code>fcmp</code></li>
+<li><code>phi</code></li>
+<li><code>select</code></li>
+<li><code>freeze</code></li>
+<li><code>call</code></li>
+<li><code>va_arg</code></li>
+<li><code>landingpad</code></li>
+<li><code>catchpad</code></li>
+<li><code>cleanuppad</code></li>
+</ul></li>
+<li>組み込み関数
+<ul>
+<li>可変長引数系</li>
+<li>GC 系</li>
+<li>コード生成系</li>
+<li>標準 C/C++ 系
+<ul>
+<li><code>llvm.memcpy</code></li>
+<li><code>llvm.memcpy.inline</code></li>
+<li><code>llvm.memmove</code></li>
+<li><code>llvm.memset.*</code></li>
+</ul></li>
+<li>ループ
+<ul>
+<li><code>llvm.set.loop.iterations.*</code></li>
+<li><code>llvm.start.loop.iterations.*</code></li>
+<li><code>llvm.test.set.loop.iterations.*</code></li>
+<li><code>llvm.test.start.loop.iterations.*</code></li>
+<li><code>llvm.loop.decrement.reg.*</code></li>
+<li>`llvm.loop.decrement.*``</li>
+</ul></li>
+<li>デバッガ用</li>
+<li>トランポリン用</li>
+<li>その他
+<ul>
+<li><code>llvm.var.annotation</code></li>
+<li><code>llvm.ptr.annotation</code></li>
+<li><code>llvm.annotation.*</code></li>
+</ul></li>
+<li>要素単位原子命令
+<ul>
+<li><code>llvm.memcpy.element.unordered.atomic</code></li>
+<li><code>llvm.memmove.element.unordered.atomic</code></li>
+<li><code>llvm.memset.element.unordered.atomic</code></li>
+</ul></li>
+<li>…</li>
+</ul></li>
+</ul>
+</body>
+</html>
