@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>今度こそ覚える Precision, Accuracy, Recall</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2023-05-01"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-05-01</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="今度こそ覚える-precision-accuracy-recall">今度こそ覚える
+Precision, Accuracy, Recall</h1>
+<p>こいつらの定義が一向に覚えられない．<br> そうだ， ChatGPT
+に聞いてみよう．</p>
+<h2 id="まずは定義を聞いてみる">まずは定義を聞いてみる</h2>
+<div class="box">
+<p>[Q]<br> 統計学の文脈で使われる precision, accuracy, recall
+の定義をそれぞれ教えてください。</p>
+<p>[A]<br>
+これらの用語は、機械学習やデータマイニングの分野でよく使われるが、統計学でもよく使われる概念です。</p>
+<ul>
+<li>Precision（精度）：正確に予測されたものの中で、実際に正解であった割合を示します。真陽性（TP）の割合として定義されます。以下の式で表されます。<br>Precision
+= TP / (TP + FP)</li>
+<li>Accuracy（正確度）：すべての予測に対して、正解と予測が一致した割合を示します。真陽性と真陰性（TN）の割合として定義されます。以下の式で表されます。<br>Accuracy
+= (TP + TN) / (TP + FP + TN + FN)</li>
+<li>Recall（再現率）：実際に正解であるものの中で、正しく予測された割合を示します。真陽性の割合として定義されます。以下の式で表されます。<br>Recall
+= TP / (TP + FN)</li>
+</ul>
+<p>これらの概念は、二値分類問題において、予測と実際の正解を比較するために使用されます。ただし、多クラス分類問題では、それぞれのクラスに対してこれらの指標を計算する必要があります。</p>
+</div>
+<p>正しい定義が出力できている．</p>
+<h2 id="語呂合わせを作らせる">語呂合わせを作らせる</h2>
+<h3 id="試行-1">試行 1</h3>
+<div class="box">
+<p>[Q]<br>
+これら3つの用語それぞれについて、その定義を覚えるための語呂合わせを考えてください。</p>
+<p>[A]<br>
+以下は、それぞれの用語の定義を覚えるための語呂合わせの例です。</p>
+<ul>
+<li>Precision（精度）：正解の「P」を、予測されたものの中で「P」recision（正確さ）を示す。つまり、「P」に着目することで、「Precision」が正解に近いかどうかを確認できる。</li>
+<li>Accuracy（正確度）：「Accu」rate（正確な）予測の「acy」で、「Accuracy」という言葉ができる。つまり、「Accuracy」は、正解に対してどの程度正確な予測ができているかを示す。</li>
+<li>Recall（再現率）：「Re」al
+positives（真の陽性）を「call」する。つまり、「Recall」は、正解のうちどの程度の割合を正しく予測できているかを示す。</li>
+</ul>
+</div>
+<p>???</p>
+<h3 id="試行-2">試行 2</h3>
+<div class="box">
+<p>[Q]<br> 別の語呂合わせを考えてください。</p>
+<p>[A]<br> 以下は、別の語呂合わせの例です。</p>
+<ul>
+<li>Precision（精度）：「P」redicted
+positive（予測された陽性）のうち、「P」recision（正確さ）が高いと、陽性と判定されたものが実際に陽性である確率が高いことを示す。</li>
+<li>Accuracy（正確度）：「A」ll
+correct（すべて正しい）予測の割合を示す。「Accuracy」は、すべての予測がどの程度正解に近いかを示す指標である。</li>
+<li>Recall（再現率）：「Re」member
+positive（陽性を思い出す）と考える。「Recall」は、実際の陽性のうち、どの程度を正しく予測できたかを示す指標である。</li>
+</ul>
+</div>
+<br>
+
+<ul>
+<li><strong>P</strong>recision は <strong>P</strong>redicated positive
+ではなくて <strong>P</strong>ositive に結びつけるのが良いのでは？</li>
+<li><strong>A</strong>ccuracy と <strong>A</strong>ll
+を結びつけるの良さそう．</li>
+</ul>
+<p>残るは Recall.</p>
+<h3 id="試行-3">試行 3</h3>
+<div class="box">
+<p>[Q]<br> Recall について、別の語呂合わせを3つ考えてください。</p>
+<p>[A]<br> 以下は、Recall（再現率）の語呂合わせの例です。</p>
+<ul>
+<li>Recall（再現率）：「R」emember the
+positives（陽性を思い出す）。「Recall」は、実際の陽性のうち、どの程度を正しく予測できたかを示す指標である。</li>
+<li>Recall（再現率）：「Re」ally find
+positives（陽性を本当に見つけ出す）。つまり、「Recall」は、本当に陽性であるものをどの程度正しく見つけ出せたかを示す。</li>
+<li>Recall（再現率）：「R」ate of true
+positive（真陽性の割合）を表す。つまり、「Recall」は、正解のうちどの程度を正しく予測できたかを示す。</li>
+</ul>
+</div>
+<p>うーん微妙．</p>
+<h2 id="今日の結論">今日の結論</h2>
+<ul>
+<li><strong>P</strong>recision の P は <strong>P</strong>ositive の P．
+<ul>
+<li>TP / (TP + FP)</li>
+</ul></li>
+<li><strong>A</strong>ccuracy の A は <strong>A</strong>ll の A．
+<ul>
+<li>(TP + TN) / (TP + FP + TN + FN)</li>
+</ul></li>
+<li><strong>R</strong>ecall の R は …?
+<ul>
+<li>TP / (TP + FN)</li>
+</ul></li>
+</ul>
+</body>
+</html>
