@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../../style.css">
+  <script type="text/javascript" src="../../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>ターミナルでも図を書きたい！！</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2023-05-09"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../../index.html">トップへ</a>
+<p>
+  <date>2023-05-09</date>
+      <tag><a href="../../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="ターミナルでも図を書きたい">ターミナルでも図を書きたい！！</h1>
+<p>最近作り始めたアプリの話．</p>
+<p>図形描画ソフトは色々あるが…</p>
+<ul>
+<li>WISYWIG 図形描画ソフト (パワポ, <a
+href="https://app.diagrams.net">draw.io</a>, <a
+href="https://asciiflow.com/legacy/">ascii-flow</a>, …)
+<ul>
+<li>問題点 : 操作がキーボードで完結しない．</li>
+</ul></li>
+<li>その他の図形描画ソフト (gnuplot, mermaid, …)
+<ul>
+<li>問題点 : 記法おぼえられない (WISYWIG じゃない)．</li>
+</ul></li>
+</ul>
+<p>→ <strong>WISYWIG
+で操作がキーボードで完結するソフトが欲しい．</strong></p>
+<h2 id="作っているもの">作っているもの</h2>
+<div class="flex55">
+<div class="flex-left">
+<p><a href="https://github.com/sinotca529/uart">uart</a> :
+ターミナルで動く図形描画ソフト</p>
+<p>現状できること :</p>
+<ul>
+<li>四角形の作成</li>
+<li>テキストの挿入</li>
+</ul>
+<p>これからやりたいこと :</p>
+<ul>
+<li>図形の種類を増やす</li>
+<li>線のスタイル変更</li>
+<li>保存・読み込み</li>
+<li>その他色々</li>
+</ul>
+<p>原理的に厳しいこと :</p>
+<ul>
+<li>斜めの線・曲線の描画
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Sixel">sixel</a>
+使えば良いのだが， tmux が sixel 非対応なのでモチベ低し．</li>
+</ul></li>
+</ul>
+<p>既知のバグ :</p>
+<ul>
+<li>カーソルを画面外に動かすと落ちる．
+<ul>
+<li>スクロール機能を開発中．</li>
+</ul></li>
+</ul>
+</div>
+<div class="flex-right">
+<div class="sticky">
+<img src="uart.png" style="border:none" width="80%">
+
+</div>
+</div>
+</div>
+<hr />
+<p>みんなのコントリビュート待ってるぜ！！<br>
+(ドキュメントないし設計が頻繁に変わるけど…)</p>
+</body>
+</html>
