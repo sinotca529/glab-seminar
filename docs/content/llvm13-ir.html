@@ -206,17 +206,40 @@ Language Reference Manual</a></p>
 <ul>
 <li>終端命令
 <ul>
-<li><code>ret</code></li>
-<li><code>br</code></li>
-<li><code>switch</code></li>
-<li><code>indirectbr</code></li>
+<li><code>ret</code>
+<ul>
+<li><code>ret &lt;type&gt; &lt;value&gt;</code></li>
+<li><code>ret void</code></li>
+</ul></li>
+<li><code>br</code>
+<ul>
+<li>conditional :
+<code>br i1 &lt;cond&gt;, label &lt;iftrue&gt;, label &lt;iffalse&gt;</code></li>
+<li>unconditional : <code>br label &lt;dest&gt;</code></li>
+</ul></li>
+<li><code>switch</code>
+<ul>
+<li><code>switch &lt;intty&gt; &lt;value&gt;, label &lt;defaultdest&gt; [ &lt;intty&gt; &lt;val&gt;, label &lt;dest&gt; ...]</code></li>
+</ul></li>
+<li><code>indirectbr</code>
+<ul>
+<li><code>indirectbr &lt;somety&gt;* &lt;address&gt;, [ label &lt;dest1&gt;, label &lt;dest2&gt;, ... ]</code></li>
+<li><code>address</code> で指定されたアドレスに飛ぶ．飛び先候補は
+<code>destN</code>．</li>
+</ul></li>
+<li><code>callbr</code>
+<ul>
+<li>gcc のインラインアセンブリで goto するために使う．</li>
+</ul></li>
+<li><code>unreachable</code></li>
+<li>例外関係
+<ul>
 <li><code>invoke</code></li>
-<li><code>callbr</code></li>
 <li><code>resume</code></li>
 <li><code>catchswitch</code></li>
 <li><code>catchret</code></li>
 <li><code>cleanupret</code></li>
-<li><code>unreachable</code></li>
+</ul></li>
 </ul></li>
 <li>単項演算
 <ul>
@@ -233,13 +256,27 @@ Language Reference Manual</a></p>
 </ul></li>
 <li>メモリアクセス
 <ul>
-<li><code>alloca</code></li>
+<li><code>alloca</code>
+<ul>
+<li><code>&lt;result&gt; = alloca [inalloca] &lt;type&gt; [, &lt;ty&gt; &lt;NumElements&gt;] [, align &lt;alignment&gt;] [, addrspace(&lt;num&gt;)]</code></li>
+<li>スタックに領域を確保し，そのアドレスを返す．</li>
+</ul></li>
 <li><code>load</code></li>
 <li><code>store</code></li>
 <li><code>fence</code></li>
 <li><code>cmpxchg</code></li>
 <li><code>atomicrmw</code></li>
-<li><code>getelementptr</code></li>
+<li><code>getelementptr</code>
+<ul>
+<li><code>&lt;result&gt; = getelementptr &lt;ty&gt;, &lt;ty&gt;* &lt;ptrval&gt;{, [inrange] &lt;ty&gt; &lt;idx&gt;}*</code></li>
+<li><code>&lt;result&gt; = getelementptr inbounds &lt;ty&gt;, &lt;ty&gt;* &lt;ptrval&gt;{, [inrange] &lt;ty&gt; &lt;idx&gt;}*</code></li>
+<li><code>&lt;result&gt; = getelementptr &lt;ty&gt;, &lt;ptr vector&gt; &lt;ptrval&gt;, [inrange] &lt;vector index type&gt; &lt;idx&gt;</code></li>
+<li>メンバなどのアドレスを取得する．
+<ul>
+<li>第1引数 : ベースの型</li>
+<li>第2引数 : ポインタ (ベースアドレス)</li>
+</ul></li>
+</ul></li>
 </ul></li>
 <li>変換
 <ul>

@@ -112,16 +112,25 @@ c.f [LLVM Language Reference Manual](https://releases.llvm.org/13.0.0/docs/LangR
 ## 命令
 - 終端命令
     - `ret`
+        - `ret <type> <value>`
+        - `ret void`
     - `br`
+        - conditional : `br i1 <cond>, label <iftrue>, label <iffalse>`
+        - unconditional : `br label <dest>`
     - `switch`
+        - `switch <intty> <value>, label <defaultdest> [ <intty> <val>, label <dest> ...]`
     - `indirectbr`
-    - `invoke`
+        - `indirectbr <somety>* <address>, [ label <dest1>, label <dest2>, ... ]`
+        - `address` で指定されたアドレスに飛ぶ．飛び先候補は `destN`．
     - `callbr`
-    - `resume`
-    - `catchswitch`
-    - `catchret`
-    - `cleanupret`
+        - gcc のインラインアセンブリで goto するために使う．
     - `unreachable`
+    - 例外関係
+        - `invoke`
+        - `resume`
+        - `catchswitch`
+        - `catchret`
+        - `cleanupret`
 - 単項演算
     - `fneg`
 - 二項演算
@@ -131,12 +140,20 @@ c.f [LLVM Language Reference Manual](https://releases.llvm.org/13.0.0/docs/LangR
     - ...
 - メモリアクセス
     - `alloca`
+        - `<result> = alloca [inalloca] <type> [, <ty> <NumElements>] [, align <alignment>] [, addrspace(<num>)]`
+        - スタックに領域を確保し，そのアドレスを返す．
     - `load`
     - `store`
     - `fence`
     - `cmpxchg`
     - `atomicrmw`
     - `getelementptr`
+        - `<result> = getelementptr <ty>, <ty>* <ptrval>{, [inrange] <ty> <idx>}*`
+        - `<result> = getelementptr inbounds <ty>, <ty>* <ptrval>{, [inrange] <ty> <idx>}*`
+        - `<result> = getelementptr <ty>, <ptr vector> <ptrval>, [inrange] <vector index type> <idx>`
+        - メンバなどのアドレスを取得する．
+            - 第1引数 : ベースの型
+            - 第2引数 : ポインタ (ベースアドレス)
 - 変換
     - `trunc .. to`
     - ...
