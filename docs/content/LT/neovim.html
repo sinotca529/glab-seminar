@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>お前も vimmer にならないか？</title>
+  <meta name="keywords" content="LT"/>
+  <meta name="date" content="2023-05-12"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-05-12</date>
+      <tag><a href="../../tag.html?tag=LT">LT</a></tag>
+  </p>
+
+<h1 id="お前も-vimmer-にならないか">お前も vimmer にならないか？</h1>
+<p>別に emacs でも vi でも neovim でも何でも良い．<br> 好きな TUI
+エディタを使おう．</p>
+<p>かく言う私は neovim 派．<br> 内田くんに布教されて vimmer
+になってから早1年半．</p>
+<h2 id="vim-の利点は">Vim の利点は？</h2>
+<p><strong>カッコイイ．</strong></p>
+<ul>
+<li>みんな密かに憧れている (はず)．</li>
+</ul>
+<p><strong>高速にテキスト編集できる．</strong></p>
+<ul>
+<li>ホームポジションから手を動かさなくて良い．</li>
+<li>マスターすると思考の速度で編集できる (らしい)．</li>
+</ul>
+<p><strong>おっさんホイホイ．</strong></p>
+<ul>
+<li>今のおっさんは (たぶん) vim/emacs 世代．</li>
+<li>インターンで颯爽と vim を開いて周りに差を付けよう (?)．</li>
+</ul>
+<h2 id="vim-の欠点は">Vim の欠点は？</h2>
+<ul>
+<li>学習曲線が急． (とは言え，枯れているので覚えれば一生使える)
+<ul>
+<li><blockquote class="twitter-tweet"><p lang="ja" dir="ltr">🌀ワロタ <a href="https://twitter.com/hashtag/vim?src=hash&amp;ref_src=twsrc%5Etfw">#vim</a> <a href="https://twitter.com/hashtag/SoftwareDesign?src=hash&amp;ref_src=twsrc%5Etfw">#SoftwareDesign</a> <a href="https://t.co/Mu8HcxCLFu">pic.twitter.com/Mu8HcxCLFu</a></p>&mdash; panponpenpe (@jagnuKG) <a href="https://twitter.com/jagnuKG/status/1537731767427141633?ref_src=twsrc%5Etfw">June 17, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</li>
+</ul></li>
+<li>プラグインの策定・設定が難しい．
+<ul>
+<li>プラグインを入れないと IDE ネイティブ世代には厳しい．</li>
+<li>でも<a
+href="https://zenn.dev/yutakatay/articles/neovim-pluginlist">選択肢が多すぎて選ぶのに苦労する．</a></li>
+</ul></li>
+</ul>
+<h2 id="で習得にどれくらい掛かるの">で，習得にどれくらい掛かるの？</h2>
+<p>基本的な操作はそのうち慣れる．</p>
+<ul>
+<li>VSCode の編集速度を越えるには1週間 ~ 1ヶ月．</li>
+</ul>
+<p>ボトルネックはプラグインの整備．</p>
+<ul>
+<li>他人の設定のコピペでいいならすぐ終わる．</li>
+<li>しかしニーズは人それぞれ．
+<ul>
+<li>コピペでは機能不足・過剰を感じると思われる．</li>
+<li>また，どのキーにどの機能がバインドされているかを把握するのも一苦労．</li>
+<li><a
+href="https://github.com/sinotca529/dotfiles/tree/main/nvim/.config/nvim">私の設定</a>
+と <a href="https://github.com/ucchiee/nvim">内田くんの設定</a>
+を比べても，プラグインマネージャの時点で違うものを使っている．</li>
+</ul></li>
+</ul>
+</body>
+</html>
