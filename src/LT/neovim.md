@@ -16,7 +16,8 @@ tag: LT
 - みんな密かに憧れている (はず)．
 
 **高速にテキスト編集できる．**
-- ホームポジションから手を動かさなくて良い．
+- 起動が速い．
+- キーボードから手を離さなくていい． (ただし A キーの左隣に Ctrl を当てるのは必須)
 - マスターすると思考の速度で編集できる (らしい)．
 
 **おっさんホイホイ．**
@@ -26,7 +27,7 @@ tag: LT
 ## Vim の欠点は？
 - 学習曲線が急． (とは言え，枯れているので覚えれば一生使える)
     - <blockquote class="twitter-tweet"><p lang="ja" dir="ltr">🌀ワロタ <a href="https://twitter.com/hashtag/vim?src=hash&amp;ref_src=twsrc%5Etfw">#vim</a> <a href="https://twitter.com/hashtag/SoftwareDesign?src=hash&amp;ref_src=twsrc%5Etfw">#SoftwareDesign</a> <a href="https://t.co/Mu8HcxCLFu">pic.twitter.com/Mu8HcxCLFu</a></p>&mdash; panponpenpe (@jagnuKG) <a href="https://twitter.com/jagnuKG/status/1537731767427141633?ref_src=twsrc%5Etfw">June 17, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-- プラグインの策定・設定が難しい．
+- プラグインの選定・設定が難しい．
     - プラグインを入れないと IDE ネイティブ世代には厳しい．
     - でも[選択肢が多すぎて選ぶのに苦労する．](https://zenn.dev/yutakatay/articles/neovim-pluginlist)
 
