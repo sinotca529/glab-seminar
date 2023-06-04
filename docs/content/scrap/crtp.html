@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../style.css">
+  <script type="text/javascript" src="../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>vcall からの脱却 with CRTP + variant</title>
+  <meta name="keywords" content="scrap"/>
+  <meta name="date" content="2023-06-04"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+</head>
+<body>
+<a href="../../index.html">トップへ</a>
+<p>
+  <date>2023-06-04</date>
+      <tag><a href="../../tag.html?tag=scrap">scrap</a></tag>
+  </p>
+
+<h1 id="vcall-からの脱却-with-crtp--variant">vcall からの脱却 with CRTP
++ variant</h1>
+<p><strong>vcall は遅い</strong>。なぜなら vtable
+を引いて動的ディスパッチしているから。<br> CRTP と <code>variant</code>
+を使って<strong>できるだけ静的ディスパッチ</strong>すれば速くなる (かも)
+という話。</p>
+<p><a
+href="https://gist.github.com/olibre/3d0774df0f7a16e2da10fae2b2f26c4f">元ネタ</a></p>
+<h2 id="crtp--curiously-recurring-template-pattern">CRTP : Curiously
+Recurring Template Pattern</h2>
+<p>C++ のデザインパターン。</p>
+
+<figure><pre><code class="cpp">template &lt;typename T&gt;
+class Base {
+  // 小テク : コンストラクタを T にだけ見せる。
+  friend T;
+  base() = default;
+
+  // 静的なダウンキャスト (RTTI 不要)
+  inline T&amp; down_casted() {
+    return static_cast&lt;T&amp;&gt;(*this);
+  }
+};
+
+class Derived: public Base&lt;Derived&gt; {};
+
+// ↓ Bad からは Base&lt;Derived&gt; のコンストラクタが見えないのでコンパイルエラー
+class Bad: public Base&lt;Derived&gt; {};</code></pre></figure>
+<p>利点 :</p>
+<ul>
+<li>ダウンキャストが静的に (コンパイル時に) 可能。</li>
+<li>→ vcall なしにポリモーフィズムを実現可能。</li>
+</ul>
+<p>欠点 :</p>
+<ul>
+<li>コード複製が起こる。</li>
+</ul>
+<h2 id="stdvariant"><code>std::variant</code></h2>
+<p>直和型。</p>
+
+<figure><pre><code class="cpp">struct A { void f() {} void g() {} };
+struct B { void f() {} void g() {} };
+struct C { void f() {} void g() {} };
+
+// A, B, Cのいずれかの型を代入できる型
+std::variant&lt;A, B, C&gt; v;
+if (cond) v = A{}; else v = B{};
+
+// B型オブジェクトを保持しているか
+if (std::holds_alternative&lt;B&gt;(v)) {
+  // 保持しているB型オブジェクトを取得
+  B &amp;b = std::get&lt;B&gt;(v);
+}
+
+// どの型が代入されていたとしても、共通のインタフェースを呼び出す
+std::visit([](auto &amp;x) { x.f(); x.g(); }, v);</code></pre></figure>
+<p>ヘッダを眺める限り、次のような構造になっていそう :</p>
+
+<figure><pre><code class="cpp">struct variantABC {
+  int index;
+  // index が 0 なら A, 1 なら B, 2 なら C
+  union { A a; B b; C c;} data;
+}</code></pre></figure>
+<p>また、アセンブリを眺めた限り <code>visit</code>
+は次のようになっていそう :</p>
+
+<figure><pre><code class="cpp">void _visitor_A(A &amp;a) { a.f(); a.g(); }
+void _visitor_B(B &amp;b) { b.f(); b.g(); }
+void _visitor_C(C &amp;c) { c.f(); c.g(); }
+
+void *visitor_table = [
+  _visitor_A,
+  _visitor_B,
+  _visitor_C
+];
+
+// std::visit([](auto &amp;x) { x.f(); }, v);
+visitor_table[v.index](v.data);</code></pre></figure>
+<h2 id="virtual-vs-crtp--variant">Virtual v.s. CRTP +
+<code>variant</code></h2>
+<h3 id="基底クラスの定義">基底クラスの定義</h3>
+<div class="flex55">
+<div class="flex-right">
+<div class="sticky">
+
+<figure><pre><code class="cpp">using msg_ty = int;
+
+struct Actor {
+  virtual ~Actor() = default;
+  virtual void update() = 0;
+
+  void handle_queued_msgs() {
+    while (!pending_msgs.empty()) {
+      auto msg = std::move(pending_msgs.front());
+      pending_msgs.pop();
+      // 動的ディスパッチ (VCALL)
+      handle_one_msg(std::move(msg));
+    }
+  }
+
+  void recv_msg(msg_ty &amp;&amp;msg) {
+    pending_msgs.emplace(std::forward&lt;msg_ty&gt;(msg));
+  }
+
+private:
+  std::queue&lt;msg_ty&gt; pending_msgs;
+  virtual void handle_one_msg(msg_ty &amp;&amp;msg) = 0;
+};</code></pre></figure>
+</div>
+</div>
+<div class="flex-left">
+
+<figure><pre><code class="cpp">using msg_ty = int;
+
+templaet &lt;typename T&gt;
+struct Actor {
+  void update() { down_casted().update(); }
+
+  void handle_all_msgs() {
+    while (!pending_msgs.empty()) {
+      auto msg = std::move(pending_msgs.front());
+      pending_msgs.pop();
+      // 静的ディスパッチ
+      handle_one_msg(std::move(msg));
+    }
+  }
+
+  void recv_msg(msg_ty &amp;&amp;msg) {
+    pending_msgs.emplace(std::forward&lt;msg_ty&gt;(msg));
+  }
+
+private:
+  friend T;
+  Actor() = default;
+
+  std::queue&lt;msg_ty&gt; pending_msgs;
+
+  inline T&amp; down_casted() {
+    return static_cast&lt;T&amp;&gt;(*this);
+  }
+
+  void handle_one_msg(msg_ty &amp;&amp;msg) {
+    // 静的ディスパッチ
+    down_casted()
+      .handle_one_msg(std::forward&lt;msg_ty&gt;(msg));
+  }
+};</code></pre></figure>
+</div>
+</div>
+<h3 id="子クラスの定義">子クラスの定義</h3>
+<div class="flex55">
+<div class="flex-right">
+
+<figure><pre><code class="cpp">struct A: Actor {
+  void update() override { ... }
+  void handle_one_msg(msg_ty &amp;&amp;msg) override { ... }
+};
+
+struct B: Actor {
+  void update() override { ... }
+  void handle_one_msg(msg_ty &amp;&amp;msg) override { ... }
+};
+</code></pre></figure>
+</div>
+<div class="flex-left">
+
+<figure><pre><code class="cpp">struct A : Actor&lt;A&gt; {
+  void update() { ... }
+
+private:
+  friend struct Actor&lt;A&gt;;
+  void handle_one_msg(msg_ty &amp;&amp; msg) { ... }
+};
+
+struct B : Actor&lt;B&gt; {
+  void update() { ... }
+
+private:
+  friend struct Actor&lt;B&gt;;
+  void handle_one_msg(msg_ty &amp;&amp; msg) { ... }
+};
+</code></pre></figure>
+</div>
+</div>
+<h3 id="使い方1--型によらず同じ処理">使い方1 : 型によらず同じ処理</h3>
+<div class="flex55">
+<div class="flex-left">
+
+<figure><pre><code class="cpp">using container_type = std::vector&lt;std::unique_ptr&lt;Actor&gt;&gt;;
+
+for (auto &amp;actor : actors) {
+  actor-&gt;recv_msg(41); // call
+  actor-&gt;recv_msg(42); // call
+  actor-&gt;recv_msg(43); // call
+}
+
+for (auto &amp; active_actor : actors) {
+  actor-&gt;update();              // vcall
+  actor-&gt;handle_all_messages(); // vcall
+}</code></pre></figure>
+</div>
+<div class="flex-right">
+
+<figure><pre><code class="cpp">using container_type = std::vector&lt;std::variant&lt;A, B&gt;&gt;;
+
+for (auto &amp;active_actor: actors) {
+  // vtable 的なものが作られるので不利？
+  std::visit(
+    [](auto &amp;actor) {
+      act.recv_msg(41); // call
+      act.recv_msg(42); // call
+      act.recv_msg(43); // call
+    },
+    active_actor
+  );
+}
+
+for (auto &amp;active_actor: actors) {
+  // vtable 的なものが作られるが、
+  // vtable 内の関数の定義には vcall がない。
+  // よって有利？
+  std::visit(
+    [](auto &amp;actor) {
+      act.update();           // call
+      act.handle_all_msgs();  // call
+    },
+    active_actor
+  );
+}</code></pre></figure>
+</div>
+</div>
+<h3 id="使い方2--型ごとに違う処理">使い方2 : 型ごとに違う処理</h3>
+<div class="flex55">
+<div class="flex-left">
+
+<figure><pre><code class="cpp">if (A *a = dynamic_cast&lt;A*&gt;(actor)) { ... }
+else if (B *b = dynamic_cast&lt;B*&gt;(actor)) { ... }</code></pre></figure>
+</div>
+<div class="flex-right">
+
+<figure><pre><code class="cpp">template&lt;class... Ts&gt; struct Visitor : Ts... { using Ts::operator()...; };
+template&lt;class... Ts&gt; Visitor(Ts...) -&gt; Visitor&lt;Ts...&gt;;
+
+// 動的キャストなし。 RTTI 不要。
+std::visit(
+  Visitor {
+    [](A &amp;a) { ... },
+    [](B &amp;b) { ... },
+  },
+  actor
+);</code></pre></figure>
+</div>
+</div>
+<h2 id="比較">比較</h2>
+<h3 id="速度">速度</h3>
+<p><a
+href="https://gist.github.com/olibre/3d0774df0f7a16e2da10fae2b2f26c4f">ここ</a>のコードをベースに実験した。</p>
+<details>
+<summary>コード</summary>
+
+
+<figure><pre><code class="cpp">#include &lt;queue&gt;
+#include &lt;variant&gt;
+#include &lt;iostream&gt;
+#include &lt;memory&gt;
+#include &lt;benchmark/benchmark.h&gt;
+
+using message_type = int;
+
+namespace using_CRTP_and_variants {
+    template &lt;typename T&gt;
+    struct Actor {
+        void update() {
+            as_underlying().update();
+        }
+
+        void handle_all_messages() {
+            while (!pending_messages.empty()) {
+                auto message = std::move(pending_messages.front());
+                pending_messages.pop();
+                handle_one_message(std::move(message));
+            }
+        }
+
+        void receive_message(message_type &amp;&amp; msg) {
+            pending_messages.emplace(std::forward&lt;message_type&gt;(msg));
+        }
+
+    private:
+        friend T;
+        Actor() = default;
+
+        std::queue&lt;message_type&gt; pending_messages;
+
+        inline T &amp; as_underlying() {
+            return static_cast&lt;T&amp;&gt;(*this);
+        }
+        inline T const &amp; as_underlying() const {
+            return static_cast&lt;T const &amp;&gt;(*this);
+        }
+
+        void handle_one_message(message_type &amp;&amp; msg) {
+            as_underlying().handle_one_message(std::forward&lt;message_type&gt;(msg));
+        }
+    };
+
+    struct A : Actor&lt;A&gt; {
+        using Actor::Actor;
+
+        void update() {
+            //std::cout &lt;&lt; &quot;A : update()\n&quot;;
+        }
+
+    private:
+        friend struct Actor&lt;A&gt;;
+
+        void handle_one_message (message_type &amp;&amp; msg) {
+            //std::cout &lt;&lt; &quot;A : handle_one_message : &quot; &lt;&lt; msg &lt;&lt; '\n';
+        }
+    };
+    struct B : Actor&lt;B&gt; {
+        using Actor::Actor;
+
+        void update() {
+            //std::cout &lt;&lt; &quot;B : update()\n&quot;;
+        }
+
+    private:
+        friend struct Actor&lt;B&gt;;
+
+        void handle_one_message (message_type &amp;&amp; msg) {
+            //std::cout &lt;&lt; &quot;B : handle_one_message : &quot; &lt;&lt; msg &lt;&lt; '\n';
+        }
+    };
+}
+
+namespace using_inheritance {
+    struct Actor {
+        virtual ~Actor() = default;
+        virtual void update() = 0;
+
+        void handle_all_messages() {
+            while (!pending_messages.empty()) {
+                auto message = std::move(pending_messages.front());
+                pending_messages.pop();
+                handle_one_message(std::move(message));
+            }
+        }
+
+        void receive_message (message_type &amp;&amp; msg) {
+            pending_messages.emplace(std::forward&lt;message_type&gt;(msg));
+        }
+
+    private:
+        std::queue&lt;message_type&gt; pending_messages;
+
+        virtual void handle_one_message(message_type &amp;&amp; msg) = 0;
+    };
+
+    struct A : Actor {
+        void update() override {
+            //std::cout &lt;&lt; &quot;A : update()\n&quot;;
+        }
+        void handle_one_message(message_type &amp;&amp; msg) override {
+            //std::cout &lt;&lt; &quot;A : handle_one_message : &quot; &lt;&lt; msg &lt;&lt; '\n';
+        }
+    };
+
+    struct B : Actor {
+        void update() override {
+            //std::cout &lt;&lt; &quot;B : update()\n&quot;;
+        }
+        void handle_one_message(message_type &amp;&amp; msg) override {
+            //std::cout &lt;&lt; &quot;B : handle_one_message : &quot; &lt;&lt; msg &lt;&lt; '\n';
+        }
+    };
+}
+
+static void test_CRTP_and_variants(benchmark::State&amp; state) {
+
+    using container_type = std::vector&lt;
+        std::variant&lt;
+            using_CRTP_and_variants::A,
+            using_CRTP_and_variants::B
+        &gt;
+    &gt;;
+
+    container_type actors {
+        using_CRTP_and_variants::A{},
+        using_CRTP_and_variants::B{},
+        using_CRTP_and_variants::A{},
+        using_CRTP_and_variants::B{},
+        using_CRTP_and_variants::A{},
+        using_CRTP_and_variants::B{},
+        using_CRTP_and_variants::A{},
+        using_CRTP_and_variants::B{},
+        using_CRTP_and_variants::A{},
+        using_CRTP_and_variants::B{}
+    };
+
+    for (auto _ : state) {
+        for (auto &amp; active_actor : actors) {
+            std::visit([](auto &amp; act) {
+                act.receive_message(41);
+                act.receive_message(42);
+                act.receive_message(43);
+            }, active_actor);
+        }
+
+        for (auto &amp; active_actor : actors)
+        {
+            std::visit([](auto &amp; act) {
+                act.update();
+                act.handle_all_messages();
+            }, active_actor);
+        }
+        benchmark::DoNotOptimize(actors);
+    }
+}
+
+static void test_CRTP_and_variants_stack_ptr(benchmark::State&amp; state) {
+    using poly = std::variant&lt;
+        using_CRTP_and_variants::A,
+        using_CRTP_and_variants::B
+    &gt;;
+
+    using container_type = std::vector&lt;poly*&gt;;
+
+    poly v0 = using_CRTP_and_variants::A{};
+    poly v1 = using_CRTP_and_variants::B{};
+    poly v2 = using_CRTP_and_variants::A{};
+    poly v3 = using_CRTP_and_variants::B{};
+    poly v4 = using_CRTP_and_variants::A{};
+    poly v5 = using_CRTP_and_variants::B{};
+    poly v6 = using_CRTP_and_variants::A{};
+    poly v7 = using_CRTP_and_variants::B{};
+    poly v8 = using_CRTP_and_variants::A{};
+    poly v9 = using_CRTP_and_variants::B{};
+
+
+    container_type actors {
+        &amp;v0,
+        &amp;v1,
+        &amp;v2,
+        &amp;v3,
+        &amp;v4,
+        &amp;v5,
+        &amp;v6,
+        &amp;v7,
+        &amp;v8,
+        &amp;v9
+    };
+
+    for (auto _ : state) {
+        for (auto &amp; active_actor : actors) {
+            std::visit([](auto &amp; act) {
+                act.receive_message(41);
+                act.receive_message(42);
+                act.receive_message(43);
+            }, *active_actor);
+        }
+
+        for (auto &amp; active_actor : actors)
+        {
+            std::visit([](auto &amp; act) {
+                act.update();
+                act.handle_all_messages();
+            }, *active_actor);
+        }
+        benchmark::DoNotOptimize(actors);
+    }
+}
+
+static void test_CRTP_and_variants_unique_ptr(benchmark::State&amp; state) {
+    using poly = std::variant&lt;
+        using_CRTP_and_variants::A,
+        using_CRTP_and_variants::B
+    &gt;;
+
+    using container_type = std::vector&lt;std::unique_ptr&lt;poly&gt;&gt;;
+
+
+
+    container_type actors;
+    {
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::A{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::B{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::A{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::B{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::A{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::B{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::A{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::B{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::A{}));
+        actors.emplace_back(std::make_unique&lt;poly&gt;(using_CRTP_and_variants::B{}));
+    }
+
+    for (auto _ : state) {
+        for (auto &amp; active_actor : actors) {
+            std::visit([](auto &amp; act) {
+                act.receive_message(41);
+                act.receive_message(42);
+                act.receive_message(43);
+            }, *active_actor);
+        }
+
+        for (auto &amp; active_actor : actors)
+        {
+            std::visit([](auto &amp; act) {
+                act.update();
+                act.handle_all_messages();
+            }, *active_actor);
+        }
+        benchmark::DoNotOptimize(actors);
+    }
+}
+
+static void test_inheritance_unique_ptr(benchmark::State&amp; state) {
+    using container_type = std::vector&lt;std::unique_ptr&lt;using_inheritance::Actor&gt;&gt;;
+
+    container_type actors;
+    {
+        actors.emplace_back(std::make_unique&lt;using_inheritance::A&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::B&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::A&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::B&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::A&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::B&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::A&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::B&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::A&gt;());
+        actors.emplace_back(std::make_unique&lt;using_inheritance::B&gt;());
+    }
+
+    for (auto _ : state) {
+        for (auto &amp; active_actor : actors) {
+            active_actor-&gt;receive_message(41);
+            active_actor-&gt;receive_message(42);
+            active_actor-&gt;receive_message(43);
+        }
+
+        for (auto &amp; active_actor : actors) {
+            active_actor-&gt;update();
+            active_actor-&gt;handle_all_messages();
+        }
+        benchmark::DoNotOptimize(actors);
+    }
+}
+
+static void test_inheritance_stack_ptr(benchmark::State&amp; state) {
+
+    using container_type = std::vector&lt;using_inheritance::Actor*&gt;;
+
+    auto k0 = using_inheritance::A();
+    auto k1 = using_inheritance::B();
+    auto k2 = using_inheritance::A();
+    auto k3 = using_inheritance::B();
+    auto k4 = using_inheritance::A();
+    auto k5 = using_inheritance::B();
+    auto k6 = using_inheritance::A();
+    auto k7 = using_inheritance::B();
+    auto k8 = using_inheritance::A();
+    auto k9 = using_inheritance::B();
+
+    container_type actors {
+        &amp;k0,
+        &amp;k1,
+        &amp;k2,
+        &amp;k3,
+        &amp;k4,
+        &amp;k5,
+        &amp;k6,
+        &amp;k7,
+        &amp;k8,
+        &amp;k9
+    };
+
+    for (auto _ : state) {
+        for (auto &amp; active_actor : actors) {
+            active_actor-&gt;receive_message(41);
+            active_actor-&gt;receive_message(42);
+            active_actor-&gt;receive_message(43);
+        }
+
+        for (auto &amp; active_actor : actors) {
+            active_actor-&gt;update();
+            active_actor-&gt;handle_all_messages();
+        }
+        benchmark::DoNotOptimize(actors);
+    }
+}
+
+BENCHMARK(test_CRTP_and_variants);
+BENCHMARK(test_CRTP_and_variants_stack_ptr);
+BENCHMARK(test_CRTP_and_variants_unique_ptr);
+BENCHMARK(test_inheritance_unique_ptr);
+BENCHMARK(test_inheritance_stack_ptr);
+BENCHMARK_MAIN();</code></pre></figure>
+</details>
+
+<p>コンパイルオプション :</p>
+
+<figure><pre><code class="nohljsln txt"># https://github.com/google/benchmark.git を利用
+clang++ bench.cpp -std=c++20 -isystem benchmark/include -Lbenchmark/build/src -lbenchmark -lpthread -O3</code></pre></figure>
+<p>結果 :</p>
+
+<figure><pre><code class="nohljsln txt">----------------------------------------------------------------------------
+Benchmark                                  Time             CPU   Iterations
+----------------------------------------------------------------------------
+test_CRTP_and_variants                  63.6 ns         63.6 ns     10815588
+test_CRTP_and_variants_stack_ptr        62.9 ns         62.9 ns     11092325
+test_CRTP_and_variants_unique_ptr       61.3 ns         61.3 ns     10988580
+test_inheritance_unique_ptr              116 ns          116 ns      6022044
+test_inheritance_stack_ptr               103 ns          103 ns      6673525</code></pre></figure>
+<p>少なくともこの例では CRTP + <code>variant</code> が速い。<br>
+ちなみに、 Rust 界隈にも<a
+href="https://tourofrust.com/81_en.html">似たような話</a>や<a
+href="https://qiita.com/carrotflakes/items/896ce7f49931c64a2954">ベンチ</a>がある。</p>
+<h3 id="拡張性">拡張性</h3>
+<p>状況 :
+ライブラリ内に上記コードがあり、それをユーザーが拡張したいとする。</p>
+<ul>
+<li>vcall : 子クラスを簡単に増やせる。</li>
+<li>CRTP + variant : 子クラスを増やすのは難しい。</li>
+</ul>
+<p><a
+href="https://zenn.dev/qnighy/articles/5b1ad05d72c19d">参考</a></p>
+</body>
+</html>
