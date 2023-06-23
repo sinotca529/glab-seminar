@@ -232,7 +232,7 @@ digraph G {
         S1 [label="状態式", shape=doublecircle];
         P1 [label="パス式"];
 
-        A1 -> S1 [label = "p"];
+        A1 -> S1 [label = "p, ¬p"];
         S1 -> P1 [label = "ε"];
         P1 -> S1 [label = "A,E"];
         S1 -> S1 [label = "¬,∨,∧"];
@@ -247,11 +247,10 @@ digraph G {
         S2 [label="状態式", shape=doublecircle];
         P2 [label="パス式"];
 
-        A2 -> S2 [label = "p"];
-        S2 -> P2 [label = "ε"];
+        A2 -> S2 [label = "p, ¬p"];
+        S2 -> P2 [label = "X,F,G,U,R"];
         P2 -> S2 [label = "A,E"];
         S2 -> S2 [label = "¬,∨,∧"];
-        P2 -> P2 [label = "X,F,G,U,R"];
 
         labelloc="t";
         label="CTL";
@@ -278,10 +277,9 @@ digraph G {
         P4 [label="パス式"];
 
         A4 -> S4 [label="p,¬p"];
-        S4 -> P4 [label="ε"];
+        S4 -> P4 [label="X,F,G,U,R"];
         P4 -> S4 [label="A"];
         S4 -> S4 [label="∨,∧"];
-        P4 -> P4 [label="∨,∧,\nX,F,G,U,R"];
 
         labelloc="t";
         label="ACTL";
@@ -289,7 +287,7 @@ digraph G {
 
     subgraph cluster_ltl {
         A5 [label="開始"];
-        S5 [label="状態式\n(LTL式)", shape=doublecircle];
+        S5 [label="状態式", shape=doublecircle];
         P5 [label="パス式"];
 
         A5 -> P5 [label="p"];
@@ -559,23 +557,23 @@ $$ \llbracket f\rrbracket_M := \{ s \in S \mid M,s \models f\} $$
 
 $F \subset 2^{S}$ ($S$ : 状態集合)
 
-- 例 : $F = \{\{s_0, s_1\}, \{s_2}\}$
+- 例 : $F = \{\{s_0, s_1\}, \{s_2\}\}$
 
 ### 公平パス (Fair Path)
 
 パス $\pi$ が公平 (fair) であるとは、次を満たすことである。
 
-$$ \forall P \in F, P \cap \mathop{\mathrm{inf}}(\pi) \neq {}$$
+$$ \forall P \in F, P \cap \mathop{\mathrm{inf}}(\pi) \neq \{\}$$
 
 ただし、
 
-$$ \mathop{\mathrm{inf}}(\pi) \stackrel{\mathrm{def}}{=} {s \in S | s \text{が} \pi \text{上に無限回出現}} $$
+$$ \mathop{\mathrm{inf}}(\pi) \stackrel{\mathrm{def}}{=} \{s \in S \mid s \text{ が } \pi \text{ 上に無限回出現}\} $$
 
 飢餓状態にはならないが、出現率の公平性は言及できない。
 
 ### CTL\* での表現
 
-$$ \mathrm{fpath} := \bigwedge\_{P \in F} \bigvee \opGF s $$
+$$ \mathrm{fpath} := \bigwedge_{P \in F} \bigvee \opGF s $$
 
 - $\opE(\mathrm{fpath} \land \phi)$
   - 公平で $\phi$ を満たすパスが存在。
@@ -590,10 +588,22 @@ $$ \mathrm{fpath} := \bigwedge\_{P \in F} \bigvee \opGF s $$
 - 文法的に $\bigwedge_{P \in F} \bigvee \opGF s$ は非文。
 - → 公平クリプキ構造 (fair Kripke structure) を使い、$\opE$, $\opA$ の意味論を変える。
 
+
 公平クリプキ構造 $M = \{ S, S_0, R, \mathrm{AP}, L, F \}$
 
+公平意味論 (fair semantics):
+- $M, s \models_F g$ : 式 $g$ が公平クリプキ構造 $M$ の状態 $s$ で成り立つ。
 - $M,s \models_F \opE \phi$ : $\exists \pi \text{s.t.} s_0 = s \land \pi \text{は公平パス}, \pi \models_F = \phi$
+    - $M,s \models \opE_F \phi$ とも書く。
 - $M,s \models_F \opA \phi$ : $\forall \pi \text{s.t.} s_0 = s \land \pi \text{は公平パス}, \pi \models_F = \phi$
+    - $M,s \models \opA_F \phi$ とも書く。
+    - $s$ で始まる公平パスがないなら、 $M,s \models \opA_F \phi$ は常に成立。
+
+
+公平性を考えない場合、 $p$, $\opE p$, $\opA p$ は同じ意味。
+しかし、 $p$, $\opE_F p$, $\opA_F p$ は違う意味。
+
+- $F = \{ S \}$ の意味は？
 
 ## 反例 (Counterexamples)
 
@@ -630,6 +640,27 @@ $$ \mathrm{fpath} := \bigwedge\_{P \in F} \bigvee \opGF s $$
 - つまり、 $\pi$ は $s_0 \stackrel{a}{\cdots} k \stackrel{b}{\cdots} k \cdots$ という状態である。
   - ただし、$\stackrel{a}{\cdots}$ と $\stackrel{b}{\cdots}$ は有限長。
 - このとき、 $\pi' := s_0 \stackrel{a}{\cdots} (k\stackrel{b}{\cdots})^\omega$ は $\opG\neg p$ を満たし、表現が有限長なパスである。
+
+
+こうした構造は lasso (投げ縄) と呼ばれる。
+
+```graphviz
+digraph G {
+    node [shape=circle, fixedsize=true];
+    A [label="", width=0, color=none];
+    B [label="s0"];
+    C [label="..."];
+    D [label="k"];
+    E [label="..."];
+    F [label="l"];
+
+    A -> B -> C -> D -> E -> F -> D;
+
+    {rank = same; A; B; C; D; E; F;};
+    labelloc="t";
+    label="lasso";
+}
+```
 
 一般には、公平性等も考える必要があるが、そうした詳しい議論は 7 章で行う。
 

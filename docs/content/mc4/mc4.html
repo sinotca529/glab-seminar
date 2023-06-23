@@ -338,7 +338,7 @@ style="text-align: center;">全てのパスで、いつかは実行が終わる�
         S1 [label=&quot;状態式&quot;, shape=doublecircle];
         P1 [label=&quot;パス式&quot;];
 
-        A1 -&gt; S1 [label = &quot;p&quot;];
+        A1 -&gt; S1 [label = &quot;p, ¬p&quot;];
         S1 -&gt; P1 [label = &quot;ε&quot;];
         P1 -&gt; S1 [label = &quot;A,E&quot;];
         S1 -&gt; S1 [label = &quot;¬,∨,∧&quot;];
@@ -353,11 +353,10 @@ style="text-align: center;">全てのパスで、いつかは実行が終わる�
         S2 [label=&quot;状態式&quot;, shape=doublecircle];
         P2 [label=&quot;パス式&quot;];
 
-        A2 -&gt; S2 [label = &quot;p&quot;];
-        S2 -&gt; P2 [label = &quot;ε&quot;];
+        A2 -&gt; S2 [label = &quot;p, ¬p&quot;];
+        S2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
         P2 -&gt; S2 [label = &quot;A,E&quot;];
         S2 -&gt; S2 [label = &quot;¬,∨,∧&quot;];
-        P2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
 
         labelloc=&quot;t&quot;;
         label=&quot;CTL&quot;;
@@ -384,10 +383,9 @@ style="text-align: center;">全てのパスで、いつかは実行が終わる�
         P4 [label=&quot;パス式&quot;];
 
         A4 -&gt; S4 [label=&quot;p,¬p&quot;];
-        S4 -&gt; P4 [label=&quot;ε&quot;];
+        S4 -&gt; P4 [label=&quot;X,F,G,U,R&quot;];
         P4 -&gt; S4 [label=&quot;A&quot;];
         S4 -&gt; S4 [label=&quot;∨,∧&quot;];
-        P4 -&gt; P4 [label=&quot;∨,∧,\nX,F,G,U,R&quot;];
 
         labelloc=&quot;t&quot;;
         label=&quot;ACTL&quot;;
@@ -395,7 +393,7 @@ style="text-align: center;">全てのパスで、いつかは実行が終わる�
 
     subgraph cluster_ltl {
         A5 [label=&quot;開始&quot;];
-        S5 [label=&quot;状態式\n(LTL式)&quot;, shape=doublecircle];
+        S5 [label=&quot;状態式&quot;, shape=doublecircle];
         P5 [label=&quot;パス式&quot;];
 
         A5 -&gt; P5 [label=&quot;p&quot;];
@@ -774,20 +772,21 @@ Constraints)</h3>
 <p><span class="math inline">F \subset 2^{S}</span> (<span
 class="math inline">S</span> : 状態集合)</p>
 <ul>
-<li>例 : $F = {{s_0, s_1}, {s_2}}$</li>
+<li>例 : <span class="math inline">F = \{\{s_0, s_1\},
+\{s_2\}\}</span></li>
 </ul>
 <h3 id="公平パス-fair-path">公平パス (Fair Path)</h3>
 <p>パス <span class="math inline">\pi</span> が公平 (fair)
 であるとは、次を満たすことである。</p>
 <p><span class="math display"> \forall P \in F, P \cap
-\mathop{\mathrm{inf}}(\pi) \neq {}</span></p>
+\mathop{\mathrm{inf}}(\pi) \neq \{\}</span></p>
 <p>ただし、</p>
 <p><span class="math display"> \mathop{\mathrm{inf}}(\pi)
-\stackrel{\mathrm{def}}{=} {s \in S | s \text{が} \pi
-\text{上に無限回出現}} </span></p>
+\stackrel{\mathrm{def}}{=} \{s \in S \mid s \text{ が } \pi \text{
+上に無限回出現}\} </span></p>
 <p>飢餓状態にはならないが、出現率の公平性は言及できない。</p>
 <h3 id="ctl-での表現">CTL* での表現</h3>
-<p><span class="math display"> \mathrm{fpath} := \bigwedge\_{P \in F}
+<p><span class="math display"> \mathrm{fpath} := \bigwedge_{P \in F}
 \bigvee \opGF s </span></p>
 <ul>
 <li><span class="math inline">\opE(\mathrm{fpath} \land \phi)</span>
@@ -816,13 +815,37 @@ class="math inline">\opE</span>, <span class="math inline">\opA</span>
 </ul>
 <p>公平クリプキ構造 <span class="math inline">M = \{ S, S_0, R,
 \mathrm{AP}, L, F \}</span></p>
+<p>公平意味論 (fair semantics):</p>
 <ul>
+<li><span class="math inline">M, s \models_F g</span> : 式 <span
+class="math inline">g</span> が公平クリプキ構造 <span
+class="math inline">M</span> の状態 <span class="math inline">s</span>
+で成り立つ。</li>
 <li><span class="math inline">M,s \models_F \opE \phi</span> : <span
 class="math inline">\exists \pi \text{s.t.} s_0 = s \land \pi
-\text{は公平パス}, \pi \models_F = \phi</span></li>
+\text{は公平パス}, \pi \models_F = \phi</span>
+<ul>
+<li><span class="math inline">M,s \models \opE_F \phi</span>
+とも書く。</li>
+</ul></li>
 <li><span class="math inline">M,s \models_F \opA \phi</span> : <span
 class="math inline">\forall \pi \text{s.t.} s_0 = s \land \pi
-\text{は公平パス}, \pi \models_F = \phi</span></li>
+\text{は公平パス}, \pi \models_F = \phi</span>
+<ul>
+<li><span class="math inline">M,s \models \opA_F \phi</span>
+とも書く。</li>
+<li><span class="math inline">s</span> で始まる公平パスがないなら、
+<span class="math inline">M,s \models \opA_F \phi</span>
+は常に成立。</li>
+</ul></li>
+</ul>
+<p>公平性を考えない場合、 <span class="math inline">p</span>, <span
+class="math inline">\opE p</span>, <span class="math inline">\opA
+p</span> は同じ意味。 しかし、 <span class="math inline">p</span>, <span
+class="math inline">\opE_F p</span>, <span class="math inline">\opA_F
+p</span> は違う意味。</p>
+<ul>
+<li><span class="math inline">F = \{ S \}</span> の意味は？</li>
 </ul>
 <h2 id="反例-counterexamples">反例 (Counterexamples)</h2>
 <p>反例 : 仕様に違反するパス</p>
@@ -882,6 +905,23 @@ class="math inline">s_0 \stackrel{a}{\cdots} k \stackrel{b}{\cdots} k
 class="math inline">\opG\neg p</span>
 を満たし、表現が有限長なパスである。</li>
 </ul>
+<p>こうした構造は lasso (投げ縄) と呼ばれる。</p>
+
+<figure><div class="graphviz">digraph G {
+    node [shape=circle, fixedsize=true];
+    A [label=&quot;&quot;, width=0, color=none];
+    B [label=&quot;s0&quot;];
+    C [label=&quot;...&quot;];
+    D [label=&quot;k&quot;];
+    E [label=&quot;...&quot;];
+    F [label=&quot;l&quot;];
+
+    A -&gt; B -&gt; C -&gt; D -&gt; E -&gt; F -&gt; D;
+
+    {rank = same; A; B; C; D; E; F;};
+    labelloc=&quot;t&quot;;
+    label=&quot;lasso&quot;;
+}</div></figure>
 <p>一般には、公平性等も考える必要があるが、そうした詳しい議論は 7
 章で行う。</p>
 <h2 id="safety-liveness">Safety, Liveness</h2>
