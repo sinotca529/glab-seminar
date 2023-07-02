@@ -34,7 +34,7 @@
     });
   </script>
 
-  <title>Model Checking (Sec.4) [WIP]</title>
+  <title>Model Checking (Sec.4)</title>
   <meta name="keywords" content="MC"/>
   <meta name="date" content="2023-07-XX"/>
 
@@ -90,8 +90,8 @@
 </span></p>
 <h1 id="mc4-章-時相論理-temporal-logic">MC4 章 時相論理 (Temporal
 Logic)</h1>
-<p>本書の目的 : システムがある性質を満たすか調べたい。</p>
-<p>手順 :</p>
+<p>本書の目的 : システムがある性質を満たすか、モデル検査で調べたい。</p>
+<p>モデル検査の手順 :</p>
 <ol type="1">
 <li>システムをモデル化する (~3 章)</li>
 <li><strong>検証したい性質を記述する (本章)</strong></li>
@@ -99,77 +99,71 @@ Logic)</h1>
 </ol>
 <p>性質を記述する方法 :</p>
 <ol type="1">
-<li>クリプキ構造を<em>計算木</em>に変換する。</li>
-<li>計算木に対し、<em>時相論理式</em>を用いて性質を記述する。</li>
+<li>クリプキ構造を<strong>計算木</strong>に変換する。</li>
+<li>計算木の性質を<strong>時相論理式</strong>で記述する。</li>
 </ol>
 <h2 id="計算木-computational-tree">計算木 (Computational Tree)</h2>
-<p>クリプキ構造上のパスを全て表した木構造。</p>
+<p>クリプキ構造上の全パスを表した木。</p>
 <ul>
 <li>パスの分岐はあるが、合流はない。</li>
 <li>クリプキ構造から簡単に作れる。</li>
-<li>クリプキ構造は left-total (全てのノードが子を持つ) なので、計算木も
-left-total である。</li>
+<li>クリプキ構造には葉ノードがない (left-total)
+なので、計算木にも葉ノードがない。</li>
 </ul>
 <p>例 :</p>
 
 <figure><div class="graphviz">digraph G {
-    node [shape=circle, fixedsize=true, style=filled];
-    subgraph cluster_kripki {
-        K0 [label=&quot;&quot;, width=0, color=none]
-        K1 [label=&quot;a,b&quot;, fillcolor=&quot;#EDCFCE&quot;];
-        K2 [label=&quot;b,c&quot;, fillcolor=&quot;#D5EAD8&quot;];
-        K3 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
-        K0 -&gt; K1 -&gt; K2 -&gt; K3 -&gt; K3;
-        K2 -&gt; K1 -&gt; K3;
-        labelloc=&quot;t&quot;;
-        label=&quot;クリプキ構造&quot;;
-    }
+  node [shape=circle, fixedsize=true, style=filled];
+  subgraph cluster_kripki {
+    K0 [label=&quot;&quot;, width=0, color=none]
+    K1 [label=&quot;a,b&quot;, fillcolor=&quot;#EDCFCE&quot;];
+    K2 [label=&quot;b,c&quot;, fillcolor=&quot;#D5EAD8&quot;];
+    K3 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
+    K0 -&gt; K1 -&gt; K2 -&gt; K3 -&gt; K3;
+    K2 -&gt; K1 -&gt; K3;
+    labelloc=&quot;t&quot;;
+    label=&quot;クリプキ構造&quot;;
+  }
 
-    subgraph cluster_ct {
-        C0 [label=&quot;&quot;, width=0, color=none]
-        C1 [label=&quot;a,b&quot;, fillcolor=&quot;#EDCFCE&quot;];
-        C2 [label=&quot;b,c&quot;, fillcolor=&quot;#D5EAD8&quot;];
-        C3 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
-        C4 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
-        C5 [label=&quot;a,b&quot;, fillcolor=&quot;#EDCFCE&quot;];
-        C6 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
-        C7 [label=&quot;&quot;, width=0, color=none];
-        C8 [label=&quot;&quot;, width=0, color=none];
-        C9 [label=&quot;&quot;, width=0, color=none];
-        C10 [label=&quot;&quot;, width=0, color=none];
-        C0 -&gt; C1 -&gt; C2 -&gt; C5;
-        C1 -&gt; C3 -&gt; C4;
-        C2 -&gt; C6;
-        C5 -&gt; C7;
-        C5 -&gt; C8;
-        C4 -&gt; C9;
-        C6 -&gt; C10;
-        labelloc=&quot;t&quot;;
-        label=&quot;計算木&quot;;
-    }
+  subgraph cluster_ct {
+    C0 [label=&quot;&quot;, width=0, color=none]
+    C1 [label=&quot;a,b&quot;, fillcolor=&quot;#EDCFCE&quot;];
+    C2 [label=&quot;b,c&quot;, fillcolor=&quot;#D5EAD8&quot;];
+    C3 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
+    C4 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
+    C5 [label=&quot;a,b&quot;, fillcolor=&quot;#EDCFCE&quot;];
+    C6 [label=&quot;c&quot;, fillcolor=&quot;#C8D2E3&quot;];
+    C7 [label=&quot;&quot;, width=0, color=none];
+    C8 [label=&quot;&quot;, width=0, color=none];
+    C9 [label=&quot;&quot;, width=0, color=none];
+    C10 [label=&quot;&quot;, width=0, color=none];
+    C0 -&gt; C1 -&gt; C2 -&gt; C5;
+    C1 -&gt; C3 -&gt; C4;
+    C2 -&gt; C6;
+    C5 -&gt; C7;
+    C5 -&gt; C8;
+    C4 -&gt; C9;
+    C6 -&gt; C10;
+    labelloc=&quot;t&quot;;
+    label=&quot;計算木&quot;;
+  }
 }</div></figure>
+<div class="note">
+<p>わざわざ計算木を考える必要性は薄いと思う。<br>
+時相理論はクリプキ構造の性質を記述していると考えても問題はない。</p>
+</div>
 <h2 id="時相論理">時相論理</h2>
-<p>計算木の<strong>時間的な</strong>振る舞いを記述できる論理。</p>
+<p>計算木に対して、<strong>複数のパス</strong>や<strong>時間</strong>を考慮した振る舞いを記述できる。</p>
 <p>例 :</p>
 <ul>
-<li>「<strong>全ての</strong>パスにおいて<strong>常に</strong>、<code>malloc</code>
-を呼んだら、<strong>次に</strong>返り値が非ゼロなことを確認する。」</li>
-<li>「<strong>全ての</strong>パスにおいて<strong>常に</strong>、メモリを確保したら、<strong>いつかは</strong>それを開放する。」</li>
-<li>「<strong>常に</strong> root
-権限を持っているパスが<strong>存在</strong>する。」</li>
-<li>「電池残量が 5%を切る<strong>まで</strong>通常モードで動く。」</li>
-<li>「電源ボタンが押されるまでスリープし続ける。」</li>
+<li>「<strong>全てのパス</strong>で<strong>常に</strong>、<code>malloc</code>
+を呼んだ<strong>直後に</strong>返り値が非ゼロなことを確認する。」</li>
+<li>「<strong>将来</strong>ゼロ除算をする<strong>パスが存在</strong>する。」</li>
+<li>「電池残量が 5% を切る<strong>まで</strong>通常モードで動く。」</li>
 </ul>
 <h3 id="時相論理の演算子">時相論理の演算子</h3>
+<p>まずは直感的な説明を試みる。<br> 形式的な定義は後述。</p>
 <ul>
-<li><p>パス量化子 (path quantifiers) :
-ある状態から始まるパス群に関する性質。</p>
-<ul>
-<li><span class="math inline">\opA p</span> : すべて (All) のパスが
-<span class="math inline">p</span> を満たす。</li>
-<li><span class="math inline">\opE p</span> : ある (Exist) パスが <span
-class="math inline">p</span> を満たす。</li>
-</ul></li>
 <li><p>時相作用素 (temporal operator) : 特定のパスに関する性質。</p>
 <ul>
 <li><p><span class="math inline">\opX p</span> : 次の (neXt) 状態が
@@ -234,8 +228,8 @@ graph [rankdir = LR];
 }</div></figure></li>
 </ul></li>
 <li><p><span class="math inline">p \opR q</span> : <span
-class="math inline">p</span> になるまで <span
-class="math inline">q</span> であり続ける。 (<span
+class="math inline">p</span> になったら <span
+class="math inline">q</span> でなくて良くなる (Release)。 (<span
 class="math inline">p</span> になる状態が現れなくても良い。)</p>
 <ul>
 <li>
@@ -251,40 +245,71 @@ graph [rankdir = LR];
 }</div></figure></li>
 </ul></li>
 </ul></li>
+<li><p>パス量化子 (path quantifiers) :
+ある状態から始まるパス群に関する性質。</p>
+<ul>
+<li><span class="math inline">\opA p</span> : すべて (All) のパスが
+<span class="math inline">p</span> を満たす。</li>
+<li><span class="math inline">\opE p</span> : ある (Exist) パスが <span
+class="math inline">p</span> を満たす。</li>
+</ul></li>
 </ul>
 <p>例 :</p>
 <ul>
-<li>「<strong>全ての</strong>パスにおいて<strong>常に</strong>、<code>malloc</code>
-を呼んだら、<strong>次に</strong>返り値が非ゼロなことを確認する。」
+<li>「<strong>全てのパス</strong>で<strong>常に</strong>、<code>malloc</code>
+を呼んだ<strong>直後に</strong>返り値が非ゼロなことを確認する。」
 <ul>
-<li>→ <span class="math inline">\opAG(\text{mallocを呼んだ} \implies
-\opX \text{返り値を確認})</span></li>
+<li><span class="math inline">\opAG((\text{mallocを呼ぶ}) \implies \opX
+(\text{返り値を確認}))</span></li>
 </ul></li>
-<li>「<strong>全ての</strong>パスにおいて<strong>常に</strong>、メモリを確保したら、<strong>いつかは</strong>それを開放する。」
+<li>「<strong>将来</strong>ゼロ除算をする<strong>パスが存在</strong>する。」
 <ul>
-<li>→ <span class="math inline">\opAG(\text{メモリaを確保した} \implies
-\opF \text{aを開放})</span></li>
+<li><span class="math inline">\opEF((\text{ゼロ除算}))</span></li>
 </ul></li>
-<li>「<strong>常に</strong> root
-権限を持っているパスが<strong>存在</strong>する。」
+<li>「電池残量が 5% を切る<strong>まで</strong>通常モードで動く。」
 <ul>
-<li>→ <span class="math inline">\opEG(\text{root権限})</span></li>
+<li><span
+class="math inline">(\text{通常モード})\opU(\text{電池残量5\%未満})</span></li>
+</ul></li>
+</ul>
+<p>Q. 適当な性質を考えて、それを時相理論式で表してください。</p>
+<h2 id="時相論理式の種類">時相論理式の種類</h2>
+<p>時相論理式は<strong>状態式</strong>と<strong>パス式</strong>に分けられる。</p>
+<ul>
+<li>状態式 (state formula): ある状態の性質をあらわす。
+<ul>
+<li>ある状態から始まるパス群に言及できる。</li>
+<li>例 1 : <span class="math inline">\opG f</span>
+「ある状態から始まる全てのパスは、性質 <span
+class="math inline">f</span> を満たす。」</li>
+</ul></li>
+<li>パス式 (path formula): あるパスの性質をあらわす。
+<ul>
+<li>ある一つのパスにのみ言及できる。</li>
+<li>例 1 : <span class="math inline">\opF f</span>
+「あるパスがいつかは性質 <span class="math inline">f</span>
+を満たす。」</li>
+<li>例 3 : <span class="math inline">\opX f</span> 「あるパスの 2
+番目の状態が性質 <span class="math inline">f</span> を満たす。」</li>
+<li>例 2 : <span class="math inline">f</span> 「パスの先頭の状態が性質
+<span class="math inline">f</span> を満たす。」</li>
 </ul></li>
 </ul>
 <h2 id="時相論理の種類と関係">時相論理の種類と関係</h2>
-<p>「演算子を使う上での制約」に応じて、表現力の異なる様々な時相論理がある。
-<svg width="100%" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg" style="background-color:white">
-<text x="10" y="25" font-family="Verdana" font-size="8">CTL*</text>
-<text x="35" y="65" font-family="Verdana" font-size="8">CTL</text>
-<text x="130" y="30" font-family="Verdana" font-size="8">ACTL*</text>
-<text x="88" y="65" font-family="Verdana" font-size="8">ACTL</text>
-<text x="135" y="65" font-family="Verdana" font-size="8">LTL</text>
-<ellipse cx="100" cy="65" rx="90" ry="60" fill="none" stroke=black />
-<ellipse cx="70"  cy="65" rx="60" ry="50" fill="none" stroke=black />
-<ellipse cx="130" cy="65" rx="60" ry="50" fill="none" stroke=black />
-<path d="M 120 37 C 60 35, 60 95, 120 93" fill="none" stroke=black />
-<ellipse cx="130" cy="65" rx="30" ry="30" fill="none" stroke=black />
-</svg></p>
+<p>「演算子の使い方のルール」に応じて、表現力の異なる多様なな時相論理がある。</p>
+<svg width="50%" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg" style="background-color:white">
+  <text x="10" y="25" font-family="Verdana" font-size="8">CTL*</text>
+  <text x="35" y="65" font-family="Verdana" font-size="8">CTL</text>
+  <text x="130" y="30" font-family="Verdana" font-size="8">ACTL*</text>
+  <text x="88" y="65" font-family="Verdana" font-size="8">ACTL</text>
+  <text x="135" y="65" font-family="Verdana" font-size="8">LTL</text>
+  <ellipse cx="100" cy="65" rx="90" ry="60" fill="none" stroke=black />
+  <ellipse cx="70"  cy="65" rx="60" ry="50" fill="none" stroke=black />
+  <ellipse cx="130" cy="65" rx="60" ry="50" fill="none" stroke=black />
+  <path d="M 120 37 C 60 35, 60 95, 120 93" fill="none" stroke=black />
+  <ellipse cx="130" cy="65" rx="30" ry="30" fill="none" stroke=black />
+</svg>
+
 <table>
 <thead>
 <tr class="header">
@@ -296,7 +321,7 @@ graph [rankdir = LR];
 <tbody>
 <tr class="odd">
 <td style="text-align: center;">該当する論理</td>
-<td style="text-align: center;">CTL, ACTL*, ACTL</td>
+<td style="text-align: center;">CTL, CTL* ACTL*, ACTL</td>
 <td style="text-align: center;">LTL</td>
 </tr>
 <tr class="even">
@@ -325,183 +350,287 @@ style="text-align: center;">全てのパスで、いつかは実行が終わる�
 </tbody>
 </table>
 <h3 id="時相論理式の作り方">時相論理式の作り方</h3>
+<p>時相論理式の目的は、システムの開始状態から始まるパス群の性質を記述すること。<br>
+そのため、どの論理も受理するのは状態式だけ。</p>
+<div id="compare">
 
 <figure><div class="graphviz">digraph G {
-    node [shape=circle, fixedsize=true, width=1.0];
-    newrank=true;
-    {rank = same; A1; A2; A3; A4; A5};
-    {rank = same; S1; S2; S3; S4; S5};
-    {rank = same; P1; P2; P3; P4; P5};
+  node [shape=circle, fixedsize=true, width=1.0];
+  graph [rankdir = LR];
+  newrank=true;
 
-    subgraph cluster_ctl_star {
-        A1 [label = &quot;開始&quot;];
-        S1 [label=&quot;状態式&quot;, shape=doublecircle];
-        P1 [label=&quot;パス式&quot;];
+  {rank = same; A5; A4; A3; A2; A1};
+  {rank = same; S5; S4; S3; S2; S1};
+  {rank = same; P5; P4; P3; P2; P1};
 
-        A1 -&gt; S1 [label = &quot;p, ¬p&quot;];
-        S1 -&gt; P1 [label = &quot;ε&quot;];
-        P1 -&gt; S1 [label = &quot;A,E&quot;];
-        S1 -&gt; S1 [label = &quot;¬,∨,∧&quot;];
-        P1 -&gt; P1 [label = &quot;¬,∨,∧,\nX,F,G,U,R&quot;];
+  subgraph cluster_ctl_star {
+    A1 [label = &quot;開始&quot;];
+    S1 [label=&quot;状態式&quot;, shape=doublecircle];
+    P1 [label=&quot;パス式&quot;];
 
-        labelloc=&quot;t&quot;;
-        label=&quot;CTL*&quot;;
-    }
+    A1 -&gt; S1 [label = &quot;p, ¬p&quot;];
+    S1 -&gt; P1 [label = &quot;ε&quot;];
+    P1 -&gt; S1 [label = &quot;A,E&quot;];
+    S1 -&gt; S1 [label = &quot;¬,∨,∧&quot;];
+    P1 -&gt; P1 [label = &quot;¬,∨,∧,\nX,F,G,U,R&quot;];
 
-    subgraph cluster_ctl {
-        A2 [label = &quot;開始&quot;];
-        S2 [label=&quot;状態式&quot;, shape=doublecircle];
-        P2 [label=&quot;パス式&quot;];
+    labelloc=&quot;t&quot;;
+    label=&quot;CTL*&quot;;
+  }
 
-        A2 -&gt; S2 [label = &quot;p, ¬p&quot;];
-        S2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
-        P2 -&gt; S2 [label = &quot;A,E&quot;];
-        S2 -&gt; S2 [label = &quot;¬,∨,∧&quot;];
+  subgraph cluster_ctl {
+    A2 [label = &quot;開始&quot;];
+    S2 [label=&quot;状態式&quot;, shape=doublecircle];
+    P2 [label=&quot;パス式&quot;];
 
-        labelloc=&quot;t&quot;;
-        label=&quot;CTL&quot;;
-    }
+    A2 -&gt; S2 [label = &quot;p, ¬p&quot;];
+    S2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
+    P2 -&gt; S2 [label = &quot;A,E&quot;];
+    S2 -&gt; S2 [label = &quot;¬,∨,∧&quot;];
 
-    subgraph cluster_actl_star {
-        A3 [label=&quot;開始&quot;];
-        S3 [label=&quot;状態式&quot;, shape=doublecircle];
-        P3 [label=&quot;パス式&quot;];
+    labelloc=&quot;t&quot;;
+    label=&quot;CTL&quot;;
+  }
 
-        A3 -&gt; S3 [label=&quot;p,¬p&quot;];
-        S3 -&gt; P3 [label=&quot;ε&quot;];
-        P3 -&gt; S3 [label=&quot;A&quot;];
-        S3 -&gt; S3 [label=&quot;∨,∧&quot;];
-        P3 -&gt; P3 [label=&quot;∨,∧,\nX,F,G,U,R&quot;];
+  subgraph cluster_actl_star {
+    A3 [label=&quot;開始&quot;];
+    S3 [label=&quot;状態式&quot;, shape=doublecircle];
+    P3 [label=&quot;パス式&quot;];
 
-        labelloc=&quot;t&quot;;
-        label=&quot;ACTL*&quot;;
-    }
+    A3 -&gt; S3 [label=&quot;p,¬p&quot;];
+    S3 -&gt; P3 [label=&quot;ε&quot;];
+    P3 -&gt; S3 [label=&quot;A&quot;];
+    S3 -&gt; S3 [label=&quot;∨,∧&quot;];
+    P3 -&gt; P3 [label=&quot;∨,∧,\nX,F,G,U,R&quot;];
 
-    subgraph cluster_actl {
-        A4 [label=&quot;開始&quot;];
-        S4 [label=&quot;状態式&quot;, shape=doublecircle];
-        P4 [label=&quot;パス式&quot;];
+    labelloc=&quot;t&quot;;
+    label=&quot;ACTL*&quot;;
+  }
 
-        A4 -&gt; S4 [label=&quot;p,¬p&quot;];
-        S4 -&gt; P4 [label=&quot;X,F,G,U,R&quot;];
-        P4 -&gt; S4 [label=&quot;A&quot;];
-        S4 -&gt; S4 [label=&quot;∨,∧&quot;];
+  subgraph cluster_actl {
+    A4 [label=&quot;開始&quot;];
+    S4 [label=&quot;状態式&quot;, shape=doublecircle];
+    P4 [label=&quot;パス式&quot;];
 
-        labelloc=&quot;t&quot;;
-        label=&quot;ACTL&quot;;
-    }
+    A4 -&gt; S4 [label=&quot;p,¬p&quot;];
+    S4 -&gt; P4 [label=&quot;X,F,G,U,R&quot;];
+    P4 -&gt; S4 [label=&quot;A&quot;];
+    S4 -&gt; S4 [label=&quot;∨,∧&quot;];
 
-    subgraph cluster_ltl {
-        A5 [label=&quot;開始&quot;];
-        S5 [label=&quot;状態式&quot;, shape=doublecircle];
-        P5 [label=&quot;パス式&quot;];
+    labelloc=&quot;t&quot;;
+    label=&quot;ACTL&quot;;
+  }
 
-        A5 -&gt; P5 [label=&quot;p&quot;];
-        P5 -&gt; S5 [label=&quot;A&quot;];
-        P5 -&gt; P5 [label=&quot;¬,∨,∧,\nX,F,G,U,R&quot;];
+  subgraph cluster_ltl {
+    A5 [label=&quot;開始&quot;];
+    S5 [label=&quot;状態式&quot;, shape=doublecircle];
+    P5 [label=&quot;パス式&quot;];
 
-        labelloc=&quot;t&quot;;
-        label=&quot;LTL&quot;;
-    }
+    A5 -&gt; P5 [label=&quot;p&quot;];
+    P5 -&gt; S5 [label=&quot;A&quot;];
+    P5 -&gt; P5 [label=&quot;¬,∨,∧,\nX,F,G,U,R&quot;];
+
+    labelloc=&quot;t&quot;;
+    label=&quot;LTL&quot;;
+  }
 }</div></figure>
+</div>
 <p>以降では、これら時相論理の体系を見ていく。</p>
 <h2 id="ctl">CTL*</h2>
 <h3 id="文法">文法</h3>
+<p>記法 : <span class="math inline">f</span>, <span
+class="math inline">g</span> は状態式、 <span
+class="math inline">\phi</span>, <span class="math inline">\psi</span>
+はパス式。</p>
 <ul>
 <li>状態式 (state formula): ある状態の性質をあらわす。
 <ul>
-<li>A1 : Atomic proposition <span class="math inline">\mathrm{AP}</span>
-の要素</li>
+<li>A1 : 原子命題 (atomic proposition) <span
+class="math inline">\mathrm{AP}</span> の要素</li>
 <li>A2 : <span class="math inline">\neg f</span>, <span
 class="math inline">f \lor g</span>, <span class="math inline">f \land
-g</span> (ただし <span class="math inline">f</span>, <span
-class="math inline">g</span> は状態式)</li>
-<li>A3 : <span class="math inline">\opE f</span>, <span
-class="math inline">\opA f</span> (ただし <span
-class="math inline">f</span> はパス式)</li>
+g</span></li>
+<li>A3 : <span class="math inline">\opE \phi</span>, <span
+class="math inline">\opA \phi</span></li>
 </ul></li>
 <li>パス式 (path formula): あるパスの性質をあらわす。
 <ul>
-<li>A4 : 状態式すべて (パスの先頭状態が状態式を満たしているか否か)</li>
-<li>A5 : <span class="math inline">\neg f</span>, <span
-class="math inline">f \lor g</span>, <span class="math inline">f \land
-g</span>, <span class="math inline">\opX f</span>, <span
-class="math inline">\opF f</span>, <span class="math inline">\opG
-f</span>, <span class="math inline">f\opU g</span>, <span
-class="math inline">f\opR g</span> (ただし <span
-class="math inline">f</span>, <span class="math inline">g</span>
-はパス式)</li>
+<li>A4 : 状態式すべて (後述)</li>
+<li>A5 : <span class="math inline">\neg \phi</span>, <span
+class="math inline">\phi \lor \psi</span>, <span
+class="math inline">\phi \land \psi</span>, <span
+class="math inline">\opX \phi</span>, <span class="math inline">\opF
+\phi</span>, <span class="math inline">\opG \phi</span>, <span
+class="math inline">\phi\opU \psi</span>, <span
+class="math inline">\phi\opR \psi</span></li>
 </ul></li>
 <li>CTL* 式
 <ul>
 <li>状態式全て。</li>
 </ul></li>
 </ul>
+
+<figure><div class="graphviz">digraph G {
+  node [shape=circle, fixedsize=true, width=1.0];
+  graph [rankdir = LR];
+
+  subgraph cluster_ctl_star {
+    A1 [label = &quot;開始&quot;];
+    S1 [label=&quot;状態式&quot;, shape=doublecircle];
+    P1 [label=&quot;パス式&quot;];
+
+    A1 -&gt; S1 [label = &quot;p, ¬p&quot;];
+    S1 -&gt; P1 [label = &quot;ε&quot;];
+    P1 -&gt; S1 [label = &quot;A,E&quot;];
+    S1 -&gt; S1 [label = &quot;¬,∨,∧&quot;];
+    P1 -&gt; P1 [label = &quot;¬,∨,∧,\nX,F,G,U,R&quot;];
+  }
+}</div></figure>
 <h3 id="意味論">意味論</h3>
 <p>クリプキ構造 <span class="math inline">M</span> 上の状態 <span
 class="math inline">s</span> とパス <span class="math inline">\pi</span>
 について、次のように CTL* 式の意味を定義する。</p>
+<p>記法 :</p>
 <ul>
 <li><span class="math inline">p</span> : 原子命題</li>
-<li><span class="math inline">f_1</span>, <span
-class="math inline">f_2</span> : 状態式</li>
-<li><span class="math inline">g_1</span>, <span
-class="math inline">g_2</span> : パス式</li>
-<li><span class="math inline">\pi^i</span> : Python でいう
-<code>π[i:]</code></li>
-<li><span class="math inline">s_i</span> : Python でいう
-<code>π[i]</code></li>
+<li><span class="math inline">f</span>, <span
+class="math inline">g</span> : 状態式</li>
+<li><span class="math inline">\phi</span>, <span
+class="math inline">\psi</span> : パス式</li>
+<li><span class="math inline">\pi^i</span> : <code>π[i:]</code> @
+Python</li>
+<li><span class="math inline">s_i</span> : <code>π[i]</code> @
+Python</li>
+<li><span class="math inline">M,s \models f</span> : クリプキ構造 <span
+class="math inline">M</span> の状態 <span class="math inline">s</span>
+は、性質 <span class="math inline">f</span> を充足する (<span
+class="math inline">M, s</span> models <span
+class="math inline">f</span> と読む) 。</li>
+<li><span class="math inline">S_0</span> : 初期状態集合。</li>
 </ul>
+<hr />
 <p>状態式 :</p>
 <p><span class="math display">
 \begin{align}
 &amp;M, s \models p &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;p \in
 L(s)\\
-&amp;M, s \models \neg f_1 &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;M, s
-\not\models f_1\\
-&amp;M, s \models f_1 \lor f_2 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;(M, s \models f_1) \lor (M, s \models f_2)\\
-&amp;M, s \models f_1 \land f_2 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;(M, s \models f) \land (M, s \models f_2)\\
-&amp;M, s \models \opE g_1 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;\exist \pi \:\text{s.t.}\: s_0 = s, M,\pi \models g_1\\
-&amp;M, s \models \opA g_1 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;\forall \pi \:\text{s.t.}\: s_0 = s, M,\pi \models g_1\\
+&amp;M, s \models \neg f &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;M, s
+\not\models f\\
+&amp;M, s \models f \lor g &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;(M,
+s \models f) \lor (M, s \models g)\\
+&amp;M, s \models f \land g &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;(M,
+s \models f) \land (M, s \models g)\\
+&amp;M, s \models \opE \phi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\exist \pi \:\text{s.t.}\: s_0 = s, M,\pi \models \phi\\
+&amp;M, s \models \opA \phi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\forall \pi \:\text{s.t.}\: s_0 = s, M,\pi \models \phi\\
 \end{align}
 </span></p>
 <p>パス式 :</p>
 <p><span class="math display">
 \begin{align}
-&amp;M, \pi \models f_1 &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;M, s_0
-\models f_1\\
-&amp;M, \pi \models \neg g_1 &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;M,
-\pi \not\models g_1\\
-&amp;M, \pi \models g_1 \lor g_2 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;(M, \pi \models g_1) \lor (M, \pi \models g_2)\\
-&amp;M, \pi \models g_1 \land g_2 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;(M, \pi \models g_1) \land (M, \pi \models g_2)\\
-&amp;M, \pi \models \opX g_1 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;(M, \pi^1 \models g_1)\\
-&amp;M, \pi \models \opF g_1 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;\exist k, M, \pi^k \models g_1\\
-&amp;M, \pi \models \opG g_1 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;\forall k, M, \pi^k \models g_1\\
-&amp;M, \pi \models g_1 \opU g_2 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;(\exist k, M, \pi^k \models g_2) \land (\forall j \leq k,\: M,
-\pi^i \models g_1)\\
-&amp;M, \pi \models g_1 \opR g_2 &amp;\:\stackrel{\mathrm{def}}{=}\:
-&amp;\forall j, (\forall i &lt; j, M,\pi^i \not\models g_1) \implies
-M,\pi^j \models g_2
+&amp;M, \pi \models f &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;M, s_0
+\models f\\
+&amp;M, \pi \models \neg \phi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;M, \pi \not\models \phi\\
+&amp;M, \pi \models \phi \lor \psi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;(M, \pi \models \phi) \lor (M, \pi \models \psi)\\
+&amp;M, \pi \models \phi \land \psi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;(M, \pi \models \phi) \land (M, \pi \models \psi)\\
+&amp;M, \pi \models \opX \phi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;(M, \pi^1 \models \phi)\\
+&amp;M, \pi \models \opF \phi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\exist k, M, \pi^k \models \phi\\
+&amp;M, \pi \models \opG \phi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\forall k, M, \pi^k \models \phi\\
+&amp;M, \pi \models \phi \opU \psi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\exist k, (M, s_k \models \psi) \land (\forall j &lt; k,\: M, s_j
+\models \phi)\\
+&amp;M, \pi \models \phi \opR \psi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\forall k, (\forall j &lt; k, M,s_j \not\models \phi) \implies
+M,s_k \models \psi
 \end{align}
 </span></p>
 <p>モデル全体 :</p>
 <p><span class="math display">
 \begin{align}
-&amp;M \models f_1  &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;\forall s
-\in S_0,\: M,s \models f_1
+&amp;M \models f  &amp;\:\stackrel{\mathrm{def}}{=}\: &amp;\forall s \in
+S_0,\: M,s \models f
 \end{align}
 </span></p>
-<h3 id="用語">用語</h3>
+<h3 id="補足--opu-opr-の定義について">補足 : <span
+class="math inline">\opU</span>, <span class="math inline">\opR</span>
+の定義について</h3>
+<ul>
+<li><p><span class="math inline">M, \pi \models p \opU q
+\:\stackrel{\mathrm{def}}{=}\: \exist k, (M, s_k \models q) \land
+(\forall j &lt; k,\: M, s_j \models p)</span></p>
+<ul>
+<li><p>いつかは <span class="math inline">\psi</span>
+を満たす状態が現れる。</p></li>
+<li><p>かつ、それ以前の状態は全て <span class="math inline">\phi</span>
+を満たす。</p></li>
+<li>
+<figure><div class="graphviz">digraph G {
+node [shape=circle, fixedsize=true];
+graph [rankdir = LR];
+  U0 [label=&quot;p,¬q&quot;]
+  U1 [label=&quot;p,¬q&quot;];
+  U2 [label=&quot;*,q&quot;];
+  U3 [label=&quot;*,*&quot;];
+  U4 [label=&quot;&quot;, width=0, color=none];
+  U0 -&gt; U1 -&gt; U2 -&gt; U3 -&gt; U4;
+}</div></figure></li>
+</ul></li>
+<li><p><span class="math inline">M, \pi \models p \opR q
+\:\stackrel{\mathrm{def}}{=}\: \forall k, (\forall j &lt; k, M,s_j
+\not\models p) \implies M,s_k \models q</span></p>
+<ul>
+<li><p>ある状態について、それ以前の状態が全て <span
+class="math inline">\phi</span> を満たすなら、その状態は <span
+class="math inline">\psi</span> を満たす。</p></li>
+<li>
+<figure><div class="graphviz">digraph G {
+node [shape=circle, fixedsize=true];
+graph [rankdir = LR];
+  R0 [label=&quot;q,¬p&quot;]
+  R1 [label=&quot;q,¬p&quot;];
+  R2 [label=&quot;q,p&quot;];
+  R3 [label=&quot;*,*&quot;];
+  R4 [label=&quot;&quot;, width=0, color=none];
+  R0 -&gt; R1 -&gt; R2 -&gt; R3 -&gt; R4;
+}</div></figure></li>
+</ul></li>
+</ul>
+<h3
+id="特異な性質--ms-notmodels-f-かつ-ms-notmodels-neg-f-な-m-f-の存在">特異な性質
+: <span class="math inline">M,s \not\models f</span> かつ <span
+class="math inline">M,s \not\models \neg f</span> な <span
+class="math inline">M</span>, <span class="math inline">f</span>
+の存在</h3>
+<ul>
+<li><span class="math inline">\opEX p</span></li>
+<li><span class="math inline">\neg\opEX p</span></li>
+</ul>
+
+<figure><div class="graphviz">digraph G {
+    node [shape=circle, fixedsize=true];
+    A [label=&quot;&quot;, width=0, color=none];
+    B [label=&quot;&quot;, width=0, color=none];
+    C [label=&quot;&quot;];
+    D [label=&quot;&quot;];
+    E [label=&quot;p&quot;];
+    F [label=&quot;¬p&quot;];
+
+    A -&gt; C -&gt; E -&gt; E;
+    B -&gt; D -&gt; F -&gt; F;
+    C -&gt; F;
+
+    labelloc=&quot;t&quot;;
+    label=&quot;pUq を満たすパス&quot;;
+}</div></figure>
+<p>この様な状況は、開始状態が 1 つの場合には生じない。</p>
+<h3 id="余談--充足可能有効">余談 : 充足可能・有効</h3>
 <ul>
 <li><span class="math inline">f</span> は充足可能 (satisfiable) : <span
 class="math inline">M \models f</span>: を満たす <span
@@ -538,7 +667,34 @@ class="math inline">\opR</span>
 <ul>
 <li>「修理するまで壊れている」の否定は「修理をやめるまで壊れてない」</li>
 <li>「諦めるまでは試合中」の否定は、「試合終了まで諦めない」</li>
+<li>…?</li>
 </ul>
+<p>代わりに <span class="math inline">\opU</span> と <span
+class="math inline">\opR</span> の関係を形式的に証明しておく。</p>
+<p><span class="math display">
+\begin{align*}
+&amp;M, \pi \models \phi \opU \psi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\exist k, (M, s_k \models \psi) \land (\forall j &lt; k,\: M, s_j
+\models \phi)\\
+&amp;M, \pi \models \phi \opR \psi &amp;\:\stackrel{\mathrm{def}}{=}\:
+&amp;\forall k, (\forall j &lt; k, M,s_j \not\models \phi) \implies
+M,s_k \models \psi
+\end{align*}
+</span></p>
+<p><span class="math display">
+\begin{align*}
+\neg(\neg f\opU\neg g)
+&amp;= \neg(\exist k, (M, s_k \models \neg g) \land (\forall j &lt; k,\:
+M, s_j \models \neg f))\\
+&amp;= \forall k, \neg(M, s_k \models \neg g) \lor \neg(\forall j &lt;
+k,\: M, s_j \models \neg f))\\
+&amp;= \forall k, (M, s_k \models g) \lor \neg(\forall j &lt; k,\: M,
+s_j \not\models f))\\
+&amp;= \forall k, (\forall j &lt; k,\: M, s_j \not\models f) \implies
+(M, s_k \models g)\\
+&amp;= f \opR g
+\end{align*}
+</span></p>
 <h3 id="正規化--否定標準形-nnf--negation-normal-form">正規化 @
 否定標準形 (NNF : Negation Normal Form)</h3>
 <p>任意の CTL* 式は、<span class="math inline">\neg</span>
@@ -561,9 +717,13 @@ class="math inline">\opR</span>
 <li>式のサイズ : 式に現れる原子命題の延べ数と、演算子の延べ数。 (<a
 href="https://www.sciencedirect.com/science/article/pii/S0004370214000228">推論元の情報</a>)</li>
 <li>主張 :
-ほとんどの式のサイズは、変換の前後で定数倍にしかならない。</li>
+<strong>ほとんどの式のサイズは、変換の前後で定数倍にしかならない</strong>。</li>
 <li>直感的な説明 :
 <ul>
+<li>変換前の式について
+<ul>
+<li><span class="math inline">\neg</span> が 2
+つ以上続くことはないとする。</li>
 <li>元の式中に出現する原子命題の数を <span class="math inline">a</span>,
 <span class="math inline">\neg</span> 以外の演算子の数を <span
 class="math inline">b</span>, <span class="math inline">\neg</span>
@@ -573,6 +733,9 @@ class="math inline">b</span>, <span class="math inline">\neg</span>
 class="math inline">c \leq a + b</span> である。</li>
 <li>式のサイズは <span class="math inline">a + b + c</span> であり、
 <span class="math inline">a + b</span> 以上である。</li>
+</ul></li>
+<li>変換後の式について
+<ul>
 <li>どの変換規則を用いても、原子命題の数と <span
 class="math inline">\neg</span> 以外の演算子の数は変化しない。</li>
 <li>NNF の制約より、変換後の <span class="math inline">\neg</span>
@@ -583,41 +746,13 @@ class="math inline">\neg</span> 以外の演算子の数は変化しない。</l
 <li>これは <span class="math inline">a + b</span>
 の定数倍のオーダーである。</li>
 </ul></li>
+</ul></li>
 </ul>
 <blockquote>
-<p>It is important to note that the conversion of a CTL<em>formula to
-NNF is linear in the size of the formula. This is true for many
-fragments of CTL</em>.</p>
+<p>It is important to note that the conversion of a CTL* formula to NNF
+is linear in the size of the formula.<br> This is true for many
+fragments of CTL*.</p>
 </blockquote>
-<h3
-id="特異な性質--ms-notmodels-f-かつ-ms-notmodels-neg-f-な-m-f-の存在">特異な性質
-: <span class="math inline">M,s \not\models f</span> かつ <span
-class="math inline">M,s \not\models \neg f</span> な <span
-class="math inline">M</span>, <span class="math inline">f</span>
-の存在</h3>
-<ul>
-<li><span class="math inline">\opEX p</span></li>
-<li><span class="math inline">\neg\opEX p</span></li>
-</ul>
-
-<figure><div class="graphviz">digraph G {
-    node [shape=circle, fixedsize=true];
-    A [label=&quot;&quot;, width=0, color=none];
-    B [label=&quot;&quot;, width=0, color=none];
-    C [label=&quot;&quot;];
-    D [label=&quot;&quot;];
-    E [label=&quot;p&quot;];
-    F [label=&quot;¬p&quot;];
-
-    A -&gt; C -&gt; E -&gt; E;
-    B -&gt; D -&gt; F -&gt; F;
-    C -&gt; F;
-
-
-    labelloc=&quot;t&quot;;
-    label=&quot;pUq を満たすパス&quot;;
-}</div></figure>
-<p>この様な状況は、開始状態が 1 つの場合には生じない。</p>
 <h2 id="ctl-1">CTL</h2>
 <p>制約 : パス量化子と時相作用素を常にペアで使う。</p>
 <ul>
@@ -638,6 +773,20 @@ class="math inline">\opE(f \opR g)</span> (ただし <span
 class="math inline">f</span>, <span class="math inline">g</span> は CTL
 式)</li>
 </ul>
+
+<figure><div class="graphviz">digraph G {
+  node [shape=circle, fixedsize=true, width=1.0];
+  graph [rankdir = LR];
+ subgraph cluster_ctl {
+    A2 [label = &quot;開始&quot;];
+    S2 [label=&quot;状態式&quot;, shape=doublecircle];
+    P2 [label=&quot;パス式&quot;];
+    A2 -&gt; S2 [label = &quot;p, ¬p&quot;];
+    S2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
+    P2 -&gt; S2 [label = &quot;A,E&quot;];
+    S2 -&gt; S2 [label = &quot;¬,∨,∧&quot;];
+  }
+}</div></figure>
 <h3 id="正規化">正規化</h3>
 <p>CTL 式は <span class="math inline">\opEX</span>, <span
 class="math inline">\opEG</span>, <span class="math inline">\opEU</span>
@@ -687,6 +836,21 @@ class="math inline">f</span>, <span class="math inline">g</span>
 <li>状態式全て</li>
 </ul></li>
 </ul>
+
+<figure><div class="graphviz">digraph G {
+  node [shape=circle, fixedsize=true, width=1.0];
+  graph [rankdir = LR];
+  subgraph cluster_actl_star {
+    A3 [label=&quot;開始&quot;];
+    S3 [label=&quot;状態式&quot;, shape=doublecircle];
+    P3 [label=&quot;パス式&quot;];
+    A3 -&gt; S3 [label=&quot;p,¬p&quot;];
+    S3 -&gt; P3 [label=&quot;ε&quot;];
+    P3 -&gt; S3 [label=&quot;A&quot;];
+    S3 -&gt; S3 [label=&quot;∨,∧&quot;];
+    P3 -&gt; P3 [label=&quot;∨,∧,\nX,F,G,U,R&quot;];
+  }
+}</div></figure>
 <h3 id="正規化-1">正規化</h3>
 <p><span class="math inline">\opX</span>, <span
 class="math inline">\opU</span>, <span class="math inline">\opR</span>
@@ -718,6 +882,20 @@ class="math inline">f \lor g</span>, <span class="math inline">\opA(f
 <li>状態式全て</li>
 </ul></li>
 </ul>
+
+<figure><div class="graphviz">digraph G {
+  node [shape=circle, fixedsize=true, width=1.0];
+  graph [rankdir = LR];
+  subgraph cluster_actl {
+    A4 [label=&quot;開始&quot;];
+    S4 [label=&quot;状態式&quot;, shape=doublecircle];
+    P4 [label=&quot;パス式&quot;];
+    A4 -&gt; S4 [label=&quot;p,¬p&quot;];
+    S4 -&gt; P4 [label=&quot;X,F,G,U,R&quot;];
+    P4 -&gt; S4 [label=&quot;A&quot;];
+    S4 -&gt; S4 [label=&quot;∨,∧&quot;];
+  }
+}</div></figure>
 <h3 id="正規化-2">正規化</h3>
 <p><span class="math inline">\opAX</span>, <span
 class="math inline">\opAU</span>, <span class="math inline">\opAR</span>
@@ -750,6 +928,21 @@ class="math inline">\opA</span> と <span class="math inline">\opE</span>
 を持たないもの)</li>
 </ul></li>
 </ul>
+
+<figure><div class="graphviz">digraph G {
+  node [shape=circle, fixedsize=true, width=1.0];
+  graph [rankdir = LR];
+  subgraph cluster_ltl {
+    A5 [label=&quot;開始&quot;];
+    S5 [label=&quot;状態式&quot;, shape=doublecircle];
+    P5 [label=&quot;パス式&quot;];
+    A5 -&gt; P5 [label=&quot;p&quot;];
+    P5 -&gt; S5 [label=&quot;A&quot;];
+    P5 -&gt; P5 [label=&quot;¬,∨,∧,\nX,F,G,U,R&quot;];
+  }
+}</div></figure>
+<h2 id="時相論理まとめ">時相論理まとめ</h2>
+<p><clone ref="compare"></clone></p>
 <h2 id="集合原子命題">集合原子命題</h2>
 <p>より柔軟な記述を可能にするため、 CTL*
 に特殊な原子命題を導入する。<br> なお、これは表現力の拡張ではない。</p>
@@ -763,68 +956,72 @@ Q</span></li>
 <p>また、次の記法を導入する。</p>
 <p><span class="math display"> \llbracket f\rrbracket_M := \{ s \in S
 \mid M,s \models f\} </span></p>
-<h2 id="公平性-fairness-todo-45">公平性 (Fairness) TODO 4.5</h2>
-<p>公平クリプキ構造 (fair Kripke structure) を使い、<span
-class="math inline">\opE</span>, <span class="math inline">\opA</span>
-の意味論を変える。</p>
-<h3 id="公平性制約-fairness-constraints">公平性制約 (Fairness
-Constraints)</h3>
-<p><span class="math inline">F \subset 2^{S}</span> (<span
-class="math inline">S</span> : 状態集合)</p>
-<ul>
-<li>例 : <span class="math inline">F = \{\{s_0, s_1\},
-\{s_2\}\}</span></li>
-</ul>
+<h2 id="公平性-fairness">公平性 (Fairness)</h2>
+<p>3 章で見てきた通り、公平性の考慮は大切である。<br>
+公平性を扱うために、<strong>公平パス</strong>を導入する。</p>
 <h3 id="公平パス-fair-path">公平パス (Fair Path)</h3>
-<p>パス <span class="math inline">\pi</span> が公平 (fair)
+<p>パス <span class="math inline">\pi</span> が公平性制約 <span
+class="math inline">F</span> のもとで公平 (fair)
 であるとは、次を満たすことである。</p>
 <p><span class="math display"> \forall P \in F, P \cap
 \mathop{\mathrm{inf}}(\pi) \neq \{\}</span></p>
 <p>ただし、</p>
-<p><span class="math display"> \mathop{\mathrm{inf}}(\pi)
+<ul>
+<li><span class="math inline">F \subset 2^{S}</span> は公平性制約
+(Fairness Constraints)</li>
+<li><span class="math inline">\mathop{\mathrm{inf}}(\pi)
 \stackrel{\mathrm{def}}{=} \{s \in S \mid s \text{ が } \pi \text{
-上に無限回出現}\} </span></p>
-<p>飢餓状態にはならないが、出現率の公平性は言及できない。</p>
-<h3 id="ctl-での表現">CTL* での表現</h3>
+上に無限回出現}\}</span></li>
+</ul>
+<p>である。</p>
+<p>例えば <span class="math inline">F = \{\{ a, b\}, \{ c \}\}</span>
+のとき、 <span class="math inline">\pi</span> が公平である条件は :</p>
+<ul>
+<li><span class="math inline">\pi</span> 上に <span
+class="math inline">a</span>, <span class="math inline">b</span>
+のいずれかが無限に現れる。</li>
+<li><span class="math inline">\pi</span> 上に <span
+class="math inline">c</span> が無限に現れる。</li>
+</ul>
+<h3 id="ctl-での公平性の扱い">CTL* での公平性の扱い</h3>
+<p>CTL* 式 <span class="math inline">\mathrm{fpath}</span>
+を考える。</p>
 <p><span class="math display"> \mathrm{fpath} := \bigwedge_{P \in F}
-\bigvee \opGF s </span></p>
+\bigvee_{s \in P} \opGF s </span></p>
 <ul>
-<li><span class="math inline">\opE(\mathrm{fpath} \land \phi)</span>
-<ul>
-<li>公平で <span class="math inline">\phi</span>
-を満たすパスが存在。</li>
-</ul></li>
+<li><span class="math inline">\opE(\mathrm{fpath} \land \phi)</span> :
+公平で <span class="math inline">\phi</span> を満たすパスが存在</li>
 <li><span class="math inline">\opA(\mathrm{fpath} \implies \phi)</span>
+: 公平なパスはすべて <span class="math inline">\phi</span> を満たす。
 <ul>
-<li>公平なパスはすべて <span class="math inline">\phi</span>
-を満たす。</li>
-<li>クリプキ構造上の状態遷移は非決定的。したがって、一般には不公平なパスが存在する。</li>
-<li>そのため、 <span class="math inline">\opA(\mathrm{fpath} \land
-\phi)</span> は都合が悪い。</li>
-<li><span class="math inline">\implies</span>
-によって不公平なパスを除外する。</li>
+<li>一般のクリプキ構造上には、不公平なパスが存在する。</li>
+<li>知りたいのは公平パスに関する性質なので、 <span
+class="math inline">\implies</span> で不公平なパスを除外する。</li>
+<li>公平パスが存在しない場合は <span class="math inline">\phi</span>
+によらず恒真。</li>
 </ul></li>
 </ul>
-<h3 id="ctl-での表現-1">CTL での表現</h3>
+<h3 id="ctl-での公平性の扱い-1">CTL での公平性の扱い</h3>
 <ul>
-<li>文法的に <span class="math inline">\bigwedge_{P \in F} \bigvee \opGF
-s</span> は非文。</li>
+<li>文法的に <span class="math inline">\bigwedge_{P \in F} \bigvee_{s\in
+P} \opGF s</span> は非文。</li>
 <li>→ 公平クリプキ構造 (fair Kripke structure) を使い、<span
 class="math inline">\opE</span>, <span class="math inline">\opA</span>
 の意味論を変える。</li>
 </ul>
-<p>公平クリプキ構造 <span class="math inline">M = \{ S, S_0, R,
-\mathrm{AP}, L, F \}</span></p>
+<p>公平クリプキ構造 <span class="math inline">M = (S, S_0, R, L,
+\mathrm{AP}, F)</span> :</p>
+<ul>
+<li>クリプキ構造に公平性制約 <span class="math inline">F \subset
+2^{S}</span> を加えたもの。</li>
+</ul>
 <p>公平意味論 (fair semantics):</p>
 <ul>
-<li><span class="math inline">M, s \models_F g</span> : 式 <span
-class="math inline">g</span> が公平クリプキ構造 <span
-class="math inline">M</span> の状態 <span class="math inline">s</span>
-で成り立つ。</li>
-<li><span class="math inline">M,s \models_F \opE \phi</span> : <span
-class="math inline">\exists \pi \text{s.t.} s_0 = s \land \pi
-\text{は公平パス}, \pi \models_F = \phi</span>
+<li><span class="math inline">M,s \models_F \opE \phi</span> :
 <ul>
+<li><span class="math inline">M</span> 上の <span
+class="math inline">s</span> で始まる公平パスで、 <span
+class="math inline">\phi</span> が成り立つものが存在する。</li>
 <li><span class="math inline">M,s \models \opE_F \phi</span>
 とも書く。</li>
 </ul></li>
@@ -832,36 +1029,34 @@ class="math inline">\exists \pi \text{s.t.} s_0 = s \land \pi
 class="math inline">\forall \pi \text{s.t.} s_0 = s \land \pi
 \text{は公平パス}, \pi \models_F = \phi</span>
 <ul>
+<li><span class="math inline">M</span> 上の <span
+class="math inline">s</span> で始まる全ての公平パスで、 <span
+class="math inline">\phi</span> が成り立つ。</li>
 <li><span class="math inline">M,s \models \opA_F \phi</span>
 とも書く。</li>
-<li><span class="math inline">s</span> で始まる公平パスがないなら、
-<span class="math inline">M,s \models \opA_F \phi</span>
-は常に成立。</li>
+<li>公平パスが存在しない場合は <span class="math inline">\phi</span>
+によらず恒真。</li>
 </ul></li>
 </ul>
-<p>公平性を考えない場合、 <span class="math inline">p</span>, <span
-class="math inline">\opE p</span>, <span class="math inline">\opA
-p</span> は同じ意味。 しかし、 <span class="math inline">p</span>, <span
-class="math inline">\opE_F p</span>, <span class="math inline">\opA_F
-p</span> は違う意味。</p>
-<ul>
-<li><span class="math inline">F = \{ S \}</span> の意味は？</li>
-</ul>
+<p><span class="math inline">p</span>, <span class="math inline">\opE
+p</span>, <span class="math inline">\opA p</span> は同じ意味。<br> <span
+class="math inline">p</span>, <span class="math inline">\opE_F p</span>,
+<span class="math inline">\opA_F p</span> は違う意味。</p>
+<hr />
+<p>Q. <span class="math inline">F = \{ S \}</span>
+が表している制約は？</p>
 <h2 id="反例-counterexamples">反例 (Counterexamples)</h2>
-<p>反例 : 仕様に違反するパス</p>
-<p>入手法 :</p>
-<ol type="1">
-<li>システムをモデル化</li>
-<li>仕様を記述</li>
-<li>モデルチェック</li>
-<li>仕様を満たさない例外を得る</li>
-</ol>
-<p>要件 :</p>
+<p>モデル検査の基本 :</p>
+<ul>
+<li>仕様を満たさないパス (反例) を探す。</li>
+</ul>
+<p>反例パスの要件 :</p>
 <ul>
 <li>表現が有限長 (例 : <span class="math inline">s_0 s_1 (s_2
-s_3)^\omega</span>)</li>
+s_3)^\omega</span>) であること。</li>
 </ul>
-<p>以下では、状態数が有限なクリプキ構造 (finite Kripke structure)
+<p>ここでは、任意の反例が有限長で表せるかを議論する。<br>
+以下では、状態数が有限なクリプキ構造 (finite Kripke structure)
 を仮定する。</p>
 <h3
 id="反例は有限の情報で表現できるか">反例は有限の情報で表現できるか？</h3>
@@ -874,8 +1069,8 @@ class="math inline">\opX \neg p</span> なパス
 <li><span class="math inline">\opAG p</span> の反例 : <span
 class="math inline">\opF \neg p</span> なパス
 <ul>
-<li>→ <span class="math inline">\not p</span>
-になる状態までの部分パスで十分。</li>
+<li>→ <span class="math inline">\neg p</span> になる状態までの部分パス
+(有限長) で十分。</li>
 </ul></li>
 <li><span class="math inline">\opAF p</span> の反例 : <span
 class="math inline">\opG \neg p</span> なパス
@@ -883,9 +1078,12 @@ class="math inline">\opG \neg p</span> なパス
 <li>→ …?</li>
 </ul></li>
 </ul>
-<p>主張 : <span class="math inline">\opG \neg p</span> なパスには、
-<span class="math inline">a \cdots c (d \cdots e)^\omega</span>
-の形式で書けるものが存在する。</p>
+<p>主張 :</p>
+<ul>
+<li><span class="math inline">\opG \neg p</span> なパスには、 <span
+class="math inline">a \cdots c (d \cdots e)^\omega</span>
+の形式で書けるものが存在する。</li>
+</ul>
 <p>証明 :</p>
 <ul>
 <li>まず、反例 <span class="math inline">\pi</span> を適当に選ぶ。</li>
@@ -895,15 +1093,11 @@ class="math inline">\opG \neg p</span> なパス
 が存在する。</li>
 <li>つまり、 <span class="math inline">\pi</span> は <span
 class="math inline">s_0 \stackrel{a}{\cdots} k \stackrel{b}{\cdots} k
-\cdots</span> という状態である。
-<ul>
-<li>ただし、<span class="math inline">\stackrel{a}{\cdots}</span> と
-<span class="math inline">\stackrel{b}{\cdots}</span> は有限長。</li>
-</ul></li>
+\cdots</span> と書ける。</li>
 <li>このとき、 <span class="math inline">\pi&#39; := s_0
 \stackrel{a}{\cdots} (k\stackrel{b}{\cdots})^\omega</span> は <span
 class="math inline">\opG\neg p</span>
-を満たし、表現が有限長なパスである。</li>
+を満たす、表現が有限長なパスである。</li>
 </ul>
 <p>こうした構造は lasso (投げ縄) と呼ばれる。</p>
 
@@ -922,8 +1116,7 @@ class="math inline">\opG\neg p</span>
     labelloc=&quot;t&quot;;
     label=&quot;lasso&quot;;
 }</div></figure>
-<p>一般には、公平性等も考える必要があるが、そうした詳しい議論は 7
-章で行う。</p>
+<p>一般には公平性等も考える必要があるが、詳しい議論は 7 章で行う。</p>
 <h2 id="safety-liveness">Safety, Liveness</h2>
 <ul>
 <li>Safety : 「悪いことは起きない」
@@ -939,10 +1132,24 @@ class="math inline">\opG\neg p</span>
 <span class="math inline">\opA(p \opU \text{(良いこと)})</span></li>
 </ul></li>
 </ul>
-<p>Safety か liveness かの見分け方 :</p>
+<p>Safety か liveness かの見分け方 : 反例を考える。</p>
 <ul>
 <li>Safety の反例は「悪いことが起きる」 → ループのない有限長パス。</li>
 <li>Liveness の反例は「良いことが起きない」 → 無限長パス。</li>
+</ul>
+<h2 id="まとめ">まとめ</h2>
+<ul>
+<li>時相論理は、計算木に対して、<quiz>複数のパスや時間</quiz>を考慮した振る舞いを記述できる。</li>
+<li>時相論理には、表現能力の異なる論理がたくさんあり、 CTL*, CTL, ATL*,
+ATL, LTL の中で最も表現力が高いのは<quiz>CTL*</quiz>である。</li>
+<li>CTL* で公平性を扱うには、公平性制約 <span class="math inline">F
+\subset 2^{S}</span> を用意して、式 <span
+class="math inline">\mathrm{fpath} := \bigwedge_{P \in F} \bigvee_{s \in
+P} \opGF s</span> を考える。</li>
+<li>Safety
+は「<quiz>悪いことは起きない</quiz>」という類の性質である。</li>
+<li>Liveness
+は「<quiz>いつかは良いことが起きる</quiz>」という類の性質である。</li>
 </ul>
 <h2 id="bibliographic-notes">Bibliographic Notes</h2>
 <ul>
