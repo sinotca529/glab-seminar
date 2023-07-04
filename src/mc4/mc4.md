@@ -210,7 +210,7 @@ Q. 適当な性質を考えて、それを時相理論式で表してくださ�
 
 - 状態式 (state formula): ある状態の性質をあらわす。
   - ある状態から始まるパス群に言及できる。
-  - 例 1 : $\opG f$ 「ある状態から始まる全てのパスは、性質 $f$ を満たす。」
+  - 例 1 : $\opAG f$ 「ある状態から始まる全てのパスは、性質 $f$ を満たす。」
 - パス式 (path formula): あるパスの性質をあらわす。
   - ある一つのパスにのみ言及できる。
   - 例 1 : $\opF f$ 「あるパスがいつかは性質 $f$ を満たす。」
@@ -428,8 +428,8 @@ $$
 
 - $M, \pi \models p \opU q \:\stackrel{\mathrm{def}}{=}\: \exist k, (M, s_k \models q) \land (\forall j < k,\: M, s_j \models p)$
 
-  - いつかは $\psi$ を満たす状態が現れる。
-  - かつ、それ以前の状態は全て $\phi$ を満たす。
+  - いつかは $q$ を満たす状態が現れる。
+  - かつ、それ以前の状態は全て $p$ を満たす。
 
   - ```graphviz
     digraph G {
@@ -446,7 +446,7 @@ $$
 
 - $M, \pi \models p \opR q \:\stackrel{\mathrm{def}}{=}\: \forall k, (\forall j < k, M,s_j \not\models p) \implies M,s_k \models q$
 
-  - ある状態について、それ以前の状態が全て $\phi$ を満たすなら、その状態は $\psi$ を満たす。
+  - ある状態について、それ以前の状態が全て $p$ を満たすなら、その状態は $q$ を満たす。
 
   - ```graphviz
     digraph G {
@@ -461,7 +461,7 @@ $$
     }
     ```
 
-### 特異な性質 : $M,s \not\models f$ かつ $M,s \not\models \neg f$ な $M$, $f$ の存在
+### 特異な性質 : $M \not\models f$ かつ $M \not\models \neg f$ な $M$, $f$ の存在
 
 - $\opEX p$
 - $\neg\opEX p$
@@ -479,9 +479,6 @@ digraph G {
     A -> C -> E -> E;
     B -> D -> F -> F;
     C -> F;
-
-    labelloc="t";
-    label="pUq を満たすパス";
 }
 ```
 
@@ -561,17 +558,14 @@ $$
 
 - 式のサイズ : 式に現れる原子命題の延べ数と、演算子の延べ数。 ([推論元の情報](https://www.sciencedirect.com/science/article/pii/S0004370214000228))
 - 主張 : **ほとんどの式のサイズは、変換の前後で定数倍にしかならない**。
-- 直感的な説明 :
-  - 変換前の式について
-    - $\neg$ が 2 つ以上続くことはないとする。
-    - 元の式中に出現する原子命題の数を $a$, $\neg$ 以外の演算子の数を $b$, $\neg$ の数を $c$ と置く。
-    - $\neg$ は原子命題や演算子に一つまで付けることができるため、 $c \leq a + b$ である。
-    - 式のサイズは $a + b + c$ であり、 $a + b$ 以上である。
-  - 変換後の式について
-    - どの変換規則を用いても、原子命題の数と $\neg$ 以外の演算子の数は変化しない。
-    - NNF の制約より、変換後の $\neg$ の数は、式内の原子命題の数 $b$ 以下である。
-    - → 変換後の式のサイズは $a + b + b = a + 2b$ 以下である。
-    - これは $a + b$ の定数倍のオーダーである。
+  - 仮定 : $\neg$ は 2 個続かない
+
+|                         |    変換前    |    変換後     |
+| :---------------------: | :----------: | :-----------: |
+|      原子命題の数       |     $a$      |      $a$      |
+| $\neg$ 以外の演算子の数 |     $b$      |      $b$      |
+|       $\neg$ の数       | $a + b$ 以下 |   $a$ 以下    |
+|         サイズ          | $a + b$ 以上 | $2a + b$ 以下 |
 
 > It is important to note that the conversion of a CTL\* formula to NNF is linear in the size of the formula.<br>
 > This is true for many fragments of CTL\*.
@@ -766,13 +760,13 @@ $$ \forall P \in F, P \cap \mathop{\mathrm{inf}}(\pi) \neq \{\}$$
 
 CTL\* 式 $\mathrm{fpath}$ を考える。
 
-$$ \mathrm{fpath} := \bigwedge_{P \in F} \bigvee_{s \in P} \opGF s $$
+$$\mathrm{fpath} := \bigwedge_{P \in F} \bigvee_{s \in P} \opGF s$$
 
 - $\opE(\mathrm{fpath} \land \phi)$ : 公平で $\phi$ を満たすパスが存在
 - $\opA(\mathrm{fpath} \implies \phi)$ : 公平なパスはすべて $\phi$ を満たす。
   - 一般のクリプキ構造上には、不公平なパスが存在する。
   - 知りたいのは公平パスに関する性質なので、 $\implies$ で不公平なパスを除外する。
-  - 公平パスが存在しない場合は $\phi$ によらず恒真。
+  - 公平パスが存在しない場合は $\phi$ によらず真。
 
 ### CTL での公平性の扱い
 
@@ -791,10 +785,10 @@ $$ \mathrm{fpath} := \bigwedge_{P \in F} \bigvee_{s \in P} \opGF s $$
 - $M,s \models_F \opA \phi$ : $\forall \pi \text{s.t.} s_0 = s \land \pi \text{は公平パス}, \pi \models_F = \phi$
   - $M$ 上の $s$ で始まる全ての公平パスで、 $\phi$ が成り立つ。
   - $M,s \models \opA_F \phi$ とも書く。
-  - 公平パスが存在しない場合は $\phi$ によらず恒真。
+  - 公平パスが存在しない場合は $\phi$ によらず真。
 
 $p$, $\opE p$, $\opA p$ は同じ意味。<br>
- $p$, $\opE_F p$, $\opA_F p$ は違う意味。
+$p$, $\opE_F p$, $\opA_F p$ は違う意味。
 
 ---
 

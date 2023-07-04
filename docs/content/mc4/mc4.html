@@ -279,7 +279,7 @@ class="math inline">(\text{通常モード})\opU(\text{電池残量5\%未満})</
 <li>状態式 (state formula): ある状態の性質をあらわす。
 <ul>
 <li>ある状態から始まるパス群に言及できる。</li>
-<li>例 1 : <span class="math inline">\opG f</span>
+<li>例 1 : <span class="math inline">\opAG f</span>
 「ある状態から始まる全てのパスは、性質 <span
 class="math inline">f</span> を満たす。」</li>
 </ul></li>
@@ -566,9 +566,9 @@ class="math inline">\opU</span>, <span class="math inline">\opR</span>
 \:\stackrel{\mathrm{def}}{=}\: \exist k, (M, s_k \models q) \land
 (\forall j &lt; k,\: M, s_j \models p)</span></p>
 <ul>
-<li><p>いつかは <span class="math inline">\psi</span>
+<li><p>いつかは <span class="math inline">q</span>
 を満たす状態が現れる。</p></li>
-<li><p>かつ、それ以前の状態は全て <span class="math inline">\phi</span>
+<li><p>かつ、それ以前の状態は全て <span class="math inline">p</span>
 を満たす。</p></li>
 <li>
 <figure><div class="graphviz">digraph G {
@@ -587,8 +587,8 @@ graph [rankdir = LR];
 \not\models p) \implies M,s_k \models q</span></p>
 <ul>
 <li><p>ある状態について、それ以前の状態が全て <span
-class="math inline">\phi</span> を満たすなら、その状態は <span
-class="math inline">\psi</span> を満たす。</p></li>
+class="math inline">p</span> を満たすなら、その状態は <span
+class="math inline">q</span> を満たす。</p></li>
 <li>
 <figure><div class="graphviz">digraph G {
 node [shape=circle, fixedsize=true];
@@ -603,9 +603,9 @@ graph [rankdir = LR];
 </ul></li>
 </ul>
 <h3
-id="特異な性質--ms-notmodels-f-かつ-ms-notmodels-neg-f-な-m-f-の存在">特異な性質
-: <span class="math inline">M,s \not\models f</span> かつ <span
-class="math inline">M,s \not\models \neg f</span> な <span
+id="特異な性質--m-notmodels-f-かつ-m-notmodels-neg-f-な-m-f-の存在">特異な性質
+: <span class="math inline">M \not\models f</span> かつ <span
+class="math inline">M \not\models \neg f</span> な <span
 class="math inline">M</span>, <span class="math inline">f</span>
 の存在</h3>
 <ul>
@@ -625,9 +625,6 @@ class="math inline">M</span>, <span class="math inline">f</span>
     A -&gt; C -&gt; E -&gt; E;
     B -&gt; D -&gt; F -&gt; F;
     C -&gt; F;
-
-    labelloc=&quot;t&quot;;
-    label=&quot;pUq を満たすパス&quot;;
 }</div></figure>
 <p>この様な状況は、開始状態が 1 つの場合には生じない。</p>
 <h3 id="余談--充足可能有効">余談 : 充足可能・有効</h3>
@@ -717,37 +714,48 @@ s_j \not\models f))\\
 <li>式のサイズ : 式に現れる原子命題の延べ数と、演算子の延べ数。 (<a
 href="https://www.sciencedirect.com/science/article/pii/S0004370214000228">推論元の情報</a>)</li>
 <li>主張 :
-<strong>ほとんどの式のサイズは、変換の前後で定数倍にしかならない</strong>。</li>
-<li>直感的な説明 :
+<strong>ほとんどの式のサイズは、変換の前後で定数倍にしかならない</strong>。
 <ul>
-<li>変換前の式について
-<ul>
-<li><span class="math inline">\neg</span> が 2
-つ以上続くことはないとする。</li>
-<li>元の式中に出現する原子命題の数を <span class="math inline">a</span>,
-<span class="math inline">\neg</span> 以外の演算子の数を <span
-class="math inline">b</span>, <span class="math inline">\neg</span>
-の数を <span class="math inline">c</span> と置く。</li>
-<li><span class="math inline">\neg</span>
-は原子命題や演算子に一つまで付けることができるため、 <span
-class="math inline">c \leq a + b</span> である。</li>
-<li>式のサイズは <span class="math inline">a + b + c</span> であり、
-<span class="math inline">a + b</span> 以上である。</li>
-</ul></li>
-<li>変換後の式について
-<ul>
-<li>どの変換規則を用いても、原子命題の数と <span
-class="math inline">\neg</span> 以外の演算子の数は変化しない。</li>
-<li>NNF の制約より、変換後の <span class="math inline">\neg</span>
-の数は、式内の原子命題の数 <span class="math inline">b</span>
-以下である。</li>
-<li>→ 変換後の式のサイズは <span class="math inline">a + b + b = a +
-2b</span> 以下である。</li>
-<li>これは <span class="math inline">a + b</span>
-の定数倍のオーダーである。</li>
-</ul></li>
+<li>仮定 : <span class="math inline">\neg</span> は 2 個続かない</li>
 </ul></li>
 </ul>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;"></th>
+<th style="text-align: center;">変換前</th>
+<th style="text-align: center;">変換後</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">原子命題の数</td>
+<td style="text-align: center;"><span class="math inline">a</span></td>
+<td style="text-align: center;"><span class="math inline">a</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><span class="math inline">\neg</span>
+以外の演算子の数</td>
+<td style="text-align: center;"><span class="math inline">b</span></td>
+<td style="text-align: center;"><span class="math inline">b</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\neg</span>
+の数</td>
+<td style="text-align: center;"><span class="math inline">a + b</span>
+以下</td>
+<td style="text-align: center;"><span class="math inline">a</span>
+以下</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">サイズ</td>
+<td style="text-align: center;"><span class="math inline">a + b</span>
+以上</td>
+<td style="text-align: center;"><span class="math inline">2a + b</span>
+以下</td>
+</tr>
+</tbody>
+</table>
 <blockquote>
 <p>It is important to note that the conversion of a CTL* formula to NNF
 is linear in the size of the formula.<br> This is true for many
@@ -986,8 +994,8 @@ class="math inline">c</span> が無限に現れる。</li>
 <h3 id="ctl-での公平性の扱い">CTL* での公平性の扱い</h3>
 <p>CTL* 式 <span class="math inline">\mathrm{fpath}</span>
 を考える。</p>
-<p><span class="math display"> \mathrm{fpath} := \bigwedge_{P \in F}
-\bigvee_{s \in P} \opGF s </span></p>
+<p><span class="math display">\mathrm{fpath} := \bigwedge_{P \in F}
+\bigvee_{s \in P} \opGF s</span></p>
 <ul>
 <li><span class="math inline">\opE(\mathrm{fpath} \land \phi)</span> :
 公平で <span class="math inline">\phi</span> を満たすパスが存在</li>
@@ -998,7 +1006,7 @@ class="math inline">c</span> が無限に現れる。</li>
 <li>知りたいのは公平パスに関する性質なので、 <span
 class="math inline">\implies</span> で不公平なパスを除外する。</li>
 <li>公平パスが存在しない場合は <span class="math inline">\phi</span>
-によらず恒真。</li>
+によらず真。</li>
 </ul></li>
 </ul>
 <h3 id="ctl-での公平性の扱い-1">CTL での公平性の扱い</h3>
@@ -1035,7 +1043,7 @@ class="math inline">\phi</span> が成り立つ。</li>
 <li><span class="math inline">M,s \models \opA_F \phi</span>
 とも書く。</li>
 <li>公平パスが存在しない場合は <span class="math inline">\phi</span>
-によらず恒真。</li>
+によらず真。</li>
 </ul></li>
 </ul>
 <p><span class="math inline">p</span>, <span class="math inline">\opE
