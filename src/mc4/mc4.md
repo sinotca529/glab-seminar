@@ -1,7 +1,7 @@
 ---
 title: Model Checking (Sec.4)
 tag: MC
-date: 2023-07-XX
+date: 2023-07-04
 plug:
   graphviz: true
 ---
@@ -208,18 +208,28 @@ Q. 適当な性質を考えて、それを時相理論式で表してくださ�
 
 時相論理式は**状態式**と**パス式**に分けられる。
 
-- 状態式 (state formula): ある状態の性質をあらわす。
-  - ある状態から始まるパス群に言及できる。
-  - 例 1 : $\opAG f$ 「ある状態から始まる全てのパスは、性質 $f$ を満たす。」
-- パス式 (path formula): あるパスの性質をあらわす。
-  - ある一つのパスにのみ言及できる。
-  - 例 1 : $\opF f$ 「あるパスがいつかは性質 $f$ を満たす。」
-  - 例 3 : $\opX f$ 「あるパスの 2 番目の状態が性質 $f$ を満たす。」
-  - 例 2 : $f$ 「パスの先頭の状態が性質 $f$ を満たす。」
+**状態式 (state formula): ある状態の性質。**
+
+- ある状態から始まるパス群に言及できる。
+- 例 1 : $\opAG f$ 「ある状態から始まる全てのパスは、性質 $f$ を満たす。」
+
+**パス式 (path formula): あるパスの性質。**
+
+- ある一つのパスにのみ言及できる。
+- 例 1 : $\opF f$ 「あるパスがいつかは性質 $f$ を満たす。」
+- 例 2 : $f$ 「パスの先頭の状態が性質 $f$ を満たす。」
+- 例 3 : $\opX f$ 「あるパスの 2 番目の状態が性質 $f$ を満たす。」
+
+---
+
+時相論理式の目的は、システムの開始状態から始まるパス群の性質を記述すること。\
+そのため、システム全体の性質を記述するのは状態式。
 
 ## 時相論理の種類と関係
 
 「演算子の使い方のルール」に応じて、表現力の異なる多様なな時相論理がある。
+
+::: {.centered}
 
 <svg width="50%" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg" style="background-color:white">
   <text x="10" y="25" font-family="Verdana" font-size="8">CTL*</text>
@@ -234,111 +244,46 @@ Q. 適当な性質を考えて、それを時相理論式で表してくださ�
   <ellipse cx="130" cy="65" rx="30" ry="30" fill="none" stroke=black />
 </svg>
 
-|                  |                          Branching-Time Logic                          |             Linear-Time Logic              |
-| :--------------: | :--------------------------------------------------------------------: | :----------------------------------------: |
-|   該当する論理   |                        CTL, CTL\* ACTL\*, ACTL                         |                    LTL                     |
-| パス量化子の扱い |                             何回でも使える                             |        式の先頭に 1 度しか使えない         |
-|   見ているもの   |                                 木全体                                 | あり得るパスの集合<br>(分岐の情報は落ちる) |
-| 部分式が表すもの |                              部分木の性質                              |               部分パスの性質               |
-|  書ける性質の例  | 全てのパスで、いつかは「次にどの分岐でも実行が終わる」状態に到達する。 |    全てのパスで、いつかは実行が終わる。    |
-
-### 時相論理式の作り方
-
-時相論理式の目的は、システムの開始状態から始まるパス群の性質を記述すること。<br>
-そのため、どの論理も受理するのは状態式だけ。
+:::
 
 ::: {#compare}
 
-```graphviz
-digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  newrank=true;
-
-  {rank = same; A5; A4; A3; A2; A1};
-  {rank = same; S5; S4; S3; S2; S1};
-  {rank = same; P5; P4; P3; P2; P1};
-
-  subgraph cluster_ctl_star {
-    A1 [label = "開始"];
-    S1 [label="状態式", shape=doublecircle];
-    P1 [label="パス式"];
-
-    A1 -> S1 [label = "p, ¬p"];
-    S1 -> P1 [label = "ε"];
-    P1 -> S1 [label = "A,E"];
-    S1 -> S1 [label = "¬,∨,∧"];
-    P1 -> P1 [label = "¬,∨,∧,\nX,F,G,U,R"];
-
-    labelloc="t";
-    label="CTL*";
-  }
-
-  subgraph cluster_ctl {
-    A2 [label = "開始"];
-    S2 [label="状態式", shape=doublecircle];
-    P2 [label="パス式"];
-
-    A2 -> S2 [label = "p, ¬p"];
-    S2 -> P2 [label = "X,F,G,U,R"];
-    P2 -> S2 [label = "A,E"];
-    S2 -> S2 [label = "¬,∨,∧"];
-
-    labelloc="t";
-    label="CTL";
-  }
-
-  subgraph cluster_actl_star {
-    A3 [label="開始"];
-    S3 [label="状態式", shape=doublecircle];
-    P3 [label="パス式"];
-
-    A3 -> S3 [label="p,¬p"];
-    S3 -> P3 [label="ε"];
-    P3 -> S3 [label="A"];
-    S3 -> S3 [label="∨,∧"];
-    P3 -> P3 [label="∨,∧,\nX,F,G,U,R"];
-
-    labelloc="t";
-    label="ACTL*";
-  }
-
-  subgraph cluster_actl {
-    A4 [label="開始"];
-    S4 [label="状態式", shape=doublecircle];
-    P4 [label="パス式"];
-
-    A4 -> S4 [label="p,¬p"];
-    S4 -> P4 [label="X,F,G,U,R"];
-    P4 -> S4 [label="A"];
-    S4 -> S4 [label="∨,∧"];
-
-    labelloc="t";
-    label="ACTL";
-  }
-
-  subgraph cluster_ltl {
-    A5 [label="開始"];
-    S5 [label="状態式", shape=doublecircle];
-    P5 [label="パス式"];
-
-    A5 -> P5 [label="p"];
-    P5 -> S5 [label="A"];
-    P5 -> P5 [label="¬,∨,∧,\nX,F,G,U,R"];
-
-    labelloc="t";
-    label="LTL";
-  }
-}
-```
+|  論理  | CTL\*からみた制約                                                        |
+| :----: | :----------------------------------------------------------------------- |
+| CTL\*  | なし                                                                     |
+|  CTL   | 操作は $\{\opA,\opE\}\times\{\opX,\opF,\opG,\opU,\opR\}$ のみ可能。      |
+| ACTL\* | NNF かつ、 $\opA$ が使えない。                                           |
+|  ACTL  | NNF かつ、操作は $\{\opA\}\times\{\opX,\opF,\opG,\opU,\opR\}$ のみ可能。 |
+|  LTL   | $\opE$ は使えない。 式は $\opA$ で開始し、それ以外で $\opA$ は使えない。 |
 
 :::
+
+|                       |                          Branching-Time Logic                          |             Linear-Time Logic              |
+| :-------------------: | :--------------------------------------------------------------------: | :----------------------------------------: |
+|     該当する論理      |                        CTL, CTL\* ACTL\*, ACTL                         |                    LTL                     |
+| $\opA$, $\opE$ の扱い |                             何回でも使える                             |        式の先頭に 1 度しか使えない         |
+|     見ているもの      |                                 木全体                                 | あり得るパスの集合<br>(分岐の情報は落ちる) |
+|   部分式が表すもの    |                              部分木の性質                              |               部分パスの性質               |
+|    書ける性質の例     | 全てのパスで、いつかは「次にどの分岐でも実行が終わる」状態に到達する。 |    全てのパスで、いつかは実行が終わる。    |
 
 以降では、これら時相論理の体系を見ていく。
 
 ## CTL\*
 
 ### 文法
+
+状態式 :
+![](fig/ctlx_state.png)
+
+パス式 :
+![](fig/ctlx_path.png)
+
+CTL\* 式 :
+
+- 状態式全て
+
+<details>
+<summary>定義</summary>
 
 記法 : $f$, $g$ は状態式、 $\phi$, $\psi$ はパス式。
 
@@ -352,24 +297,7 @@ digraph G {
 - CTL\* 式
   - 状態式全て。
 
-```graphviz
-digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-
-  subgraph cluster_ctl_star {
-    A1 [label = "開始"];
-    S1 [label="状態式", shape=doublecircle];
-    P1 [label="パス式"];
-
-    A1 -> S1 [label = "p, ¬p"];
-    S1 -> P1 [label = "ε"];
-    P1 -> S1 [label = "A,E"];
-    S1 -> S1 [label = "¬,∨,∧"];
-    P1 -> P1 [label = "¬,∨,∧,\nX,F,G,U,R"];
-  }
-}
-```
+</details>
 
 ### 意味論
 
@@ -489,12 +417,12 @@ digraph G {
 - $f$ は充足可能 (satisfiable) : $M \models f$: を満たす $M$ が存在する。
 - $f$ は有効 (valid) : すべての $M$ が $M \models f$ を満たす。
 
-充足可能性・有効性の判定は難しい問題だが、モデル検査をする上では不要な概念。<br>
+充足可能性・有効性の判定は難しい問題だが、モデル検査をする上では不要な概念。\
 なぜなら、与えられた $M$ と $f$ に対して $M \models f$ を調べれば良いから。
 
 ### 正規化 @ 最低限の演算子で
 
-CTL\* 式は ${\lor, \neg, \opX, \opU, \opE }$ だけで書ける。<br>
+CTL\* 式は ${\lor, \neg, \opX, \opU, \opE }$ だけで書ける。\
 のこる $\land$, $\opR$, $\opF$, $\opG$, $\opA$ は次のように変形できる。
 
 $$
@@ -578,25 +506,16 @@ $$
 
 ### 文法
 
+![](fig/ctl.png)
+
+<details>
+<summary>定義</summary>
+
 - B1 : 原子命題 $p$
 - B2 : $\neg f, \opAX f, \opEX f, \opAF f, \opEF f, \opAG f, \opEG f$ (ただし $f$ は CTL 式)
 - B3 : $f \land g$, $f \lor g$, $\opA(f \opU g)$, $\opE(f \opU g)$, $\opA(f \opR g)$, $\opE(f \opR g)$ (ただし $f$, $g$ は CTL 式)
 
-```graphviz
-digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
- subgraph cluster_ctl {
-    A2 [label = "開始"];
-    S2 [label="状態式", shape=doublecircle];
-    P2 [label="パス式"];
-    A2 -> S2 [label = "p, ¬p"];
-    S2 -> P2 [label = "X,F,G,U,R"];
-    P2 -> S2 [label = "A,E"];
-    S2 -> S2 [label = "¬,∨,∧"];
-  }
-}
-```
+</details>
 
 ### 正規化
 
@@ -621,6 +540,19 @@ $$
 
 ### 文法
 
+状態式 :
+![](fig/actlx_state.png)
+
+パス式 :
+![](fig/actlx_path.png)
+
+ACTL\* 式 :
+
+- 状態式全て
+
+<details>
+<summary>定義</summary>
+
 - 状態式 (state formula):
   - C1 : 原子命題とその否定 $p$, $\neg p$
   - C2 : $f \lor g$, $f \land g$ (ただし $f$, $g$ は状態式)
@@ -631,22 +563,7 @@ $$
 - ACTL\* 式:
   - 状態式全て
 
-```graphviz
-digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  subgraph cluster_actl_star {
-    A3 [label="開始"];
-    S3 [label="状態式", shape=doublecircle];
-    P3 [label="パス式"];
-    A3 -> S3 [label="p,¬p"];
-    S3 -> P3 [label="ε"];
-    P3 -> S3 [label="A"];
-    S3 -> S3 [label="∨,∧"];
-    P3 -> P3 [label="∨,∧,\nX,F,G,U,R"];
-  }
-}
-```
+</details>
 
 ### 正規化
 
@@ -658,6 +575,11 @@ $\opX$, $\opU$, $\opR$ のみの形に変形可能。
 
 ### 文法
 
+![](fig/actl.png)
+
+<details>
+<summary>定義</summary>
+
 - 状態式 (state formula):
   - D1 : 原子命題とその否定 $p$, $\neg p$
   - D2 : $\opAX f$, $\opAF f$, $\opAG f$ (ただし $f$ は状態式)
@@ -667,21 +589,7 @@ $\opX$, $\opU$, $\opR$ のみの形に変形可能。
 - ACTL 式:
   - 状態式全て
 
-```graphviz
-digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  subgraph cluster_actl {
-    A4 [label="開始"];
-    S4 [label="状態式", shape=doublecircle];
-    P4 [label="パス式"];
-    A4 -> S4 [label="p,¬p"];
-    S4 -> P4 [label="X,F,G,U,R"];
-    P4 -> S4 [label="A"];
-    S4 -> S4 [label="∨,∧"];
-  }
-}
-```
+</details>
 
 ### 正規化
 
@@ -693,27 +601,23 @@ $\opAX$, $\opAU$, $\opAR$ だけで書ける。
 
 ### 文法
 
+パス式 :
+![](fig/ltl_path.png)
+
+LTL 式:
+![](fig/ltl.png)
+
+<details>
+<summary>定義</summary>
+
 - パス式:
   - E1 : 原子命題 $p$
   - E2 : $\neg f$, $\opX f$, $\opF f$, $\opG f$ (ただし $f$ はパス式)
   - E3 : $f \lor g$, $f \land g$, $f\opU g$, $f\opR g$ (ただし $f$, $g$ はパス式)
 - LTL 式
-  - E4 : $\opA f$ (ただし $f$ はパス式のうち、 $\opA$ と $\opE$ を持たないもの)
+  - E4 : $\opA f$ (ただし $f$ はパス式)
 
-```graphviz
-digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  subgraph cluster_ltl {
-    A5 [label="開始"];
-    S5 [label="状態式", shape=doublecircle];
-    P5 [label="パス式"];
-    A5 -> P5 [label="p"];
-    P5 -> S5 [label="A"];
-    P5 -> P5 [label="¬,∨,∧,\nX,F,G,U,R"];
-  }
-}
-```
+</details>
 
 ## 時相論理まとめ
 

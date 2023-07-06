@@ -36,7 +36,7 @@
 
   <title>Model Checking (Sec.4)</title>
   <meta name="keywords" content="MC"/>
-  <meta name="date" content="2023-07-XX"/>
+  <meta name="date" content="2023-07-04"/>
 
   <style type="text/css">
       span.smallcaps{font-variant: small-caps;}
@@ -65,7 +65,7 @@
 <body>
 <a href="../../index.html">トップへ</a>
 <p>
-  <date>2023-07-XX</date>
+  <date>2023-07-04</date>
       <tag><a href="../../tag.html?tag=MC">MC</a></tag>
   </p>
 
@@ -275,28 +275,30 @@ class="math inline">(\text{通常モード})\opU(\text{電池残量5\%未満})</
 <p>Q. 適当な性質を考えて、それを時相理論式で表してください。</p>
 <h2 id="時相論理式の種類">時相論理式の種類</h2>
 <p>時相論理式は<strong>状態式</strong>と<strong>パス式</strong>に分けられる。</p>
-<ul>
-<li>状態式 (state formula): ある状態の性質をあらわす。
+<p><strong>状態式 (state formula): ある状態の性質。</strong></p>
 <ul>
 <li>ある状態から始まるパス群に言及できる。</li>
 <li>例 1 : <span class="math inline">\opAG f</span>
 「ある状態から始まる全てのパスは、性質 <span
 class="math inline">f</span> を満たす。」</li>
-</ul></li>
-<li>パス式 (path formula): あるパスの性質をあらわす。
+</ul>
+<p><strong>パス式 (path formula): あるパスの性質。</strong></p>
 <ul>
 <li>ある一つのパスにのみ言及できる。</li>
 <li>例 1 : <span class="math inline">\opF f</span>
 「あるパスがいつかは性質 <span class="math inline">f</span>
 を満たす。」</li>
-<li>例 3 : <span class="math inline">\opX f</span> 「あるパスの 2
-番目の状態が性質 <span class="math inline">f</span> を満たす。」</li>
 <li>例 2 : <span class="math inline">f</span> 「パスの先頭の状態が性質
 <span class="math inline">f</span> を満たす。」</li>
-</ul></li>
+<li>例 3 : <span class="math inline">\opX f</span> 「あるパスの 2
+番目の状態が性質 <span class="math inline">f</span> を満たす。」</li>
 </ul>
+<hr />
+<p>時相論理式の目的は、システムの開始状態から始まるパス群の性質を記述すること。<br />
+そのため、システム全体の性質を記述するのは状態式。</p>
 <h2 id="時相論理の種類と関係">時相論理の種類と関係</h2>
 <p>「演算子の使い方のルール」に応じて、表現力の異なる多様なな時相論理がある。</p>
+<div class="centered">
 <svg width="50%" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg" style="background-color:white">
   <text x="10" y="25" font-family="Verdana" font-size="8">CTL*</text>
   <text x="35" y="65" font-family="Verdana" font-size="8">CTL</text>
@@ -310,6 +312,47 @@ class="math inline">f</span> を満たす。」</li>
   <ellipse cx="130" cy="65" rx="30" ry="30" fill="none" stroke=black />
 </svg>
 
+</div>
+<div id="compare">
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">論理</th>
+<th style="text-align: left;">CTL*からみた制約</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">CTL*</td>
+<td style="text-align: left;">なし</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">CTL</td>
+<td style="text-align: left;">操作は <span
+class="math inline">\{\opA,\opE\}\times\{\opX,\opF,\opG,\opU,\opR\}</span>
+のみ可能。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">ACTL*</td>
+<td style="text-align: left;">NNF かつ、 <span
+class="math inline">\opA</span> が使えない。</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">ACTL</td>
+<td style="text-align: left;">NNF かつ、操作は <span
+class="math inline">\{\opA\}\times\{\opX,\opF,\opG,\opU,\opR\}</span>
+のみ可能。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">LTL</td>
+<td style="text-align: left;"><span class="math inline">\opE</span>
+は使えない。 式は <span class="math inline">\opA</span>
+で開始し、それ以外で <span class="math inline">\opA</span>
+は使えない。</td>
+</tr>
+</tbody>
+</table>
+</div>
 <table>
 <thead>
 <tr class="header">
@@ -325,7 +368,8 @@ class="math inline">f</span> を満たす。」</li>
 <td style="text-align: center;">LTL</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">パス量化子の扱い</td>
+<td style="text-align: center;"><span class="math inline">\opA</span>,
+<span class="math inline">\opE</span> の扱い</td>
 <td style="text-align: center;">何回でも使える</td>
 <td style="text-align: center;">式の先頭に 1 度しか使えない</td>
 </tr>
@@ -349,95 +393,18 @@ style="text-align: center;">全てのパスで、いつかは実行が終わる�
 </tr>
 </tbody>
 </table>
-<h3 id="時相論理式の作り方">時相論理式の作り方</h3>
-<p>時相論理式の目的は、システムの開始状態から始まるパス群の性質を記述すること。<br>
-そのため、どの論理も受理するのは状態式だけ。</p>
-<div id="compare">
-
-<figure><div class="graphviz">digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  newrank=true;
-
-  {rank = same; A5; A4; A3; A2; A1};
-  {rank = same; S5; S4; S3; S2; S1};
-  {rank = same; P5; P4; P3; P2; P1};
-
-  subgraph cluster_ctl_star {
-    A1 [label = &quot;開始&quot;];
-    S1 [label=&quot;状態式&quot;, shape=doublecircle];
-    P1 [label=&quot;パス式&quot;];
-
-    A1 -&gt; S1 [label = &quot;p, ¬p&quot;];
-    S1 -&gt; P1 [label = &quot;ε&quot;];
-    P1 -&gt; S1 [label = &quot;A,E&quot;];
-    S1 -&gt; S1 [label = &quot;¬,∨,∧&quot;];
-    P1 -&gt; P1 [label = &quot;¬,∨,∧,\nX,F,G,U,R&quot;];
-
-    labelloc=&quot;t&quot;;
-    label=&quot;CTL*&quot;;
-  }
-
-  subgraph cluster_ctl {
-    A2 [label = &quot;開始&quot;];
-    S2 [label=&quot;状態式&quot;, shape=doublecircle];
-    P2 [label=&quot;パス式&quot;];
-
-    A2 -&gt; S2 [label = &quot;p, ¬p&quot;];
-    S2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
-    P2 -&gt; S2 [label = &quot;A,E&quot;];
-    S2 -&gt; S2 [label = &quot;¬,∨,∧&quot;];
-
-    labelloc=&quot;t&quot;;
-    label=&quot;CTL&quot;;
-  }
-
-  subgraph cluster_actl_star {
-    A3 [label=&quot;開始&quot;];
-    S3 [label=&quot;状態式&quot;, shape=doublecircle];
-    P3 [label=&quot;パス式&quot;];
-
-    A3 -&gt; S3 [label=&quot;p,¬p&quot;];
-    S3 -&gt; P3 [label=&quot;ε&quot;];
-    P3 -&gt; S3 [label=&quot;A&quot;];
-    S3 -&gt; S3 [label=&quot;∨,∧&quot;];
-    P3 -&gt; P3 [label=&quot;∨,∧,\nX,F,G,U,R&quot;];
-
-    labelloc=&quot;t&quot;;
-    label=&quot;ACTL*&quot;;
-  }
-
-  subgraph cluster_actl {
-    A4 [label=&quot;開始&quot;];
-    S4 [label=&quot;状態式&quot;, shape=doublecircle];
-    P4 [label=&quot;パス式&quot;];
-
-    A4 -&gt; S4 [label=&quot;p,¬p&quot;];
-    S4 -&gt; P4 [label=&quot;X,F,G,U,R&quot;];
-    P4 -&gt; S4 [label=&quot;A&quot;];
-    S4 -&gt; S4 [label=&quot;∨,∧&quot;];
-
-    labelloc=&quot;t&quot;;
-    label=&quot;ACTL&quot;;
-  }
-
-  subgraph cluster_ltl {
-    A5 [label=&quot;開始&quot;];
-    S5 [label=&quot;状態式&quot;, shape=doublecircle];
-    P5 [label=&quot;パス式&quot;];
-
-    A5 -&gt; P5 [label=&quot;p&quot;];
-    P5 -&gt; S5 [label=&quot;A&quot;];
-    P5 -&gt; P5 [label=&quot;¬,∨,∧,\nX,F,G,U,R&quot;];
-
-    labelloc=&quot;t&quot;;
-    label=&quot;LTL&quot;;
-  }
-}</div></figure>
-</div>
 <p>以降では、これら時相論理の体系を見ていく。</p>
 <h2 id="ctl">CTL*</h2>
 <h3 id="文法">文法</h3>
+<p>状態式 : <img src="fig/ctlx_state.png" /></p>
+<p>パス式 : <img src="fig/ctlx_path.png" /></p>
+<p>CTL* 式 :</p>
+<ul>
+<li>状態式全て</li>
+</ul>
+<details>
+<summary>定義</summary>
+
 <p>記法 : <span class="math inline">f</span>, <span
 class="math inline">g</span> は状態式、 <span
 class="math inline">\phi</span>, <span class="math inline">\psi</span>
@@ -469,23 +436,8 @@ class="math inline">\phi\opR \psi</span></li>
 <li>状態式全て。</li>
 </ul></li>
 </ul>
+</details>
 
-<figure><div class="graphviz">digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-
-  subgraph cluster_ctl_star {
-    A1 [label = &quot;開始&quot;];
-    S1 [label=&quot;状態式&quot;, shape=doublecircle];
-    P1 [label=&quot;パス式&quot;];
-
-    A1 -&gt; S1 [label = &quot;p, ¬p&quot;];
-    S1 -&gt; P1 [label = &quot;ε&quot;];
-    P1 -&gt; S1 [label = &quot;A,E&quot;];
-    S1 -&gt; S1 [label = &quot;¬,∨,∧&quot;];
-    P1 -&gt; P1 [label = &quot;¬,∨,∧,\nX,F,G,U,R&quot;];
-  }
-}</div></figure>
 <h3 id="意味論">意味論</h3>
 <p>クリプキ構造 <span class="math inline">M</span> 上の状態 <span
 class="math inline">s</span> とパス <span class="math inline">\pi</span>
@@ -636,17 +588,17 @@ class="math inline">M</span> が存在する。</li>
 class="math inline">M</span> が <span class="math inline">M \models
 f</span> を満たす。</li>
 </ul>
-<p>充足可能性・有効性の判定は難しい問題だが、モデル検査をする上では不要な概念。<br>
+<p>充足可能性・有効性の判定は難しい問題だが、モデル検査をする上では不要な概念。<br />
 なぜなら、与えられた <span class="math inline">M</span> と <span
 class="math inline">f</span> に対して <span class="math inline">M
 \models f</span> を調べれば良いから。</p>
 <h3 id="正規化--最低限の演算子で">正規化 @ 最低限の演算子で</h3>
 <p>CTL* 式は <span class="math inline">{\lor, \neg, \opX, \opU, \opE
-}</span> だけで書ける。<br> のこる <span
-class="math inline">\land</span>, <span class="math inline">\opR</span>,
-<span class="math inline">\opF</span>, <span
-class="math inline">\opG</span>, <span class="math inline">\opA</span>
-は次のように変形できる。</p>
+}</span> だけで書ける。<br />
+のこる <span class="math inline">\land</span>, <span
+class="math inline">\opR</span>, <span class="math inline">\opF</span>,
+<span class="math inline">\opG</span>, <span
+class="math inline">\opA</span> は次のように変形できる。</p>
 <p><span class="math display">
 \begin{align}
 &amp;f \land g &amp;\:\equiv\: &amp;\neg(\neg f \lor \neg g)\\
@@ -768,6 +720,10 @@ fragments of CTL*.</p>
 \opG , \opU , \opR \}</span> の十種の操作が可能。</li>
 </ul>
 <h3 id="文法-1">文法</h3>
+<p><img src="fig/ctl.png" /></p>
+<details>
+<summary>定義</summary>
+
 <ul>
 <li>B1 : 原子命題 <span class="math inline">p</span></li>
 <li>B2 : <span class="math inline">\neg f, \opAX f, \opEX f, \opAF f,
@@ -781,20 +737,8 @@ class="math inline">\opE(f \opR g)</span> (ただし <span
 class="math inline">f</span>, <span class="math inline">g</span> は CTL
 式)</li>
 </ul>
+</details>
 
-<figure><div class="graphviz">digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
- subgraph cluster_ctl {
-    A2 [label = &quot;開始&quot;];
-    S2 [label=&quot;状態式&quot;, shape=doublecircle];
-    P2 [label=&quot;パス式&quot;];
-    A2 -&gt; S2 [label = &quot;p, ¬p&quot;];
-    S2 -&gt; P2 [label = &quot;X,F,G,U,R&quot;];
-    P2 -&gt; S2 [label = &quot;A,E&quot;];
-    S2 -&gt; S2 [label = &quot;¬,∨,∧&quot;];
-  }
-}</div></figure>
 <h3 id="正規化">正規化</h3>
 <p>CTL 式は <span class="math inline">\opEX</span>, <span
 class="math inline">\opEG</span>, <span class="math inline">\opEU</span>
@@ -816,6 +760,15 @@ f\land\neg g))\land\neg\opEG\neg g\\
 のみで、かつ、 NNF 。<br> (<span class="math inline">\opE</span> 版の
 ECTL* という論理もある)</p>
 <h3 id="文法-2">文法</h3>
+<p>状態式 : <img src="fig/actlx_state.png" /></p>
+<p>パス式 : <img src="fig/actlx_path.png" /></p>
+<p>ACTL* 式 :</p>
+<ul>
+<li>状態式全て</li>
+</ul>
+<details>
+<summary>定義</summary>
+
 <ul>
 <li>状態式 (state formula):
 <ul>
@@ -844,21 +797,8 @@ class="math inline">f</span>, <span class="math inline">g</span>
 <li>状態式全て</li>
 </ul></li>
 </ul>
+</details>
 
-<figure><div class="graphviz">digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  subgraph cluster_actl_star {
-    A3 [label=&quot;開始&quot;];
-    S3 [label=&quot;状態式&quot;, shape=doublecircle];
-    P3 [label=&quot;パス式&quot;];
-    A3 -&gt; S3 [label=&quot;p,¬p&quot;];
-    S3 -&gt; P3 [label=&quot;ε&quot;];
-    P3 -&gt; S3 [label=&quot;A&quot;];
-    S3 -&gt; S3 [label=&quot;∨,∧&quot;];
-    P3 -&gt; P3 [label=&quot;∨,∧,\nX,F,G,U,R&quot;];
-  }
-}</div></figure>
 <h3 id="正規化-1">正規化</h3>
 <p><span class="math inline">\opX</span>, <span
 class="math inline">\opU</span>, <span class="math inline">\opR</span>
@@ -867,6 +807,10 @@ class="math inline">\opU</span>, <span class="math inline">\opR</span>
 <p>制約 : 作用素は <span class="math inline">\{ \opA \} \times \{ \opX,
 \opF, \opG, \opU, \opR \}</span> の 5 種のみ。</p>
 <h3 id="文法-3">文法</h3>
+<p><img src="fig/actl.png" /></p>
+<details>
+<summary>定義</summary>
+
 <ul>
 <li>状態式 (state formula):
 <ul>
@@ -890,20 +834,8 @@ class="math inline">f \lor g</span>, <span class="math inline">\opA(f
 <li>状態式全て</li>
 </ul></li>
 </ul>
+</details>
 
-<figure><div class="graphviz">digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  subgraph cluster_actl {
-    A4 [label=&quot;開始&quot;];
-    S4 [label=&quot;状態式&quot;, shape=doublecircle];
-    P4 [label=&quot;パス式&quot;];
-    A4 -&gt; S4 [label=&quot;p,¬p&quot;];
-    S4 -&gt; P4 [label=&quot;X,F,G,U,R&quot;];
-    P4 -&gt; S4 [label=&quot;A&quot;];
-    S4 -&gt; S4 [label=&quot;∨,∧&quot;];
-  }
-}</div></figure>
 <h3 id="正規化-2">正規化</h3>
 <p><span class="math inline">\opAX</span>, <span
 class="math inline">\opAU</span>, <span class="math inline">\opAR</span>
@@ -914,6 +846,11 @@ class="math inline">f</span> は CTL* のパス式のうち、 <span
 class="math inline">\opA</span> と <span class="math inline">\opE</span>
 を持たないもの) の形をしている。</p>
 <h3 id="文法-4">文法</h3>
+<p>パス式 : <img src="fig/ltl_path.png" /></p>
+<p>LTL 式: <img src="fig/ltl.png" /></p>
+<details>
+<summary>定義</summary>
+
 <ul>
 <li>パス式:
 <ul>
@@ -931,24 +868,11 @@ class="math inline">f</span>, <span class="math inline">g</span>
 <li>LTL 式
 <ul>
 <li>E4 : <span class="math inline">\opA f</span> (ただし <span
-class="math inline">f</span> はパス式のうち、 <span
-class="math inline">\opA</span> と <span class="math inline">\opE</span>
-を持たないもの)</li>
+class="math inline">f</span> はパス式)</li>
 </ul></li>
 </ul>
+</details>
 
-<figure><div class="graphviz">digraph G {
-  node [shape=circle, fixedsize=true, width=1.0];
-  graph [rankdir = LR];
-  subgraph cluster_ltl {
-    A5 [label=&quot;開始&quot;];
-    S5 [label=&quot;状態式&quot;, shape=doublecircle];
-    P5 [label=&quot;パス式&quot;];
-    A5 -&gt; P5 [label=&quot;p&quot;];
-    P5 -&gt; S5 [label=&quot;A&quot;];
-    P5 -&gt; P5 [label=&quot;¬,∨,∧,\nX,F,G,U,R&quot;];
-  }
-}</div></figure>
 <h2 id="時相論理まとめ">時相論理まとめ</h2>
 <p><clone ref="compare"></clone></p>
 <h2 id="集合原子命題">集合原子命題</h2>
