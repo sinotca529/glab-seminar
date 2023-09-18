@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <link rel="stylesheet" type="text/css" href="../../../style.css">
+  <script type="text/javascript" src="../../../script.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+
+  <!-- and it's easy to individually load additional languages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/llvm.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.0/languages/makefile.min.js"></script>
+
+  <script>
+    hljs.highlightAll();
+    hljs.initLineNumbersOnLoad();
+  </script>
+
+
+
+
+  <title>Demand Driven Alias Analysis for C</title>
+  <meta name="keywords" content=""/>
+  <meta name="date" content="2023-09-19"/>
+
+  <style type="text/css">
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css" />
+</head>
+<body>
+<a href="../../../index.html">トップへ</a>
+<p>
+  <date>2023-09-19</date>
+  </p>
+
+<h1 id="demand-driven-alias-analysis-for-c-popl08">Demand Driven Alias
+Analysis for C [POPL’08]</h1>
+<ul>
+<li>目的 : C 言語の may-alias 解析</li>
+<li>既存手法の問題 : 遅い</li>
+<li>提案手法 : May-alias 解析を CFL-reachability に帰着
+<ul>
+<li>CFL : Context Free Grammer</li>
+</ul></li>
+<li>結果 : 不要な解析が減り、速度改善 (x30)</li>
+<li>精度 : Andersen 相当 (flow, ctxt, element, field -
+<strong>in</strong>sensitive)</li>
+</ul>
+<h2 id="alias-解析">Alias 解析</h2>
+<p>問 : ある 2 つのポインタ <code>p</code>, <code>q</code>
+が同じ場所を指しうるか？</p>
+<h2 id="提案手法概説">提案手法概説</h2>
+<ol type="1">
+<li>変数間の関係をグラフに起こす
+<ul>
+<li>ノード : 変数, 変数の参照 (多段も可), 変数の参照外し (多段も可)</li>
+<li>エッジ : 式</li>
+<li>エッジのラベル : 式の種類</li>
+</ul></li>
+<li>ノード間のパスについているラベル列を観察</li>
+</ol>
+
+<figure><pre><code class="txt">Program :       [*x]                  [ z]                  [*s]       [ t]
+                 ^                     ^                     ^          ^
+s = &amp;t;          |                     |                     |          |
+r = &amp;z;         [ x]&lt;------[*y]&lt;------[&amp;z]------&gt;[ r]------&gt;[ s]&lt;------[&amp;t]
+y = &amp;r;          ^          ^                     ^          ^
+s = r;           |          |                     |          |
+x = *y;         [&amp;x]       [ y]&lt;-----------------[&amp;r]       [&amp;s]
+                            ^
+                            |
+                           [&amp;y]
+
+
+                全ての辺には対応する逆向きの辺も貼られているが、表記上は省略
+
+                縦線 : 参照外し (*), 逆辺は参照 (&amp;)
+                横線 : 代入 (→), 逆辺は被代入 (←)
+                (カッコ内は辺のラベル)</code></pre></figure>
+<p><code>z</code> から <code>*x</code> までのあるパス :</p>
+
+<figure><pre><code class="txt">      &amp;           →          →          *
+[ z]------&gt;[&amp;z]------&gt;[*y]------&gt;[ x]------&gt;[*x]</code></pre></figure>
+<p>ラベル列 <code>&amp; → → *</code> は、次の操作に対応 :</p>
+<ol type="1">
+<li>参照を取る</li>
+<li>その値が伝播</li>
+<li>その値が伝播</li>
+<li>参照を外す</li>
+</ol>
+<p>これは <code>z</code> と <code>*x</code> が may-alias
+関係にあるということ。</p>
+<p>直感的な観察 :</p>
+<ul>
+<li>ラベル列状で <code>&amp;</code> と <code>*</code>
+のバランスが取れていれば良い。</li>
+</ul>
+<h2 id="提案手法の構築手順">提案手法の構築手順</h2>
+<ol type="1">
+<li>プログラムを定式化</li>
+<li>プログラムをグラフに変換する方法を策定</li>
+<li>エイリアス関係を表すラベル列を CFL で記述</li>
+<li>CFL-reachability を求める方法を考案</li>
+</ol>
+<h2 id="プログラムの定式化">プログラムの定式化</h2>
+<p>仮定 : 変数はすべてポインタである。</p>
+<ul>
+<li><code>int a;</code> は
+<code>int *ptr_a = stack_alloc(sizeof(int))</code> に変えれば良い。</li>
+</ul>
+<p>形式的定義 :</p>
+<ul>
+<li>Addresses <span class="math inline">a \in \text{Addr}</span></li>
+<li>Expressions <span class="math inline">e \in \text{Expr}</span>,
+<span class="math inline">e ::= a | *e</span></li>
+<li>Assignments <span class="math inline">s \in \text{Stmt}</span>,
+<span class="math inline">*e1 ::= e2</span></li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th>種別</th>
+<th>Andersen の定式化</th>
+<th>提案手法の定式化</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Address of</td>
+<td><code>x = &amp;y</code></td>
+<td><code>*ptr_x = ptr_y</code></td>
+</tr>
+<tr class="even">
+<td>Assign</td>
+<td><code>x = y</code></td>
+<td><code>*ptr_x = *ptr_y</code></td>
+</tr>
+<tr class="odd">
+<td>Load</td>
+<td><code>x = *y</code></td>
+<td><code>*ptr_x = **ptr_y</code></td>
+</tr>
+<tr class="even">
+<td>Store</td>
+<td><code>*x = y</code></td>
+<td><code>**ptr_x = *ptr_y</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="グラフの定義">グラフの定義</h2>
+<p>Program Expression Graph (PEG)</p>
+<ul>
+<li>ノード : 式</li>
+<li>辺 : Assignment (andersen の Assign ではないことに注意)</li>
+<li>辺のラベル
+<ul>
+<li>参照外し (*)</li>
+<li>代入エッジ (→)</li>
+</ul></li>
+</ul>
+<h2
+id="エイリアス関係を表すラベル列を-cfl-で記述">エイリアス関係を表すラベル列を
+CFL で記述</h2>
+<dl>
+<dt>2点 <code>a</code>, <code>b</code> が CFL-reachable :</dt>
+<dd>
+ある CFL による言語 <span class="math inline">L</span>
+について、<code>a</code>, <code>b</code> 間のパスのラベル列が <span
+class="math inline">L</span> の要素である
+</dd>
+</dl>
+<h3 id="エイリアス関係の分類">エイリアス関係の分類</h3>
+<dl>
+<dt>Memory alias <span class="math inline">M \in (\text{Expr} \times
+\text{Expr})</span> :</dt>
+<dd>
+左辺値 <code>e1</code> と <code>e2</code> が
+<code>&amp;(*e1) == &amp;(*e2)</code> である
+</dd>
+<dt>Value alias <span class="math inline">V \in (\text{Expr} \times
+\text{Expr})</span> :</dt>
+<dd>
+式 <code>e1</code> と <code>e2</code> が <code>e1 == e2</code> である
+</dd>
+</dl>
+<h3 id="cfl-の定義">CFL の定義</h3>
+<p><span class="math display">
+\begin{align}
+M &amp;::= `\&amp;`\ V\ `*`\\
+V &amp;::= \bar{F}\ M?\ \bar{F} \\
+F &amp;::= (→\ M?)^{*} \\
+\bar{F} &amp;::= (M?\ ←)^{*} \\
+\end{align}
+</span></p>
+<h4 id="f-の直感的な理解"><span class="math inline">F</span>
+の直感的な理解</h4>
+
+<figure><pre><code class="txt">      →          M
+[*a]-----&gt;[*b]- ... -&gt;[*c]</code></pre></figure>
+<ul>
+<li><span class="math inline">M</span> の定義より、 <code>*b</code> と
+<code>*c</code> は同じメモリ位置を指す</li>
+<li>→ 式 <code>*c = *a</code> を表す</li>
+</ul>
+<h4 id="barf-の直感的な理解"><span class="math inline">\bar{F}</span>
+の直感的な理解</h4>
+
+<figure><pre><code class="txt">      M          ←
+[*c]-----&gt;[*b]- ... -&gt;[*a]</code></pre></figure>
+<ul>
+<li><span class="math inline">F</span>
+から作られるラベル列を逆順にしたもの</li>
+<li>式 <code>*c = *a</code> を表す</li>
+</ul>
+<h4 id="m-の直感的な理解"><span class="math inline">M</span>
+の直感的な理解</h4>
+
+<figure><pre><code class="txt">       &amp;             V             *
+[ a]-------&gt;[&amp;a]--- ... ---&gt;[ y]-------&gt;[*y]</code></pre></figure>
+<ul>
+<li><span class="math inline">V</span> の定義より
+<code>&amp;a == y</code></li>
+<li>→ <code>&amp;a == &amp;(*y)</code> を表す</li>
+</ul>
+<h4 id="v-の直感的な理解"><span class="math inline">V</span>
+の直感的な理解</h4>
+
+<figure><pre><code class="txt">       _
+       F             M             F
+[*a]-------&gt;[*b]--- ... ---&gt;[*c]-------&gt;[*d]</code></pre></figure>
+<ul>
+<li><span class="math inline">\bar{F}</span> の定義より、
+<code>*b = *a</code></li>
+<li><span class="math inline">M</span>
+の定義より、<code>&amp;(*b) == &amp;(*c)</code> →
+<code>*b == *c</code></li>
+<li><span class="math inline">F</span> の定義より、
+<code>*d = *c</code></li>
+<li>→ <code>*a == *d</code></li>
+</ul>
+<p>(命令順は考えていないことに注意)</p>
+<h3 id="cfl-の定義-再掲">CFL の定義 (再掲)</h3>
+<p><span class="math display">
+\begin{align}
+M &amp;::= `\&amp;`\ V\ `*`\\
+V &amp;::= \bar{F}\ M?\ \bar{F} \\
+F &amp;::= (→\ M?)^{*} \\
+\bar{F} &amp;::= (M?\ ←)^{*} \\
+\end{align}
+</span></p>
+<p>整理して、</p>
+<p><span class="math display">
+\begin{align}
+M &amp;::= `\&amp;`\ V\ `*`\\
+V &amp;::= (M?\ ←)^{*}\ M?\ (→\ M?)^{*} \\
+\end{align}
+</span></p>
+<h2 id="cfl-reachability-を求める方法を考案">CFL-reachability
+を求める方法を考案</h2>
+<ol type="1">
+<li>CFL をオートマトンに変換</li>
+<li>オートマトン上で CFL-reachability を求める</li>
+</ol>
+<h3 id="cfl-をオートマトンに変換">CFL をオートマトンに変換</h3>
+<p><span class="math display">
+\begin{align}
+M &amp;::= `\&amp;`\ V\ `*`\\
+V &amp;::= (M?\ ←)^{*}\ M?\ (→\ M?)^{*} \\
+\end{align}
+</span></p>
+<p><img src="./img/automaton.dio.svg" alt="オートマトン" /></p>
+<h3 id="may-alias-解析">May-alias 解析</h3>
+<ul>
+<li>入力 : 左辺式 <code>e1</code>, <code>e2</code></li>
+<li>出力 : それらが may-alias 関係にあるか (<span
+class="math inline">M</span> の要素か)</li>
+</ul>
+
+<figure><pre><code class="python">#  aassign_to(a) : {b : &lt;a&gt; → &lt;b&gt;}
+# assign_from(a) : {b : &lt;a&gt; ← &lt;b&gt;}
+
+# alias_mem[n] : n の memory alias
+alias_mem: dict[Expr, list[Expr]] = {}
+
+# {(s, c)} = reach[n] : &lt;s&gt; から始めて &lt;n&gt; に状態 c で到達した
+reach: dict[Expr, list[(Expr, State)]]
+
+def may_alias(&lt;e1&gt;: Expr, &lt;e2&gt;: Expr):
+    # ワークリスト
+    # (&lt;n&gt;, &lt;s&gt;, c) = w.pop()
+    #
+    # 意味 :
+    #      &lt;s&gt; --- V ---&gt; &lt;n&gt;
+    #                   状態S1
+    #
+    w: list[(Expr, Expr, State)] = [(&lt;&amp;e1&gt;, &lt;&amp;e1&gt;, S1)]
+
+    while w.len() != 0:
+        (&lt;n&gt;, &lt;s&gt;, c) = w.pop()
+
+        # 終了条件
+        if &lt;*s&gt; == e1 and &lt;*n&gt; == e2:
+            return True
+
+        # 情報を上方 (参照外し側) へ伝播
+        if &lt;*n&gt; != NULL and &lt;*n&gt; not in alias_mem[&lt;*s&gt;]:
+            # M(&lt;*s&gt;, &lt;*n&gt;) を新たに発見した
+            alias_mem[&lt;*s&gt;].insert(&lt;*n&gt;)
+            for (&lt;t&gt;, c) in reach(&lt;*s&gt;):
+                if c == S1:
+                    #  &lt;t&gt; ----&gt; &lt;*s&gt; --- M ---&gt; &lt;*n&gt;
+                    #             S1              S2
+                    #
+                    # → reach[&lt;*n&gt;].insert((&lt;t&gt;, S2))
+                    #   w.insert((&lt;*n&gt;, &lt;t&gt;, S2))
+                    #
+                    propagete(w, &lt;*n&gt;, &lt;t&gt;, S2)
+                elif c == S3:
+                    propagate(w, &lt;*n&gt;, &lt;t&gt;, S4)
+
+        # 情報流を考慮して到達可能性を伝播
+        if c == S1:
+            for &lt;m&gt; in assign_from(&lt;n&gt;):
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S1)
+            for &lt;m&gt; in alias_mem[&lt;n&gt;]:
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S2)
+            for &lt;m&gt; in assign_to(&lt;n&gt;):
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S3)
+        elif c == S2:
+            for &lt;m&gt; in assign_from(&lt;n&gt;):
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S1)
+            for &lt;m&gt; in assign_to(n):
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S3)
+        elif c == S3:
+            for &lt;m&gt; in assign_to(&lt;n&gt;):
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S3)
+            for &lt;m&gt; in alias_mem[n]:
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S4)
+        elif c == S4:
+            for &lt;m&gt; in assign_to(&lt;n&gt;):
+                propagate(w, &lt;m&gt;, &lt;s&gt;, S3)
+
+        # 情報を下方へ伝播
+        if &lt;&amp;n&gt; != NULL and (c == S1 or c == S3):
+            propagate(w, &lt;&amp;n&gt;, &lt;&amp;n&gt;, S1)
+
+        return false</code></pre></figure>
+
+<figure><pre><code class="python">def propagate(w, &lt;n&gt;, &lt;s&gt;, c):
+    if (&lt;s&gt;, c) not in reach(&lt;n&gt;):
+        reach(&lt;n&gt;).insert((&lt;s&gt;, c))
+        w.insert((&lt;n&gt;, &lt;s&gt;, c))</code></pre></figure>
+<h3 id="アルゴリズムの最適化">アルゴリズムの最適化</h3>
+<ul>
+<li>伝播順の工夫 (省略)</li>
+<li>並列化
+<ul>
+<li><code>may_alias(&lt;e1&gt;, &lt;e2&gt;)</code> と
+<code>may_alias(&lt;e2&gt;, &lt;e1&gt;)</code> を並列実行</li>
+<li>高速になったとのこと。</li>
+</ul></li>
+<li>解析の切り上げ
+<ul>
+<li>ワークリストに追加できる回数を制限</li>
+<li>制限に到達した場合は may-alias と判定 (健全)</li>
+</ul></li>
+<li>キャッシュ
+<ul>
+<li>あるクエリの処理で得た情報を、別のクエリの処理でも使う</li>
+<li>メモリ消費量が増える (2008 年当時は死活問題だったと思われる)</li>
+</ul></li>
+</ul>
+<h2 id="points-to-解析への応用">points-to 解析への応用</h2>
+<p>問 : あるポインタ <code>p</code> の指し先は何か？</p>
+<p><span class="math display">
+\begin{align}
+R &amp;= \{ (a, a) | a \in \text{Addr} \}\\
+P &amp;= \bar{F}R = (M?\ ←)^{*} R \subseteq \text{Expr} \times
+_text{Addr}\\
+\end{align}
+</span></p>
+<p><span class="math inline">P</span> を調べれば良い。<br />
+本筋でないのでアルゴリズムは省略とのこと。</p>
+<h2 id="健全性">健全性</h2>
+<p>形式的に証明を与えた (略)</p>
+<h2 id="評価">評価</h2>
+<p>実装</p>
+<ul>
+<li>Java 製の C 言語解析インフラ Crystal 上で実装</li>
+<li>実装は Crystal に取り込まれたらしい</li>
+</ul>
+<p>検体</p>
+<ul>
+<li>SPEC2000 の C 言語で書かれた検体</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th>Program</th>
+<th style="text-align: right;">Code size (KLOC)</th>
+<th style="text-align: right;">PEG #Node</th>
+<th style="text-align: right;">PEG #Edge</th>
+<th style="text-align: right;">Picked queries</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>164.gzip</td>
+<td style="text-align: right;">7.8</td>
+<td style="text-align: right;">4767</td>
+<td style="text-align: right;">3226</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr class="even">
+<td>175.vpr</td>
+<td style="text-align: right;">17.0</td>
+<td style="text-align: right;">11242</td>
+<td style="text-align: right;">9833</td>
+<td style="text-align: right;">91</td>
+</tr>
+<tr class="odd">
+<td>176.gcc</td>
+<td style="text-align: right;">205.7</td>
+<td style="text-align: right;">112341</td>
+<td style="text-align: right;">168484</td>
+<td style="text-align: right;">1086</td>
+</tr>
+<tr class="even">
+<td>177.mesa</td>
+<td style="text-align: right;">50.2</td>
+<td style="text-align: right;">51766</td>
+<td style="text-align: right;">271863</td>
+<td style="text-align: right;">955</td>
+</tr>
+<tr class="odd">
+<td>179.art</td>
+<td style="text-align: right;">1.3</td>
+<td style="text-align: right;">1226</td>
+<td style="text-align: right;">659</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td>181.mcf</td>
+<td style="text-align: right;">1.9</td>
+<td style="text-align: right;">1303</td>
+<td style="text-align: right;">1040</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td>183.equake</td>
+<td style="text-align: right;">1.5</td>
+<td style="text-align: right;">1716</td>
+<td style="text-align: right;">967</td>
+<td style="text-align: right;">54</td>
+</tr>
+<tr class="even">
+<td>186.crafty</td>
+<td style="text-align: right;">19.5</td>
+<td style="text-align: right;">10929</td>
+<td style="text-align: right;">7238</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr class="odd">
+<td>188.ammp</td>
+<td style="text-align: right;">13.3</td>
+<td style="text-align: right;">13526</td>
+<td style="text-align: right;">9203</td>
+<td style="text-align: right;">59</td>
+</tr>
+<tr class="even">
+<td>197.parser</td>
+<td style="text-align: right;">10.9</td>
+<td style="text-align: right;">9538</td>
+<td style="text-align: right;">8753</td>
+<td style="text-align: right;">99</td>
+</tr>
+<tr class="odd">
+<td>253.perlbmk</td>
+<td style="text-align: right;">61.8</td>
+<td style="text-align: right;">48703</td>
+<td style="text-align: right;">52964</td>
+<td style="text-align: right;">304</td>
+</tr>
+<tr class="even">
+<td>254.gap</td>
+<td style="text-align: right;">59.5</td>
+<td style="text-align: right;">58915</td>
+<td style="text-align: right;">809665</td>
+<td style="text-align: right;">656</td>
+</tr>
+<tr class="odd">
+<td>255.vortex</td>
+<td style="text-align: right;">52.6</td>
+<td style="text-align: right;">50322</td>
+<td style="text-align: right;">65125</td>
+<td style="text-align: right;">784</td>
+</tr>
+<tr class="even">
+<td>256.bzip2</td>
+<td style="text-align: right;">4.6</td>
+<td style="text-align: right;">3523</td>
+<td style="text-align: right;">1681</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr class="odd">
+<td>300.twolf</td>
+<td style="text-align: right;">19.7</td>
+<td style="text-align: right;">14057</td>
+<td style="text-align: right;">9977</td>
+<td style="text-align: right;">120</td>
+</tr>
+</tbody>
+</table>
+<p>環境</p>
+<ul>
+<li>CPU: dual-processor 3.8GHz Pentium 4</li>
+<li>RAM: 2GB</li>
+<li>OS : Windows XP</li>
+</ul>
+<h2 id="peg-の構築時間">PEG の構築時間</h2>
+<p>15 検体の合計 8 秒</p>
+<h2 id="精度">精度</h2>
+<p>X-sensitivity</p>
+<ul>
+<li>Element-insensitive (ポインタ算術の結果は同じノード扱い)</li>
+<li>Field-insensitive (<code>a-&gt;f</code> も <code>a</code>
+と同じノード扱い)
+<ul>
+<li>Field-sensitive な定式化も試したが、コストの割に恩恵 (精度向上)
+は少なかった</li>
+</ul></li>
+<li>Context-insensitive</li>
+</ul>
+<p>その他</p>
+<ul>
+<li>icall 先として、引数の数が同じで address taken
+な関数の集合を用いた</li>
+<li>メモリ確保のラッパは自動判別
+<ul>
+<li>条件1 : 返り値がメモリ確保関数/ラッパの返り値が伝播してきたもの</li>
+<li>条件2 : 値が経由した変数は全て address taken でない</li>
+</ul></li>
+</ul>
+<h2 id="評価手法">評価手法</h2>
+<p>クエリの選定 :</p>
+<ul>
+<li>部分冗長性削除のための解析 (DFA)
+を行い、必要になったエイリアス解析を収集</li>
+</ul>
+<p>評価するアルゴリズム :</p>
+<ul>
+<li>Demand-Driven Alias Analysis (DDA)
+<ul>
+<li>提案手法</li>
+</ul></li>
+<li>Exhausitive Points-to Analysis (EXH)
+<ul>
+<li>Andersen の points-to 解析 による alias 解析</li>
+<li>step1: 全変数の points-to 関係を求める</li>
+<li>step2: points-to 集合の和が空かどうかを見て alias 判定</li>
+</ul></li>
+<li>Demand-Driven Points-to Analysis (DDPT)
+<ul>
+<li>提案手法を points-to 解析に応用したものによる alias 解析</li>
+<li>step1: クエリ (e1, e2) の e1 と e2 について points-to 解析</li>
+<li>step2: points-to 集合の和が空かどうかを見て alias 判定</li>
+</ul></li>
+</ul>
+<h2 id="dda-単体の評価">DDA 単体の評価</h2>
+<p>N は 6 ~ 2000 step per query</p>
+<h3 id="実行時間">実行時間</h3>
+<p><img src="./img/runtime.png" alt="Runtime" /></p>
+<ul>
+<li>縦軸は対数軸</li>
+<li>図はキャッシュ以外の最適化を適用した場合の結果</li>
+<li>キャッシュを有効化した場合、 12% ほど改善</li>
+</ul>
+<h3 id="精度-1">精度</h3>
+<p><img src="./img/precision.png" alt="Precision" /></p>
+<ul>
+<li>(a) : 予算を使い果たさなかったクエリの割合
+<ul>
+<li>N = 500 で 67%, N = 2000 で 72%</li>
+<li>予算を使い果たしたクエリを EXH (Andersen) で解析したら、多くが
+may-alias だった</li>
+<li>→ N を 500 より大きくする利益は少ない</li>
+</ul></li>
+<li>(b) : no-alias が返ったクエリの割合</li>
+</ul>
+<h3 id="メモリ使用量">メモリ使用量</h3>
+<p><img src="./img/mem.png" alt="Memory" /></p>
+<ul>
+<li>Java (GC
+言語)のメモリ使用量を見積もるのは難しいので、ヒューリスティクスを用いた
+(なぜ？)</li>
+</ul>
+<h2 id="exh-との比較">EXH との比較</h2>
+<p><img src="./img/cmp-exh.png" alt="Compare with EXH" /></p>
+<ul>
+<li>EXT (提案手法の精度の上限) と結果が一致した割合</li>
+<li>N = 500 で 95%, N = 50 で 90%</li>
+</ul>
+<h2 id="ddpt-との比較">DDPT との比較</h2>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Budget</th>
+<th>解析完了の割合 (DDA/DDPT)</th>
+<th>EXH との一致度 (DDA/DDPT)</th>
+<th>実行時間 [ms] (DDA/DDPT)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">6</td>
+<td>12% / 8%</td>
+<td>61% / 63%</td>
+<td>0.08 / 0.08</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td>22% / 15%</td>
+<td>69% / 69%</td>
+<td>0.10 / 0.09</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td>40% / 19%</td>
+<td>84% / 73%</td>
+<td>0.13 / 0.11</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">50</td>
+<td>49% / 27%</td>
+<td>89% / 80%</td>
+<td>0.17 / 0.18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">100</td>
+<td>55% / 29%</td>
+<td>91% / 82%</td>
+<td>0.22 / 0.23</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">200</td>
+<td>59% / 30%</td>
+<td>93% / 83%</td>
+<td>0.31 / 0.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">500</td>
+<td>67% / 31%</td>
+<td>96% / 84%</td>
+<td>0.52 / 0.75</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1000</td>
+<td>70% / 31%</td>
+<td>96% / 84%</td>
+<td>0.85 / 1.63</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2000</td>
+<td>72% / 31%</td>
+<td>96% / 84%</td>
+<td>1.84 / 6.32</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>DDA の方が良い (それはそうだろう)</li>
+</ul>
+<h2 id="まとめ">まとめ</h2>
+<ul>
+<li>目的 : C 言語の may-alias 解析</li>
+<li>既存手法の問題 : 遅い</li>
+<li>提案手法 : May-alias 解析を CFL-reachability に帰着
+<ul>
+<li>精度 : Andersen 相当 (flow, ctxt, element, field -
+<strong>in</strong>sensitive)</li>
+</ul></li>
+<li>結果 : 不要な解析が減り、速度改善 (x30)</li>
+</ul>
+<h2 id="修論との関係">修論との関係</h2>
+<p>第一に、古い研究なので直接の対決相手として不足。<br />
+ただ、 CFL-reachability ベースのポインタ解析を知るには有用。</p>
+<p><a href="https://dl.acm.org/doi/10.1145/3319535.3354244">’19 MLTA</a>
+は points-to 解析の流派としてポインタ解析と型解析を挙げていた。<br />
+しかし、 dfa ベースと cfl-reachability
+ベースでは全く違うので、再分類も要検討。</p>
+<h2 id="補足">補足</h2>
+<ul>
+<li>Ctxt-sensitivity をもたせる
+<ol type="1">
+<li>CallGraph をどうにかして作る</li>
+<li>関数 <code>foo</code> の call/ret のエッジにラベル <span
+class="math inline">\{*{\text{foo}}</span>, <span
+class="math inline">\}*{\text{foo}}</span> を貼る</li>
+<li>CFL の定義時にカッコのバランスを取る (→ Dyck-reachability)</li>
+</ol></li>
+<li>関連研究 :
+<ul>
+<li><a
+href="https://www.cs.jhu.edu/~huang/cs624/spring21/readings/program-analysis-graph.pdf">’97
+IFDS/IDE</a> (<a
+href="https://euske.github.io/slides/sem20170606/index.html">新山さんの資料</a>)</li>
+<li><a href="https://dl.acm.org/doi/10.1145/3466820">’21 Systemizing
+Interprocedural Static Analysis of Large-scale Systems Code with
+Graspan</a>
+<ul>
+<li>求めた V や M を実際に辺としてグラフに追加して、ビッグデータ解析用の
+disc-base なグラフアルゴリズムで殴る話？</li>
+</ul></li>
+<li><a
+href="https://2021.ecoop.org/details/ecoop-2021-ecoop-research-papers/3/Lossless-Persisted-Summarization-of-Static-Callgraph-Points-To-and-Data-Flow-Analys">’21
+Modalyzer</a> (<a
+href="../modalyzer/modalyzer.html">個別ページ</a>)</li>
+</ul></li>
+</ul>
+</body>
+</html>

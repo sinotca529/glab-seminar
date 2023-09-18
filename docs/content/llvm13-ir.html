@@ -334,5 +334,311 @@ Language Reference Manual</a></p>
 <li>…</li>
 </ul></li>
 </ul>
+<h1 id="メモ">メモ</h1>
+<h2 id="union-の扱い"><code>union</code> の扱い</h2>
+<p>一番大きな型の変数として宣言し、使うときによしなにキャストするようだ。</p>
+<p>例 :</p>
+
+<figure><pre><code class="c">#include &lt;stdio.h&gt;
+union {
+  char c;
+  double d;
+} a;
+
+int main(void) {
+  a.d = 10;
+  printf(&quot;%d\n&quot;, a.c);
+  return 0;
+}</code></pre></figure>
+
+<figure><pre><code class="llvm">%union.anon = type { double }
+
+@a = common dso_local global %union.anon zeroinitializer, align 8
+@.str = private unnamed_addr constant [4 x i8] c&quot;%d\0A\00&quot;, align 1
+
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main() #0 {
+  %1 = alloca i32, align 4
+  store i32 0, i32* %1, align 4
+  store double 1.000000e+01, double* getelementptr inbounds (%union.anon, %union.anon* @a, i32 0, i32 0), align 8
+  %2 = load i8, i8* bitcast (%union.anon* @a to i8*), align 8
+  %3 = sext i8 %2 to i32
+  %4 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 %3)
+  ret i32 0
+}</code></pre></figure>
+<h2 id="struct-の扱い"><code>struct</code> の扱い</h2>
+<h2 id="定数式">定数式</h2>
+<p>定数を別の定数に変換する</p>
+<ul>
+<li>切り詰め・拡張
+<ul>
+<li>trunc</li>
+<li>zext</li>
+<li>sext</li>
+<li>fptrunc</li>
+<li>fpext</li>
+</ul></li>
+<li>小数/整数変換
+<ul>
+<li>fptoui</li>
+<li>fptosi</li>
+<li>uitofp</li>
+<li>sitofp</li>
+</ul></li>
+<li>ポインタ/整数変換
+<ul>
+<li>ptrtoint</li>
+<li>inttoptr</li>
+</ul></li>
+<li>その他汎用変換
+<ul>
+<li>bitcast</li>
+<li>addrspacecast</li>
+</ul></li>
+<li>その他
+<ul>
+<li>getelementptr</li>
+<li>select</li>
+<li>icmp</li>
+<li>fcmp</li>
+<li>extractelement</li>
+<li>insertelement</li>
+<li>shufflevector</li>
+<li>extractvalue</li>
+<li>insertvalue</li>
+<li>OPCODE (LHS, RHS) : 任意の二項演算を定数に適用</li>
+</ul></li>
+</ul>
+<h2 id="pointer-aliasing-rules">Pointer Aliasing Rules</h2>
+<p>ポインタ値を用いてメモリアクセスをする際は、アクセスするメモリ範囲がポインタ値に紐づいていなければならない。
+ポインタ値とメモリ範囲の紐づけは以下のルールで行われる :</p>
+<ul>
+<li>そのポインタ値が基づいているポインタに紐づいている領域に、そのポインタも紐付けられる。</li>
+<li>大域変数を指すポインタ値は、大域変数が格納されているメモリ範囲に紐付けられる。</li>
+<li>メモリ割り当ての返り値のポインタ値は、割り当てられたメモリ範囲に紐付けられる。</li>
+<li>(default address-space 内の) null
+ポインタはどこにも紐づけされない。</li>
+<li>undef 値はどこにも紐づけされない。</li>
+<li>LLVM
+の外で定義された関数の返り値のうち、非ゼロの整数定数かポインタ値であるものは、
+LLVM 以外の機構で確保されたメモリ範囲に紐づいているかも知れないが、 LLVM
+の機構で確保されたメモリ範囲に紐づくことはない。</li>
+</ul>
+<p><em>基づく (based on)</em>
+ポインタ値が別のポインタ値に基づいているというのは次のルールで決まる</p>
+<ul>
+<li>scalar <code>getelementptr</code>
+で得たポインタ値は、<code>getelementptr</code>
+に渡したポインタ値に基づいている。</li>
+<li>vector <code>getelementptr</code> で得た lane l
+のポインタ値は、<code>getelementptr</code> に渡した ポインタのベクタの
+lane l にあるポインタ値に基づいている。</li>
+<li><code>bitcast</code> の結果の値は、 <code>bitcast</code>
+のオペランドに基づいている。</li>
+<li><code>inttoptr</code>
+で得られたポインタ値は、そのポインタ値の生成に関与した全てのポインタ値に基づいている。</li>
+<li>「基づく」関係は推移則がある。</li>
+</ul>
+<h2 id="getelementptr-の例"><code>getelementptr</code> の例</h2>
+
+<figure><pre><code class="c">struct RT {
+  char A;
+  int B[10][20];
+  char C;
+};
+struct ST {
+  int X;
+  double Y;
+  struct RT Z;
+};
+
+int *foo(struct ST *s) {
+  return &amp;s[1].Z.B[5][13];
+}</code></pre></figure>
+
+<figure><pre><code class="llvm">%struct.RT = type { i8, [10 x [20 x i32]], i8 }
+%struct.ST = type { i32, double, %struct.RT }
+
+define i32* @foo(%struct.ST* %s) nounwind uwtable readnone optsize ssp {
+entry:
+  %arrayidx = getelementptr inbounds %struct.ST, %struct.ST* %s, i64 1, i32 2, i32 1, i64 5, i64 13
+  ret i32* %arrayidx
+}</code></pre></figure>
+<h2 id="tbaa-メタデータ"><code>tbaa</code> メタデータ</h2>
+<ul>
+<li>LLVM IR でメモリは型を持っていない。 (!?)</li>
+<li>高レベル言語の型システムを表すのには、代わりにメタデータが使われる。</li>
+<li>LLVM の TBAA は semantics と representation からなる。</li>
+</ul>
+<h3 id="semantics">Semantics</h3>
+<ul>
+<li>TBAA メタデータシステムは struct path TBAA (!=
+<code>tbaa.struct</code>) とも呼ばれる。</li>
+<li>Type Descriptor と Access Tag からなる。</li>
+<li>Type Descriptor
+<ul>
+<li>scalar type descriptor : 他の型を内包しない型
+<ul>
+<li>親はスカラ型か TBAA root</li>
+<li>親 : より内部へ内部へ潜るイメージ</li>
+</ul></li>
+<li>struct type descriptor : 他の型ディスクリプタを内包する型</li>
+</ul></li>
+<li>Access Tag
+<ul>
+<li>load, store に付けられるメタデータ</li>
+<li>base type, access type, offset からなる。
+<ul>
+<li>base type から offset の位置にある access type
+型の値へのメモリアクセスを表す。</li>
+</ul></li>
+<li>(BaseTy, Offset) の親子関係 :
+<ul>
+<li>BaseTy がスカラの場合 :
+<ul>
+<li>Offset が非ゼロの場合は未定義。</li>
+<li>ImmediateParent(BaseTy, 0) は (ParentTy, 0)
+<ul>
+<li>ただし、 BaseTy の親は ParentTy</li>
+</ul></li>
+</ul></li>
+<li>BaseTy が struct の場合:
+<ul>
+<li>ImmediateParent(BaseTy, Offset) は (NewTy, NewOffset)
+<ul>
+<li>NewTy : BaseTy の Offset にある型</li>
+<li>NewOffset : それに応じて調整したオフセット</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<h3 id="representation">Representation</h3>
+<ul>
+<li>TBAA 型階層のルート
+<ul>
+<li>引数0,1個の MDNode
+<ul>
+<li>第1引数 : (オプショナル) MDString</li>
+</ul></li>
+</ul></li>
+<li>Scalar type descriptor : 2引数の MDNode。
+<ul>
+<li>第1引数 : 型名を表す MDString</li>
+<li>第2引数 : 親を指す MDNode</li>
+<li>第3引数 : (オプショナル) 定数 0 (ConstantInt) 。</li>
+</ul></li>
+<li>Struct type descriptor
+<ul>
+<li>奇数個の引数を持つ MDNode</li>
+<li>第1引数 : 型名を表す MDString</li>
+<li>第2n引数 : 内包する型 (MDNode)</li>
+<li>第2n+1引数 : そのオフセット (ConstantInt)</li>
+</ul></li>
+<li>Access tag
+<ul>
+<li>引数3,4個の MDNode
+<ul>
+<li>第1引数 : base type を指す MDNode</li>
+<li>第2引数 : access type を指す MDNode</li>
+<li>第3引数 : オフセットを指す ConstantInt</li>
+<li>第4引数 : (オプショナル) 0 か 1 の ConstantInt
+<ul>
+<li>1 : メモリアクセスが constant である (pointsToConstantMemory が true
+を返す)</li>
+<li>0 : そうでない</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<h2 id="tbaastruct-メタデータ"><code>tbaa.struct</code> メタデータ</h2>
+<ul>
+<li><code>llvm.memcpy</code> は構造体のコピーに使われる</li>
+<li>しかし、厳密にはパディング部分をコピーする必要はない。</li>
+<li><code>tbaa.struct</code> は次の情報を持つ :
+<ul>
+<li>どのメモリサブ領域がパディングか</li>
+<li>その構造体の TBAA tag</li>
+<li>引数3Nの MDNode
+<ul>
+<li>N : メンバのオフセット</li>
+<li>N+1 : メンバのサイズ</li>
+<li>N+2 : メンバの型の tbaa tag</li>
+</ul></li>
+</ul></li>
+</ul>
+<h2 id="aliasanalysis">AliasAnalysis</h2>
+<ul>
+<li>https://releases.llvm.org/13.0.0/docs/AliasAnalysis.html</li>
+<li>flow-insensitive</li>
+</ul>
+<h3 id="aliasanalysis-class">AliasAnalysis class</h3>
+<ul>
+<li>エイリアス解析のインタフェース</li>
+<li><code>enum AliasResult</code> : alias query の結果</li>
+<li><code>enum ModRefResult</code> : mod/ref query の結果</li>
+</ul>
+<p>複数の値を含むクエリにおいて、定数でない値はすべて同じ関数内で定義されていなくてはならない。</p>
+<ul>
+<li><p>ポインタの表現</p>
+<ul>
+<li>開始アドレス + サイズ</li>
+</ul></li>
+<li><p><code>basic-aa</code> pass</p></li>
+<li><p><code>alias</code> メソッド</p>
+<ul>
+<li>2つのメモリオブジェクトがエイリアスかどうかを判定
+<ul>
+<li>２つのメモリオブジェクトは同じ関数内で定義されている必要あり。</li>
+<li>// つまり、 intra-procedural ?</li>
+</ul></li>
+<li>返り値は MustAlias, PartialAlias, MayAlias, NoAlias のいずれか。
+<ul>
+<li>NoAlias : 違う場所を指している or
+両方のポインタがメモリの読み出しのみに利用される。</li>
+<li>MayAlias : 同じオブジェクトを参照しうる</li>
+<li>PartialAlias : 参照するオブジェクトが部分的に重複しうる</li>
+<li>MustAlias : 同じアドレスを指す (サイズは？)</li>
+</ul></li>
+</ul></li>
+<li><p><code>getModRefInfo</code> メソッド1</p>
+<ul>
+<li>命令の実行が、メモリ位置の読み取りあるいは編集を行うか否かを得る。
+<ul>
+<li>// load, store の有無？</li>
+<li>保守的な結果を返す</li>
+</ul></li>
+</ul></li>
+<li><p><code>getModRefInfo</code> メソッド2</p>
+<ul>
+<li>2つのコールサイト (CS1, CS2) を受け取る</li>
+<li>CS1 が読む/書くメモリの集合を R1/W1, 同様に R2/W2 と置く。</li>
+<li>NoModRef : (W1 ∧ (R2 ∨ W2)) ∨ (W2 ∧ (R1 ∨ W1)) = ∅
+<ul>
+<li>他方が読み書きするメモリに書き込まない</li>
+</ul></li>
+<li>Ref : R1 ∧ W2 != ∅
+<ul>
+<li>CS2 が書いたメモリを CS1 が読む。</li>
+</ul></li>
+<li>Mod : W1 ∧ (R2 ∨ W2) != ∅
+<ul>
+<li>CS2 が読み/書きしたメモリを CS1 が読む。</li>
+</ul></li>
+<li>ModRef : (R1 ∨ W1) ∧ W2 != ∅
+<ul>
+<li>CS2 が書いたメモリを CS1 が読み書きする。</li>
+</ul></li>
+</ul></li>
+<li><p><code>doesNotAccessMemory</code> メソッド</p>
+<ul>
+<li>関数がメモリを読み書きしない or constant メモリのみを読むなら真</li>
+<li>これが真なら <code>onlyReadsMemory</code> も真。</li>
+</ul></li>
+<li><p><code>onlyReadsMemory</code> メソッド</p>
+<ul>
+<li>関数がメモリ読み込みしないなら真。</li>
+</ul></li>
+</ul>
 </body>
 </html>

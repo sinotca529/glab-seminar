@@ -72,7 +72,10 @@ Points-To and Data-Flow Analysis</p>
 </ul>
 <p><strong>既存手法の問題 :</strong></p>
 <ul>
-<li>目的の解析が依存する解析を考慮しておらず，スケールしない．</li>
+<li>解析の依存関係を考慮していない
+<ul>
+<li>解析を部分的にスケールさせても、依存先の解析がスケールしてなければ効果は薄い</li>
+</ul></li>
 <li>(C に比べポインタ操作の自由度が低い Java しか扱えない．)</li>
 </ul>
 <p><strong>解決策 :</strong></p>
@@ -560,10 +563,7 @@ href="https://ja.wikipedia.org/wiki/%E3%82%B0%E3%83%A9%E3%83%95%E7%90%86%E8%AB%9
 <li>(青色) 1 の更新を反映し，PAG 上で <code>getGlobalSan</code>
 の返り値と受け口をつなぐ．</li>
 <li>(緑色) 2 の更新が影響する変数 <code>s</code> は CG
-の依存対象なので， CG を再構築．
-<ul>
-<li>上記の <code>walk</code> を使う．</li>
-</ul></li>
+の依存対象なので， CG を再構築．- 上記の <code>walk</code> を使う．</li>
 </ol>
 </div>
 </div>
